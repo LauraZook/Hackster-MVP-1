@@ -1774,13 +1774,17 @@ const CoachSignUpPage = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
           <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-            <h3 className="text-sm font-semibold text-purple-900 mb-2">Your FREE trial includes:</h3>
+            <h3 className="text-sm font-semibold text-purple-900 mb-2">Join our FREE BETA program:</h3>
             <ul className="text-sm text-purple-800 space-y-1">
               <li>• Complete professional profile</li>
               <li>• Direct client connections & inquiries</li>
               <li>• Full visibility in our coach directory</li>
-              <li>• All premium features unlocked</li>
+              <li>• Help us build the best wellness platform</li>
+              <li>• Early access to new features</li>
             </ul>
+            <div className="mt-2 text-xs text-purple-600">
+              <strong>Beta Promise:</strong> Your profile stays free during beta. We'll email you before any changes.
+            </div>
           </div>
 
           {error && (
