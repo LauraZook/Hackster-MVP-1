@@ -968,7 +968,7 @@ const GetStartedFlow = () => {
                 <div className="text-center">
                   <div className="text-3xl mb-3">🎯</div>
                   <h3 className="font-semibold mb-2">Establish Vision</h3>
-                  <p className="text-gray-600 text-sm">Identify the right health tests for benchmark data and set your specific goals</p>
+                  <p className="text-gray-600 text-sm">Identify the right health tests for benchmark data and then we'll set your specific goals</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-3">⚡</div>
