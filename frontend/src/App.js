@@ -956,7 +956,7 @@ const GetStartedFlow = () => {
               <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-white text-3xl">🤖</span>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Your Hackster AI Coach!</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome! I'm excited to be your biohacking buddy...</h1>
               <p className="text-xl text-gray-600 mb-8">
                 Let's start with understanding where you are today and what goals we'll work on achieving.
               </p>
