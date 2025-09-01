@@ -1221,10 +1221,10 @@ async def startup_event():
         # Only initialize if database is accessible
         await client.admin.command('ping')
         await initialize_sample_data()
-        logger.info("Hackster Health Platform API started successfully with database")
+        print("✅ Hackster Health Platform API started successfully with database")
     except Exception as e:
-        logger.warning(f"Database not accessible during startup: {e}")
-        logger.info("Hackster Health Platform API started in database-free mode")
+        print(f"⚠️ Database not accessible during startup: {e}")
+        print("Hackster Health Platform API started in database-free mode")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
