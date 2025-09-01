@@ -115,6 +115,7 @@ class AuthenticationTester:
                 return
             
             self.member_token = data["access_token"]
+            self.member_email = test_data["email"]  # Store for login test
             self.log_test("Member Registration", True, "Member registered successfully with JWT token")
         else:
             self.log_test("Member Registration", False, f"Status: {response['status_code']}, Error: {response['data']}")
