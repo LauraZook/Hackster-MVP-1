@@ -1940,29 +1940,156 @@ const Home = () => {
       <CommunityCoaching />
       
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">H</span>
-              </div>
-              <div className="flex flex-col">
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Main Footer Content */}
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            {/* Logo and Description */}
+            <div className="md:col-span-1">
+              <Link to="/" className="flex items-center space-x-3 mb-4">
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold">Hackster.ai</span>
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">H</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl font-bold">Hackster.ai</span>
+                      <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
+                    </div>
+                    <span className="text-xs text-gray-400 -mt-1">Your biohacking buddy</span>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-400 -mt-1">Your biohacking buddy</span>
+              </Link>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Empowering your biohacking journey with AI-powered recommendations, expert guidance, and a supportive community.
+              </p>
+            </div>
+
+            {/* Platform Links */}
+            <div>
+              <h3 className="text-white font-semibold mb-4">Platform</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link to="/get-started" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                    Get Started
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/community" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                    Community
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/coaches" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                    Find a Coach
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/login" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                    Join Now
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* For Professionals */}
+            <div>
+              <h3 className="text-white font-semibold mb-4">For Professionals</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link to="/signup/coach" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                    Become a Coach
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/coaches" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                    Coach Directory
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/signin" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                    Coach Login
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="text-white font-semibold mb-4">Legal</h3>
+              <ul className="space-y-3">
+                <li>
+                  <a href="#privacy" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#terms" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#disclaimer" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Medical Disclaimer
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:support@hackster.ai" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Disclaimer Section */}
+          <div className="border-t border-gray-800 pt-8 mb-8">
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-white font-semibold mb-4 flex items-center">
+                <span className="text-yellow-400 mr-2">⚠️</span>
+                Important Medical Disclaimer
+              </h3>
+              <div className="text-gray-300 text-sm leading-relaxed space-y-3">
+                <p>
+                  <strong>Not Medical Advice:</strong> The information provided by Hackster.ai, including AI recommendations, 
+                  community discussions, and coach guidance, is for educational and informational purposes only. 
+                  It is not intended as medical advice, diagnosis, or treatment.
+                </p>
+                <p>
+                  <strong>Consult Healthcare Professionals:</strong> Always consult with qualified healthcare providers 
+                  before making any changes to your health regimen, starting new supplements, or implementing 
+                  biohacking protocols. Individual results may vary.
+                </p>
+                <p>
+                  <strong>FDA Statement:</strong> The statements and recommendations on this platform have not been 
+                  evaluated by the Food and Drug Administration. Our recommendations are not intended to diagnose, 
+                  treat, cure, or prevent any disease.
+                </p>
+                <p>
+                  <strong>Personal Responsibility:</strong> You are solely responsible for your health decisions. 
+                  Hackster.ai and its coaches are not liable for any adverse effects or consequences resulting 
+                  from the use of information provided on this platform.
+                </p>
               </div>
             </div>
           </div>
-          <p className="text-gray-400 mb-8">
-            Empowering your biohacking journey with science-backed solutions and expert guidance.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center space-x-8">
-            <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="text-gray-400 text-sm mb-4 md:mb-0">
+                © 2024 Hackster.ai. All rights reserved. | Beta Version
+              </div>
+              <div className="flex items-center space-x-6">
+                <span className="text-gray-400 text-sm">
+                  Made with ❤️ for the biohacking community
+                </span>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 text-sm">Beta Live</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
