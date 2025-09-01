@@ -579,13 +579,15 @@ async def create_health_assessment(assessment_data: HealthAssessmentCreate, curr
     assessment_data.user_id = current_user.id
     
     # This would contain logic to analyze responses and generate recommendations
-    # For now, we'll create a basic assessment
-    assessment = HealthAssessment(**assessment_data.dict())
+    # For now, we'll create a basic assessment with sample recommendations
+    assessment_dict = assessment_data.dict()
+    assessment_dict.update({
+        "recommended_tests": ["comprehensive_metabolic_panel"],
+        "recommended_supplements": ["vitamin_d3_k2", "magnesium_bisglycinate"],
+        "score": 75  # Sample score
+    })
     
-    # Add sample recommendations based on responses
-    assessment.recommended_tests = ["comprehensive_metabolic_panel"]
-    assessment.recommended_supplements = ["vitamin_d3_k2", "magnesium_bisglycinate"]
-    assessment.score = 75  # Sample score
+    assessment = HealthAssessment(**assessment_dict)
     
     await db.assessments.insert_one(assessment.dict())
     return assessment
