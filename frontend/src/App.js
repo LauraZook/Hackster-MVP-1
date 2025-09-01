@@ -89,7 +89,7 @@ const CoreFeatures = () => {
     },
     {
       id: "coaching",
-      title: "3. Optimize with a Personal Coach",
+      title: "3. Optimize with Coaching",
       subtitle: "AI Coach + Human Experts",
       description: "Get personalized guidance from the Hackster AI coach 24/7, plus connect with certified coaches for advanced results.",
       icon: "🚀",
