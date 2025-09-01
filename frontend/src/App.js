@@ -1970,11 +1970,222 @@ const Home = () => {
   );
 };
 
+// Coach Onboarding Page
+const CoachOnboardingPage = () => {
+  const { user, token } = useAuth();
+  const [coachProfile, setCoachProfile] = useState({
+    full_name: '',
+    bio: '',
+    specialties: [],
+    years_experience: 0,
+    location: '',
+    website: '',
+    phone: '',
+    pricing: '',
+    profile_image: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const availableSpecialties = [
+    'Nutrition', 'Weight Management', 'Hormone Optimization', 
+    'Athletic Performance', 'Sleep Optimization', 'Stress Management',
+    'Gut Health', 'Cold Therapy', 'Breathwork', 'Longevity',
+    'Functional Medicine', 'Biohacking', 'Supplements'
+  ];
+
+  const toggleSpecialty = (specialty) => {
+    if (coachProfile.specialties.includes(specialty)) {
+      setCoachProfile({
+        ...coachProfile,
+        specialties: coachProfile.specialties.filter(s => s !== specialty)
+      });
+    } else {
+      setCoachProfile({
+        ...coachProfile,
+        specialties: [...coachProfile.specialties, specialty]
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Mock successful profile creation for demo
+      setTimeout(() => {
+        setLoading(false);
+        alert('🎉 Congratulations! Your coach profile is now live with a 30-day free trial!');
+        window.location.href = '/coaches';
+      }, 1000);
+    } catch (err) {
+      setError('Profile creation failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12">
+      <Navigation />
+      
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="text-center mb-8">
+          <div className="mx-auto h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center mb-6">
+            <span className="text-white text-3xl">🎯</span>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Complete Your Coach Profile</h1>
+          <p className="text-xl text-gray-600">Let's set up your professional profile to start connecting with clients</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+              <input
+                type="text"
+                required
+                value={coachProfile.full_name}
+                onChange={(e) => setCoachProfile({ ...coachProfile, full_name: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Dr. Jane Smith"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Professional Bio *</label>
+              <textarea
+                required
+                rows={4}
+                value={coachProfile.bio}
+                onChange={(e) => setCoachProfile({ ...coachProfile, bio: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Tell potential clients about your background, expertise, and approach to wellness coaching..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Specialties *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {availableSpecialties.map(specialty => (
+                  <button
+                    key={specialty}
+                    type="button"
+                    onClick={() => toggleSpecialty(specialty)}
+                    className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                      coachProfile.specialties.includes(specialty)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {specialty}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Select all that apply</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+                <input
+                  type="number"
+                  value={coachProfile.years_experience}
+                  onChange={(e) => setCoachProfile({ ...coachProfile, years_experience: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  min="0"
+                  max="50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                <input
+                  type="text"
+                  required
+                  value={coachProfile.location}
+                  onChange={(e) => setCoachProfile({ ...coachProfile, location: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="City, Country"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <input
+                type="tel"
+                value={coachProfile.phone}
+                onChange={(e) => setCoachProfile({ ...coachProfile, phone: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pricing</label>
+              <input
+                type="text"
+                value={coachProfile.pricing}
+                onChange={(e) => setCoachProfile({ ...coachProfile, pricing: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g., $150/session, $500/month"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Website (Optional)</label>
+              <input
+                type="url"
+                value={coachProfile.website}
+                onChange={(e) => setCoachProfile({ ...coachProfile, website: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="https://www.yoursite.com"
+              />
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h3 className="text-purple-800 font-semibold mb-2">🚀 Ready to Launch Your Profile?</h3>
+              <ul className="text-purple-700 text-sm space-y-1">
+                <li>• Full 30-day trial with ALL premium features</li>
+                <li>• Contact details visible to potential clients</li>
+                <li>• Start receiving client inquiries immediately</li>
+                <li>• After trial: Continue for just $99/year</li>
+              </ul>
+            </div>
+
+            {error && (
+              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
+            )}
+
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                disabled={loading || coachProfile.specialties.length === 0}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'Creating Profile...' : 'Launch My Coach Profile'}
+              </button>
+              <Link
+                to="/"
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium text-center transition-colors"
+              >
+                Skip for Now
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <AuthProvider>
+    <AuthProvider>
+      <div className="App">
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/community" element={<CommunityLanding />} />
@@ -1983,11 +2194,12 @@ function App() {
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/signup/member" element={<MemberSignUpPage />} />
             <Route path="/signup/coach" element={<CoachSignUpPage />} />
+            <Route path="/onboarding/coach" element={<CoachOnboardingPage />} />
             <Route path="/coaches" element={<CoachesPage />} />
           </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </div>
+        </BrowserRouter>
+      </div>
+    </AuthProvider>
   );
 }
 
