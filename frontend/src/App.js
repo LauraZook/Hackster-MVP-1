@@ -732,7 +732,7 @@ const SignUpForm = ({ setShowSignUp }) => {
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold text-gray-900">Hackster</span>
+                  <span className="text-2xl font-bold text-gray-900">Hackster.ai</span>
                   <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
                 </div>
                 <span className="text-xs text-gray-500 -mt-1">Your biohacking buddy</span>
