@@ -500,6 +500,93 @@ async def initialize_sample_data():
     if await db.coaches.count_documents({}) == 0:
         coach_docs = [Coach(**coach).dict() for coach in coaches]
         await db.coaches.insert_many(coach_docs)
+    
+    # Sample Community Posts
+    if await db.posts.count_documents({}) == 0:
+        sample_posts = [
+            {
+                "user_id": "sample_user_1",
+                "username": "BiohackerPro",
+                "title": "My 30-Day Cold Exposure Journey - Incredible Results!",
+                "content": "Started with 30-second cold showers and worked up to 3-minute ice baths. The mental clarity and energy boost has been incredible. Here's what I learned:\n\n1. Week 1-2: Focus on breathing and staying calm\n2. Week 3-4: Gradually increase duration\n3. Week 5+: Ice baths for maximum benefits\n\nThe key is consistency and proper breathing techniques. Would love to hear about others' experiences!",
+                "category": "recovery",
+                "upvotes": 24,
+                "downvotes": 2,
+                "reaction_counts": {"tried_this": 8, "helpful": 12, "results": 5},
+                "comments_count": 7,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "user_id": "sample_user_2", 
+                "username": "OptimizeDaily",
+                "title": "Vitamin D3 + K2 Protocol Results After 3 Months",
+                "content": "After 3 months on this protocol, my energy levels have improved significantly. Blood work shows optimal vitamin D levels for the first time in years.\n\nProtocol:\n- 5000 IU Vitamin D3 daily\n- 200mcg Vitamin K2 (MK-7)\n- Taken with healthy fats\n\nResults:\n- Energy up 40%\n- Better sleep quality\n- Improved mood\n- Optimal blood levels (72 ng/mL)\n\nHighly recommend getting baseline testing first!",
+                "category": "supplements",
+                "upvotes": 18,
+                "downvotes": 1,
+                "reaction_counts": {"helpful": 15, "on_point": 7, "results": 9},
+                "comments_count": 12,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "user_id": "sample_user_3",
+                "username": "SleepOptimizer",
+                "title": "Sleep Tracking Data: What 6 Months of Oura Ring Taught Me",
+                "content": "Been tracking my sleep with Oura Ring for 6 months. Here are the biggest insights:\n\n🔍 Key Findings:\n- Room temperature matters MORE than I thought (65-67°F optimal)\n- Blue light blockers actually work (HRV improved 15%)\n- Magnesium timing is crucial (2 hours before bed)\n- Weekend sleep debt is real\n\n📊 Average improvements:\n- Deep sleep: +23%\n- REM sleep: +18%\n- Sleep efficiency: 91%\n- Resting HR: -8 BPM\n\nHappy to share my complete protocol if anyone's interested!",
+                "category": "sleep",
+                "upvotes": 31,
+                "downvotes": 0,
+                "reaction_counts": {"helpful": 22, "results": 15, "tried_this": 6},
+                "comments_count": 18,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        
+        for post_data in sample_posts:
+            post = Post(**post_data)
+            await db.posts.insert_one(post.dict())
+    
+    # Sample Users with levels
+    if await db.users.count_documents({"username": {"$in": ["BiohackerPro", "OptimizeDaily", "SleepOptimizer"]}}) == 0:
+        sample_users = [
+            {
+                "email": "biohacker@hackster.ai",
+                "username": "BiohackerPro", 
+                "hashed_password": get_password_hash("password123"),
+                "role": "member",
+                "level": "contributor",
+                "reputation_score": 125,
+                "posts_count": 15,
+                "comments_count": 42,
+                "reactions_received": 89
+            },
+            {
+                "email": "optimizer@hackster.ai",
+                "username": "OptimizeDaily",
+                "hashed_password": get_password_hash("password123"),
+                "role": "member", 
+                "level": "hackster_pro",
+                "reputation_score": 285,
+                "posts_count": 28,
+                "comments_count": 67,
+                "reactions_received": 156
+            },
+            {
+                "email": "sleepoptimizer@hackster.ai",
+                "username": "SleepOptimizer",
+                "hashed_password": get_password_hash("password123"),
+                "role": "member",
+                "level": "hackster_pro", 
+                "reputation_score": 340,
+                "posts_count": 35,
+                "comments_count": 89,
+                "reactions_received": 201
+            }
+        ]
+        
+        for user_data in sample_users:
+            user = UserInDB(**user_data)
+            await db.users.insert_one(user.dict())
 
 # Authentication API Routes
 @api_router.post("/auth/register", response_model=dict)
