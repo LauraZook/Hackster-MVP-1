@@ -331,7 +331,7 @@ const PrioritySupplements = () => {
 // Community Platform Component
 const CommunityPlatform = () => {
   const { isAuthenticated, user, token } = useAuth();
-  const [activeView, setActiveView] = useState('overview');
+  const [activeView, setActiveView] = useState('forum'); // Start with forum view
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ 
     title: '', 
