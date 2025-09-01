@@ -2045,30 +2045,15 @@ const Home = () => {
           {/* Disclaimer Section */}
           <div className="border-t border-gray-800 pt-8 mb-8">
             <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <span className="text-yellow-400 mr-2">⚠️</span>
-                Important Medical Disclaimer
+              <h3 className="text-white font-semibold mb-4">
+                Medical Disclaimer
               </h3>
               <div className="text-gray-300 text-sm leading-relaxed space-y-3">
                 <p>
-                  <strong>Not Medical Advice:</strong> The information provided by Hackster.ai, including AI recommendations, 
-                  community discussions, and coach guidance, is for educational and informational purposes only. 
-                  It is not intended as medical advice, diagnosis, or treatment.
+                  The information provided by Hackster.ai, including AI recommendations, community discussions, and coach guidance, is for educational, research and informational purposes only. Always consult with qualified healthcare providers before making any changes to your health regimen, starting new supplements, or implementing biohacking protocols. Individual results may vary.
                 </p>
                 <p>
-                  <strong>Consult Healthcare Professionals:</strong> Always consult with qualified healthcare providers 
-                  before making any changes to your health regimen, starting new supplements, or implementing 
-                  biohacking protocols. Individual results may vary.
-                </p>
-                <p>
-                  <strong>FDA Statement:</strong> The statements and recommendations on this platform have not been 
-                  evaluated by the Food and Drug Administration. Our recommendations are not intended to diagnose, 
-                  treat, cure, or prevent any disease.
-                </p>
-                <p>
-                  <strong>Personal Responsibility:</strong> You are solely responsible for your health decisions. 
-                  Hackster.ai and its coaches are not liable for any adverse effects or consequences resulting 
-                  from the use of information provided on this platform.
+                  Any recommendations on Hackster.ai are not intended to diagnose, treat, cure, or prevent any diseases.
                 </p>
               </div>
             </div>
