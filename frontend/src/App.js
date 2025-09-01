@@ -66,6 +66,7 @@ const useAuth = () => {
 // Navigation Component
 const Navigation = () => {
   const location = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
   
   return (
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
@@ -93,9 +94,29 @@ const Navigation = () => {
         <Link to="/get-started" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
           Get Started
         </Link>
-        <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
-          Login
-        </Link>
+        
+        {isAuthenticated ? (
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-700 text-sm">
+              Welcome, {user.username}!
+              {user.role === 'coach' && (
+                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                  Coach
+                </span>
+              )}
+            </span>
+            <button
+              onClick={logout}
+              className="text-gray-700 hover:text-red-600 transition-colors text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
+            Login
+          </Link>
+        )}
       </div>
     </nav>
   );
