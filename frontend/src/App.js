@@ -846,6 +846,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/community" element={<CommunityLanding />} />
         </Routes>
       </BrowserRouter>
     </div>
