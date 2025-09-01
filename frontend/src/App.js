@@ -1364,7 +1364,7 @@ const CoachesPage = () => {
         {/* Become a Coach Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-lg p-8 mb-12 text-center text-white">
           <h2 className="text-xl font-semibold mb-4 leading-relaxed">
-            Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster community!
+            Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster.ai community!
           </h2>
           <p className="mb-6">Share your expertise and help others. Join the Hackster.ai community for free.</p>
           <Link to="/community" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
