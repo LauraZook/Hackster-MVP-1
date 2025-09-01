@@ -1162,6 +1162,12 @@ async def get_user_assessments(user_id: str, current_user: UserProfile = Depends
 # Include the router in the main app
 app.include_router(api_router)
 
+# Simple health endpoint (no database dependency)
+@app.get("/ping")
+async def ping():
+    """Simple ping endpoint"""
+    return {"message": "pong"}
+
 # Health check endpoint for Railway (non-API route)
 @app.get("/health")
 async def health_check():
