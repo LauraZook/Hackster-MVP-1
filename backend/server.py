@@ -1166,13 +1166,25 @@ app.include_router(api_router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for deployment platforms"""
-    return {"status": "healthy", "service": "Hackster.ai API"}
+    try:
+        # Simple database connectivity check
+        await db.admin.command('ping')
+        return {"status": "healthy", "service": "Hackster.ai API", "database": "connected"}
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {"status": "unhealthy", "service": "Hackster.ai API", "error": str(e), "database": "disconnected"}
 
-# Health check endpoint for API route
+# Health check endpoint for API route  
 @api_router.get("/health")
 async def api_health_check():
     """API Health check endpoint"""
-    return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0"}
+    try:
+        # Simple database connectivity check
+        await db.admin.command('ping')
+        return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0", "database": "connected"}
+    except Exception as e:
+        logger.error(f"API Health check failed: {e}")
+        return {"status": "unhealthy", "service": "Hackster.ai API", "version": "1.0", "error": str(e), "database": "disconnected"}
 
 app.add_middleware(
     CORSMiddleware,
