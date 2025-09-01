@@ -88,12 +88,7 @@ const CoreFeatures = () => {
       subtitle: "AI Coach + Human Experts",
       description: "Get personalized guidance from our F.R.E.E.D.O.M method AI coach and connect with certified human coaches for advanced optimization.",
       icon: "🚀",
-      highlights: [
-        "F.R.E.E.D.O.M method AI coaching",
-        "Certified human coach directory",
-        "Community support & sharing",
-        "Progress tracking & optimization"
-      ],
+      highlights: [],
       cta: "Start Coaching",
       color: "purple"
     }
