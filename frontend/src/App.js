@@ -80,7 +80,8 @@ const CoreFeatures = () => {
       icon: "🎯",
       highlights: [],
       cta: "Get My Biomarkers",
-      color: "blue"
+      color: "blue",
+      link: "/get-started"
     },
     {
       id: "stack",
