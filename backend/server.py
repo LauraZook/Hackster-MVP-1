@@ -574,6 +574,162 @@ async def get_current_user_info(current_user: UserProfile = Depends(get_current_
     """Get current user information"""
     return current_user
 
+# Community API Routes
+@api_router.get("/posts", response_model=List[Post])
+async def get_posts(
+    category: Optional[PostCategory] = None,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get community posts with optional category filtering"""
+    query = {}
+    if category:
+        query["category"] = category
+    
+    posts = await db.posts.find(query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
+    return [Post(**post) for post in posts]
+
+@api_router.post("/posts", response_model=Post)
+async def create_post(post_data: PostCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Create a new community post"""
+    post = Post(
+        user_id=current_user.id,
+        username=current_user.username,
+        **post_data.dict()
+    )
+    
+    # Insert post
+    await db.posts.insert_one(post.dict())
+    
+    # Update user stats
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$inc": {"posts_count": 1}}
+    )
+    
+    return post
+
+@api_router.get("/posts/{post_id}", response_model=Post)
+async def get_post(post_id: str):
+    """Get a specific post by ID"""
+    post = await db.posts.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return Post(**post)
+
+@api_router.get("/posts/{post_id}/comments", response_model=List[Comment])
+async def get_post_comments(post_id: str):
+    """Get comments for a specific post"""
+    comments = await db.comments.find({"post_id": post_id}).sort("created_at", 1).to_list(100)
+    return [Comment(**comment) for comment in comments]
+
+@api_router.post("/comments", response_model=Comment)
+async def create_comment(comment_data: CommentCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Create a new comment on a post"""
+    # Verify post exists
+    post = await db.posts.find_one({"id": comment_data.post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    comment = Comment(
+        user_id=current_user.id,
+        username=current_user.username,
+        **comment_data.dict()
+    )
+    
+    # Insert comment
+    await db.comments.insert_one(comment.dict())
+    
+    # Update post comment count
+    await db.posts.update_one(
+        {"id": comment_data.post_id},
+        {"$inc": {"comments_count": 1}}
+    )
+    
+    # Update user stats
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$inc": {"comments_count": 1}}
+    )
+    
+    return comment
+
+@api_router.post("/reactions", response_model=dict)
+async def create_reaction(reaction_data: ReactionCreate, current_user: UserProfile = Depends(get_current_user)):
+    """React to a post or comment"""
+    # Check if user already reacted
+    existing_reaction = await db.reactions.find_one({
+        "user_id": current_user.id,
+        "post_id": reaction_data.post_id,
+        "comment_id": reaction_data.comment_id
+    })
+    
+    if existing_reaction:
+        # Update existing reaction
+        await db.reactions.update_one(
+            {"id": existing_reaction["id"]},
+            {"$set": {"reaction_type": reaction_data.reaction_type}}
+        )
+    else:
+        # Create new reaction
+        reaction = Reaction(
+            user_id=current_user.id,
+            **reaction_data.dict()
+        )
+        await db.reactions.insert_one(reaction.dict())
+    
+    # Update reaction counts
+    if reaction_data.post_id:
+        await update_post_reaction_counts(reaction_data.post_id)
+    
+    return {"message": "Reaction updated successfully"}
+
+async def update_post_reaction_counts(post_id: str):
+    """Update reaction counts for a post"""
+    reactions = await db.reactions.find({"post_id": post_id}).to_list(1000)
+    
+    reaction_counts = {}
+    upvotes = 0
+    downvotes = 0
+    
+    for reaction in reactions:
+        reaction_type = reaction["reaction_type"]
+        if reaction_type == "upvote":
+            upvotes += 1
+        elif reaction_type == "downvote":
+            downvotes += 1
+        else:
+            reaction_counts[reaction_type] = reaction_counts.get(reaction_type, 0) + 1
+    
+    await db.posts.update_one(
+        {"id": post_id},
+        {"$set": {
+            "upvotes": upvotes,
+            "downvotes": downvotes,
+            "reaction_counts": reaction_counts
+        }}
+    )
+
+async def update_user_level(user_id: str):
+    """Update user level based on activity and reputation"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return
+    
+    total_activity = user.get("posts_count", 0) + user.get("comments_count", 0)
+    reputation = user.get("reputation_score", 0)
+    
+    new_level = UserLevel.MEMBER
+    if total_activity >= 10 and reputation >= 50:
+        new_level = UserLevel.CONTRIBUTOR
+    if total_activity >= 50 and reputation >= 200:
+        new_level = UserLevel.HACKSTER_PRO
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"level": new_level}}
+    )
+
 # API Routes
 @api_router.get("/")
 async def root():
