@@ -177,8 +177,8 @@ const PrioritySupplements = () => {
             <div key={supplement.name} className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-emerald-600 font-bold text-sm">#{supplement.priority}</span>
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-bold text-sm">#{supplement.priority}</span>
                   </div>
                   <h3 className="text-lg font-bold text-gray-900">{supplement.name}</h3>
                 </div>
@@ -186,7 +186,7 @@ const PrioritySupplements = () => {
               <p className="text-gray-600 mb-4">{supplement.description}</p>
               <div className="flex flex-wrap gap-2">
                 {supplement.brands.map((brand) => (
-                  <span key={brand} className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium">
+                  <span key={brand} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
                     {brand}
                   </span>
                 ))}
