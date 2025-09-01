@@ -4,18 +4,14 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY backend/requirements.txt ./
+# Copy everything from backend directory
+COPY backend/ ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend application files
-COPY backend/server.py ./
-COPY backend/.env ./
-
-# Debug: List files and show current directory
-RUN pwd && ls -la
+# Debug: List all files to see what's actually copied
+RUN echo "=== Current directory ===" && pwd && echo "=== Files in /app ===" && ls -la && echo "=== End debug ==="
 
 # Expose the port
 EXPOSE 8001
