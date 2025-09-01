@@ -10,7 +10,7 @@ import time
 from jose import jwt, JWTError
 import base64
 
-BASE_URL = "https://biohack-buddy.preview.emergentagent.com/api"
+BASE_URL = "https://health-optimize.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 def test_email_validation():
