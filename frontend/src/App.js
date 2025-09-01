@@ -491,9 +491,12 @@ const CommunityPlatform = () => {
               >
                 Join Community
               </Link>
-              <button className="border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all">
+              <Link 
+                to="/coaches"
+                className="border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all text-center"
+              >
                 Find a Coach
-              </button>
+              </Link>
             </div>
           </div>
 
