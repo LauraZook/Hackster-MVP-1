@@ -2014,24 +2014,30 @@ const Home = () => {
               </ul>
             </div>
 
-            {/* Legal */}
+            {/* Resources & Legal */}
             <div>
-              <h3 className="text-white font-semibold mb-4">Legal</h3>
+              <h3 className="text-white font-semibold mb-4">Resources</h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="#privacy" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <Link to="/chat" className="text-gray-400 hover:text-green-400 transition-colors text-sm">
+                    Chat with Conner AI
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/blog" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                    Experiments Blog
+                    <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">Phase 2</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#terms" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">
                     Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#disclaimer" className="text-gray-400 hover:text-white transition-colors text-sm">
-                    Medical Disclaimer
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="mailto:support@hackster.ai" className="text-gray-400 hover:text-white transition-colors text-sm">
