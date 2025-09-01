@@ -1162,11 +1162,17 @@ async def get_user_assessments(user_id: str, current_user: UserProfile = Depends
 # Include the router in the main app
 app.include_router(api_router)
 
-# Health check endpoint for Railway
+# Health check endpoint for Railway (non-API route)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for deployment platforms"""
     return {"status": "healthy", "service": "Hackster.ai API"}
+
+# Health check endpoint for API route
+@api_router.get("/health")
+async def api_health_check():
+    """API Health check endpoint"""
+    return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0"}
 
 app.add_middleware(
     CORSMiddleware,
