@@ -508,12 +508,12 @@ const CommunityPlatform = () => {
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Community Forum</h3>
               <p className="text-gray-600 mb-4">Share your results, get support, and learn from thousands of fellow biohackers.</p>
-              <button 
-                onClick={() => setActiveView('forum')}
+              <Link 
+                to="/community"
                 className="text-purple-600 font-semibold hover:text-purple-700"
               >
                 Join Discussion →
-              </button>
+              </Link>
             </div>
           </div>
         </div>
