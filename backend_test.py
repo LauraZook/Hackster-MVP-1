@@ -216,9 +216,14 @@ class AuthenticationTester:
 
     def test_invalid_login_credentials(self):
         """Test login with invalid credentials"""
+        if not hasattr(self, 'member_email') or not self.member_email:
+            self.log_test("Invalid Login - Wrong Password", False, "No member email available")
+            self.log_test("Invalid Login - Non-existent Email", False, "No member email available")
+            return
+            
         # Test wrong password
         test_data = {
-            "email": "testmember@hackster.ai",
+            "email": self.member_email,
             "password": "WrongPassword123!"
         }
         
