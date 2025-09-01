@@ -324,9 +324,8 @@
 
 ## test_plan:
   current_focus:
-    - "User Authentication System"
-    - "Member/Coach Signup Pages"  
     - "API Integration & Data Flow"
+    - "Frontend Community Integration"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
