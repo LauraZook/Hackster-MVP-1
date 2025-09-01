@@ -6,28 +6,38 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Navigation Component
+const Navigation = () => {
+  const location = useLocation();
+  
+  return (
+    <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
+      <Link to="/" className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-lg">H</span>
+        </div>
+        <span className="text-2xl font-bold text-gray-900">Hackster</span>
+      </Link>
+      <div className="hidden md:flex items-center space-x-8">
+        <a href="#baseline" className="text-gray-700 hover:text-emerald-600 transition-colors">Baseline</a>
+        <a href="#stack" className="text-gray-700 hover:text-emerald-600 transition-colors">Stack</a>
+        <a href="#coaching" className="text-gray-700 hover:text-emerald-600 transition-colors">Coaching</a>
+        <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-emerald-600 font-semibold' : 'text-gray-700 hover:text-emerald-600'}`}>
+          Community
+        </Link>
+        <button className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+          Get Started
+        </button>
+      </div>
+    </nav>
+  );
+};
+
 // Hero Section Component
 const HeroSection = () => {
   return (
     <div className="bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 min-h-screen">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">H</span>
-          </div>
-          <span className="text-2xl font-bold text-gray-900">Hackster</span>
-        </div>
-        <div className="hidden md:flex items-center space-x-8">
-          <a href="#baseline" className="text-gray-700 hover:text-emerald-600 transition-colors">Baseline</a>
-          <a href="#stack" className="text-gray-700 hover:text-emerald-600 transition-colors">Stack</a>
-          <a href="#coaching" className="text-gray-700 hover:text-emerald-600 transition-colors">Coaching</a>
-          <a href="#community" className="text-gray-700 hover:text-emerald-600 transition-colors">Community</a>
-          <button className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
-            Get Started
-          </button>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero Content */}
       <div className="max-w-7xl mx-auto px-6 pt-20 pb-32">
