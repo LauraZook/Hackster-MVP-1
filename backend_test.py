@@ -121,9 +121,12 @@ class AuthenticationTester:
 
     def test_coach_registration(self):
         """Test coach registration endpoint"""
+        import time
+        timestamp = str(int(time.time()))
+        
         test_data = {
-            "email": "testcoach@hackster.ai",
-            "username": "testcoach456",
+            "email": f"testcoach{timestamp}@hackster.ai",
+            "username": f"testcoach{timestamp}",
             "password": "CoachPass456!",
             "role": "coach",
             "age": 35,
