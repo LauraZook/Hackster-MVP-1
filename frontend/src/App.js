@@ -37,8 +37,8 @@ const HeroSection = () => {
             <span className="text-emerald-600 block">Biohacking Excellence</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
-            Establish your baseline, build your personalized Hackster Stack, and optimize 
-            with world-class coaching for a longer, happier life.
+            Establish your baseline, build your personalized Hackster stack, and optimize 
+            with world-class coaching for a healthier + happier you.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button className="bg-emerald-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl">
