@@ -129,7 +129,7 @@ const HeroSection = () => {
       <Navigation />
 
       {/* Hero Content */}
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-32">
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-20">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
             Optimize Your Health with
