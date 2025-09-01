@@ -4,8 +4,8 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy everything from backend directory
-COPY backend/ ./
+# Copy all files from current directory (Railway root = backend)
+COPY . ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
