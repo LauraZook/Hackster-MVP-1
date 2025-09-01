@@ -297,7 +297,7 @@ class AuthenticationTester:
             return
         
         test_data = {
-            "email": "testmember@hackster.ai",
+            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
             "age": 30,
             "goals": ["weight_loss", "muscle_gain"]
         }
