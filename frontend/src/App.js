@@ -286,7 +286,7 @@ const Home = () => {
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">H</span>
             </div>
             <span className="text-2xl font-bold">Hackster</span>
