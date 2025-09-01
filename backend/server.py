@@ -1219,7 +1219,7 @@ async def startup_event():
     """Initialize sample data on startup"""
     try:
         # Only initialize if database is accessible
-        await db.admin.command('ping')
+        await client.admin.command('ping')
         await initialize_sample_data()
         logger.info("Hackster Health Platform API started successfully with database")
     except Exception as e:
