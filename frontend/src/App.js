@@ -551,7 +551,7 @@ const CommunityPlatform = () => {
   }
 
   return (
-    <div className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="py-14 bg-gradient-to-br from-blue-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
