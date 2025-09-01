@@ -17,6 +17,15 @@ from jose import JWTError, jwt
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# JWT Configuration
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'hackster-ai-secret-key-for-jwt-tokens-2024')
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
