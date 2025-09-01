@@ -1335,7 +1335,7 @@ const AuthSelectionPage = () => {
             <div className="space-y-3 mb-8">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-gray-700">Create professional profile</span>
+                <span className="text-gray-700">Create your professional profile</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
