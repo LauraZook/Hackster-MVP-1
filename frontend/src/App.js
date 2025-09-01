@@ -2423,7 +2423,7 @@ const AICoachChat = () => {
                 <span className="text-white font-bold">C</span>
               </div>
               <div>
-                <h3 className="font-semibold">Conner - Your AI Coach</h3>
+                <h3 className="font-semibold">Conner - Your Hackster AI Coach</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                   <span className="text-xs">Training Mode</span>
