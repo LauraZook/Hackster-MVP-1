@@ -1329,7 +1329,7 @@ const AuthSelectionPage = () => {
                 <span className="text-purple-600 text-2xl">🎯</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Become a Coach</h3>
-              <p className="text-gray-600">Share your expertise and help others optimize their health professionally</p>
+              <p className="text-gray-600">Connect with Hackster members to shape better, healthier futures.</p>
             </div>
             
             <div className="space-y-3 mb-8">
@@ -1343,11 +1343,11 @@ const AuthSelectionPage = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-gray-700">30-day free trial</span>
+                <span className="text-gray-700">Free trial during beta</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-gray-700">$99/year after trial</span>
+                <span className="text-gray-700">$79/year after trial (no commissions!)</span>
               </div>
             </div>
 
