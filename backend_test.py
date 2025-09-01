@@ -1357,10 +1357,19 @@ class RailwayDeploymentTester:
         self.test_post_creation_updates_user_stats()
 
     def run_all_tests(self):
-        """Run all authentication and community tests"""
-        print("🚀 Starting Hackster.ai Complete Backend Testing")
+        """Run all Railway deployment, authentication and community tests"""
+        print("🚀 Starting Hackster.ai Railway Deployment Testing")
         print("=" * 60)
         print()
+        
+        # First test Railway deployment and database connectivity
+        self.run_railway_deployment_tests()
+        
+        # Only continue with other tests if basic connectivity works
+        if not self.database_connected:
+            print("⚠️ Database connectivity issues detected. Skipping detailed API tests.")
+            print("Please check MongoDB deployment and connection settings.")
+            return False
         
         # Test registration
         print("📝 REGISTRATION TESTS")
