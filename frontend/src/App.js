@@ -330,6 +330,7 @@ const PrioritySupplements = () => {
 
 // Community Platform Component
 const CommunityPlatform = () => {
+  const { isAuthenticated, user, token } = useAuth();
   const [activeView, setActiveView] = useState('overview');
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ 
@@ -342,58 +343,83 @@ const CommunityPlatform = () => {
   const [loading, setLoading] = useState(false);
   const [showNewPostForm, setShowNewPostForm] = useState(false);
 
-  // Mock data for demo purposes
-  const mockPosts = [
-    {
-      id: 1,
-      username: "BiohackerPro",
-      title: "My 30-Day Cold Exposure Journey",
-      content: "Started with 30-second cold showers and worked up to 3-minute ice baths. The mental clarity and energy boost has been incredible. Here's what I learned...",
-      category: "Recovery",
-      created_at: "2024-12-28",
-      upvotes: 24,
-      downvotes: 2,
-      reaction_counts: { tried_this: 8, helpful: 12, results: 5 },
-      user_level: "contributor"
-    },
-    {
-      id: 2,
-      username: "OptimizeDaily",
-      title: "Vitamin D3 + K2 Protocol Results",
-      content: "After 3 months on this protocol, my energy levels have improved significantly. Blood work shows optimal vitamin D levels for the first time in years.",
-      category: "Supplements",
-      created_at: "2024-12-27",
-      upvotes: 18,
-      downvotes: 1,
-      reaction_counts: { helpful: 15, on_point: 7, results: 9 },
-      user_level: "hackster_pro"
+  // Fetch posts from backend
+  useEffect(() => {
+    if (activeView === 'forum') {
+      fetchPosts();
     }
-  ];
+  }, [activeView]);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/posts`);
+      setPosts(response.data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getUserLevel = (level) => {
     switch(level) {
       case 'hackster_pro': return { icon: '🟡', text: 'Hackster Pro', color: 'text-yellow-600 bg-yellow-100' };
       case 'contributor': return { icon: '🔵', text: 'Contributor', color: 'text-blue-600 bg-blue-100' };
-      default: return null;
+      case 'member': return { icon: '🟢', text: 'Member', color: 'text-green-600 bg-green-100' };
+      default: return { icon: '🟢', text: 'Member', color: 'text-green-600 bg-green-100' };
     }
   };
 
   const createPost = async (e) => {
     e.preventDefault();
-    // Mock post creation
-    const newPostData = {
-      id: Date.now(),
-      username: "You",
-      ...newPost,
-      created_at: new Date().toISOString().split('T')[0],
-      upvotes: 0,
-      downvotes: 0,
-      reaction_counts: {},
-      user_level: "member"
-    };
-    setPosts([newPostData, ...posts]);
-    setNewPost({ title: '', content: '', category: 'general', image_url: '', youtube_url: '' });
-    setShowNewPostForm(false);
+    if (!isAuthenticated) {
+      alert('Please log in to create posts');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/posts`, newPost, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setPosts([response.data, ...posts]);
+      setNewPost({ title: '', content: '', category: 'general', image_url: '', youtube_url: '' });
+      setShowNewPostForm(false);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Error creating post. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReaction = async (postId, reactionType) => {
+    if (!isAuthenticated) {
+      alert('Please log in to react to posts');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/reactions`, {
+        post_id: postId,
+        reaction_type: reactionType
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Refresh posts to get updated reaction counts
+      fetchPosts();
+    } catch (error) {
+      console.error('Error reacting to post:', error);
+    }
   };
 
   if (activeView === 'forum') {
