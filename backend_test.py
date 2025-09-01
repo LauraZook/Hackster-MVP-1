@@ -312,7 +312,7 @@ class AuthenticationTester:
     def test_protected_endpoint_without_auth(self):
         """Test protected endpoint (POST /users) without authentication"""
         test_data = {
-            "email": "testmember@hackster.ai",
+            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
             "age": 30,
             "goals": ["weight_loss"]
         }
