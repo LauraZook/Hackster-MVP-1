@@ -1318,7 +1318,7 @@ const AuthSelectionPage = () => {
               to="/signup/member"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium text-center block transition-colors"
             >
-              Join as Member
+              Join as a Member
             </Link>
           </div>
 
