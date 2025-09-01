@@ -174,6 +174,22 @@ class Reaction(BaseModel):
 class UserInDB(UserProfile):
     hashed_password: str
 
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    category: PostCategory
+    image_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+
+class CommentCreate(BaseModel):
+    post_id: str
+    content: str
+
+class ReactionCreate(BaseModel):
+    post_id: Optional[str] = None
+    comment_id: Optional[str] = None
+    reaction_type: ReactionType
+
 class UserRegister(BaseModel):
     email: EmailStr
     username: str
