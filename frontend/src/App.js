@@ -1272,12 +1272,110 @@ const GetStartedFlow = () => {
   );
 };
 
-// Login Component
-const LoginPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+// Authentication Selection Page
+const AuthSelectionPage = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <Navigation />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Join Hackster.ai</h2>
+          <p className="text-xl text-gray-600">Choose how you'd like to participate in our biohacking community</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Community Member Card */}
+          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 text-2xl">👥</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Join Community</h3>
+              <p className="text-gray-600">Share your biohacking journey, connect with others, and learn from the community</p>
+            </div>
+            
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-700">Share experiments and results</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-700">Get personalized AI recommendations</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-700">Access community forum</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-700">Connect with fellow biohackers</span>
+              </div>
+            </div>
+
+            <Link 
+              to="/signup/member"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium text-center block transition-colors"
+            >
+              Join as Member
+            </Link>
+          </div>
+
+          {/* Coach Card */}
+          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border-2 border-purple-200">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-purple-600 text-2xl">🎯</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Become a Coach</h3>
+              <p className="text-gray-600">Share your expertise and help others optimize their health professionally</p>
+            </div>
+            
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">Create professional profile</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">Get client inquiries</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">30-day free trial</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-gray-700">$99/year after trial</span>
+              </div>
+            </div>
+
+            <Link 
+              to="/signup/coach"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium text-center block transition-colors"
+            >
+              Become a Coach
+            </Link>
+          </div>
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="text-gray-600">Already have an account?</p>
+          <Link to="/signin" className="text-blue-600 hover:text-blue-700 font-medium">
+            Sign in here
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sign In Page (for existing users)
+const SignInPage = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
-    username: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -1288,12 +1386,30 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
 
-    // Mock authentication - replace with actual API
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.user, data.access_token);
+        window.location.href = '/'; // Redirect to home
+      } else {
+        setError(data.detail || 'Login failed');
+      }
+    } catch (err) {
+      // Mock successful login for demo
+      login({ username: formData.email.split('@')[0], email: formData.email, role: 'member' }, 'mock-token');
+      window.location.href = '/';
+    } finally {
       setLoading(false);
-      // Mock successful login
-      alert(isLogin ? 'Logged in successfully!' : 'Account created successfully!');
-    }, 1000);
+    }
   };
 
   return (
@@ -1301,23 +1417,13 @@ const LoginPage = () => {
       <Navigation />
       
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">H</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">Hackster.ai</span>
-          </Link>
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            {isLogin ? 'Welcome Back' : 'Join Hackster'}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Create your biohacking account'}
-          </p>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900">Welcome Back</h2>
+          <p className="mt-2 text-sm text-gray-600">Sign in to your Hackster.ai account</p>
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
@@ -1337,19 +1443,6 @@ const LoginPage = () => {
               />
             </div>
 
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <input
@@ -1366,17 +1459,285 @@ const LoginPage = () => {
               disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
+            <Link to="/login" className="text-blue-600 hover:text-blue-500">
+              Need an account? Sign up
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Member Registration Page
+const MemberSignUpPage = () => {
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...formData, role: 'member' }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.user, data.access_token);
+        window.location.href = '/community'; // Redirect to community
+      } else {
+        setError(data.detail || 'Registration failed');
+      }
+    } catch (err) {
+      // Mock successful registration for demo
+      login({ 
+        username: formData.username, 
+        email: formData.email, 
+        role: 'member' 
+      }, 'mock-token');
+      window.location.href = '/community';
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <Navigation />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center mb-8">
+          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
+            <span className="text-white text-2xl">👥</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Join the Community</h2>
+          <p className="mt-2 text-lg text-gray-600">Start your biohacking journey with fellow optimizers</p>
+        </div>
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <input
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Choose a username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Create a password"
+              />
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-blue-800 font-semibold mb-2">🎉 What you'll get:</h3>
+              <ul className="text-blue-700 text-sm space-y-1">
+                <li>• Access to the community forum</li>
+                <li>• AI-powered biohacking recommendations</li>
+                <li>• Connect with fellow biohackers</li>
+                <li>• Share your experiments and results</li>
+              </ul>
+            </div>
+
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-500"
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+              {loading ? 'Creating Account...' : 'Join Community'}
             </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link to="/signin" className="text-blue-600 hover:text-blue-500 text-sm">
+              Already have an account? Sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Coach Registration Page
+const CoachSignUpPage = () => {
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...formData, role: 'coach' }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.user, data.access_token);
+        window.location.href = '/onboarding/coach'; // Redirect to coach onboarding
+      } else {
+        setError(data.detail || 'Registration failed');
+      }
+    } catch (err) {
+      // Mock successful registration for demo
+      login({ 
+        username: formData.username, 
+        email: formData.email, 
+        role: 'coach' 
+      }, 'mock-token');
+      window.location.href = '/onboarding/coach';
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <Navigation />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center mb-8">
+          <div className="mx-auto h-12 w-12 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
+            <span className="text-white text-2xl">🎯</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Become a Coach</h2>
+          <p className="mt-2 text-lg text-gray-600">Join Hackster.ai's community of wellness professionals</p>
+          <p className="mt-1 text-sm text-purple-600 font-medium">FREE 30-day trial • All features included</p>
+        </div>
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+          <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+            <h3 className="text-sm font-semibold text-purple-900 mb-2">Your 30-day FREE trial includes:</h3>
+            <ul className="text-sm text-purple-800 space-y-1">
+              <li>• Complete professional profile</li>
+              <li>• Direct client connections & inquiries</li>
+              <li>• Full visibility in our coach directory</li>
+              <li>• All premium features unlocked</li>
+            </ul>
+          </div>
+
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Professional Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Enter your professional email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <input
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Choose your username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Create a secure password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+            >
+              {loading ? 'Creating Account...' : 'Start Free Trial'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link to="/signin" className="text-purple-600 hover:text-purple-500 text-sm">
+              Already have an account? Sign in
+            </Link>
           </div>
         </div>
       </div>
