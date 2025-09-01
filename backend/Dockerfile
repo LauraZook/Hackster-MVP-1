@@ -17,7 +17,7 @@ RUN echo "=== Current directory ===" && pwd && echo "=== Files in /app ===" && l
 EXPOSE 8001
 
 # Make start script executable
-RUN chmod +x start.sh
+RUN chmod +x backend/start.sh
 
-# Start the application using the debug script
-CMD ["./start.sh"]
+# Start the application using the debug script  
+CMD ["./backend/start.sh"]
