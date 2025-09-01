@@ -785,12 +785,12 @@ const CommunityLanding = () => {
                 <p className="text-blue-100 mb-6 text-sm">
                   Ready to share your latest biohacking discoveries with the community?
                 </p>
-                <button
-                  onClick={() => setActiveView('forum')}
-                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
+                <Link
+                  to="/community-forum"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full block text-center"
                 >
                   View Community Forum
-                </button>
+                </Link>
               </>
             ) : (
               <>
