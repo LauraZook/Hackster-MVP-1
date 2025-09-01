@@ -2293,6 +2293,235 @@ const CoachOnboardingPage = () => {
   );
 };
 
+// Blog System (Phase 2 - Prepared for future)
+const BlogPage = () => {
+  const [posts, setPosts] = useState([]);
+
+  // Sample blog posts for Phase 2
+  const samplePosts = [
+    {
+      id: 1,
+      title: "The Science Behind Cold Exposure: A 30-Day Experiment",
+      excerpt: "I spent 30 days incorporating cold showers and ice baths into my routine. Here's what the data showed...",
+      author: "Dr. Sarah Martinez",
+      date: "2024-12-15",
+      category: "Experiments",
+      readTime: "8 min read",
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800",
+      content: "Detailed experiment results and methodology..."
+    },
+    {
+      id: 2,
+      title: "Optimizing Sleep with Red Light Therapy: My 60-Day Journey",
+      excerpt: "Testing red light therapy's impact on sleep quality using HRV and sleep tracking data...",
+      author: "Mike Chen",
+      date: "2024-12-10",
+      category: "Sleep Optimization",
+      readTime: "12 min read",
+      image: "https://images.unsplash.com/photo-1520637836862-4d197d17c8a4?w=800",
+      content: "Comprehensive sleep data analysis and protocol..."
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Hackster Experiments</h1>
+          <p className="text-xl text-gray-600">Real biohacking experiments with data-driven results</p>
+        </div>
+
+        <div className="space-y-8">
+          {samplePosts.map(post => (
+            <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <img src={post.image} alt={post.title} className="w-full h-48 object-cover" />
+              <div className="p-6">
+                <div className="flex items-center space-x-4 mb-4">
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {post.category}
+                  </span>
+                  <span className="text-gray-500 text-sm">{post.readTime}</span>
+                  <span className="text-gray-500 text-sm">{post.date}</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">{post.title}</h2>
+                <p className="text-gray-600 mb-4">{post.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-sm">By {post.author}</span>
+                  <button className="text-blue-600 hover:text-blue-700 font-medium">
+                    Read Experiment →
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="text-center mt-12 p-8 bg-blue-50 rounded-xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Coming in Phase 2</h3>
+          <p className="text-gray-600">Full blog system with community experiments, detailed protocols, and data analysis</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// AI Coach Chat (Conner) - Placeholder
+const AICoachChat = () => {
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      sender: 'conner',
+      text: "Hi! I'm Conner, your biohacking buddy. I'm currently in training to become your personal AI coach. Soon I'll be able to help you with personalized recommendations, answer questions about your health journey, and guide you through the F.R.E.E.D.O.M method!",
+      timestamp: new Date().toLocaleTimeString()
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+
+  const sendMessage = () => {
+    if (!inputMessage.trim()) return;
+    
+    const newMessage = {
+      id: messages.length + 1,
+      sender: 'user',
+      text: inputMessage,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    
+    setMessages([...messages, newMessage]);
+    setInputMessage('');
+    
+    // Auto-reply from Conner
+    setTimeout(() => {
+      const connerReply = {
+        id: messages.length + 2,
+        sender: 'conner',
+        text: "Thanks for your message! I'm still learning and will be ready to provide personalized biohacking guidance soon. In the meantime, check out our Get Started flow for immediate recommendations!",
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setMessages(prev => [...prev, connerReply]);
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg h-96 flex flex-col">
+          {/* Chat Header */}
+          <div className="bg-blue-600 text-white p-4 rounded-t-xl">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">C</span>
+              </div>
+              <div>
+                <h3 className="font-semibold">Conner - Your AI Coach</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span className="text-xs">Training Mode</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 p-4 overflow-y-auto">
+            {messages.map(message => (
+              <div key={message.id} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                <div className={`inline-block max-w-xs p-3 rounded-lg ${
+                  message.sender === 'user' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-900'
+                }`}>
+                  <p className="text-sm">{message.text}</p>
+                  <p className="text-xs mt-1 opacity-70">{message.timestamp}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div className="p-4 border-t">
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                placeholder="Message Conner (Training Mode)..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={sendMessage}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center p-6 bg-yellow-50 rounded-xl border border-yellow-200">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">🤖 Conner is Learning!</h3>
+          <p className="text-yellow-700">
+            Our AI coach Conner is currently in training. Soon he'll provide personalized biohacking 
+            recommendations using the F.R.E.E.D.O.M method. For now, try our Get Started flow for 
+            immediate guidance!
+          </p>
+          <Link to="/get-started" className="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            Get Started Instead
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Placeholder Pages
+const PrivacyPolicy = () => (
+  <div className="min-h-screen bg-gray-50">
+    <Navigation />
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
+      <div className="bg-white rounded-xl p-8 shadow-lg">
+        <p className="text-gray-600 mb-4">Last updated: December 2024</p>
+        <div className="space-y-6">
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Information We Collect</h2>
+            <p className="text-gray-700">Hackster.ai is committed to protecting your privacy. This policy outlines how we collect, use, and protect your personal information.</p>
+          </section>
+          <div className="bg-blue-50 p-6 rounded-lg">
+            <p className="text-blue-800">🚧 Full privacy policy coming soon. During beta, we follow industry-standard privacy practices.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const TermsOfService = () => (
+  <div className="min-h-screen bg-gray-50">
+    <Navigation />
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold text-gray-900 mb-8">Terms of Service</h1>
+      <div className="bg-white rounded-xl p-8 shadow-lg">
+        <p className="text-gray-600 mb-4">Last updated: December 2024</p>
+        <div className="space-y-6">
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Acceptance of Terms</h2>
+            <p className="text-gray-700">By using Hackster.ai, you agree to these terms of service and our privacy policy.</p>
+          </section>
+          <div className="bg-blue-50 p-6 rounded-lg">
+            <p className="text-blue-800">🚧 Full terms of service coming soon. During beta, standard platform usage terms apply.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <AuthProvider>
@@ -2308,6 +2537,18 @@ function App() {
             <Route path="/signup/coach" element={<CoachSignUpPage />} />
             <Route path="/onboarding/coach" element={<CoachOnboardingPage />} />
             <Route path="/coaches" element={<CoachesPage />} />
+            
+            {/* AI Coach Chat - Conner */}
+            <Route path="/chat" element={<AICoachChat />} />
+            <Route path="/coach/conner" element={<AICoachChat />} />
+            
+            {/* Blog System (Phase 2) */}
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/experiments" element={<BlogPage />} />
+            
+            {/* Legal Pages */}
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
           </Routes>
         </BrowserRouter>
       </div>
