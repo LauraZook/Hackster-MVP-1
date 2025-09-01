@@ -778,16 +778,33 @@ const CommunityLanding = () => {
           </div>
           
           <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
-            <h3 className="text-xl font-semibold text-white mb-4">Ready to Connect?</h3>
-            <p className="text-blue-100 mb-6 text-sm">
-              Please sign up to share your biohacking experiences and connect with the Hackster.ai community.
-            </p>
-            <button
-              onClick={() => setShowSignUp(true)}
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
-            >
-              Join Community
-            </button>
+            {isAuthenticated ? (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-4">Welcome back, {user.username}!</h3>
+                <p className="text-blue-100 mb-6 text-sm">
+                  Ready to share your latest biohacking discoveries with the community?
+                </p>
+                <button
+                  onClick={() => setActiveView('forum')}
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
+                >
+                  View Community Forum
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-4">Ready to Connect?</h3>
+                <p className="text-blue-100 mb-6 text-sm">
+                  Please sign up to share your biohacking experiences and connect with the Hackster.ai community.
+                </p>
+                <button
+                  onClick={() => setShowSignUp(true)}
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
+                >
+                  Join Community
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
