@@ -27,8 +27,6 @@ const Navigation = () => {
         </div>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
-        <a href="#stack" className="text-gray-700 hover:text-blue-600 transition-colors">Stack</a>
-        <a href="#coaching" className="text-gray-700 hover:text-blue-600 transition-colors">Coaching</a>
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
         </Link>
