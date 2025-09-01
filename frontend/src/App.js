@@ -797,6 +797,662 @@ const SignUpForm = ({ setShowSignUp }) => {
   );
 };
 
+// AI Coach Get Started Flow
+const GetStartedFlow = () => {
+  const [currentStep, setCurrentStep] = useState('welcome');
+  const [userResponses, setUserResponses] = useState({
+    hasBaselineTesting: null,
+    healthGoals: [],
+    currentSupplements: [],
+    testingPreference: null,
+    age: '',
+    gender: '',
+    activityLevel: ''
+  });
+
+  const handleResponse = (key, value) => {
+    setUserResponses(prev => ({ ...prev, [key]: value }));
+  };
+
+  const nextStep = () => {
+    switch(currentStep) {
+      case 'welcome':
+        setCurrentStep('baseline-check');
+        break;
+      case 'baseline-check':
+        if (userResponses.hasBaselineTesting === false) {
+          setCurrentStep('testing-options');
+        } else {
+          setCurrentStep('questionnaire');
+        }
+        break;
+      case 'testing-options':
+        if (userResponses.testingPreference === 'skip') {
+          setCurrentStep('questionnaire');
+        } else {
+          setCurrentStep('testing-recommendations');
+        }
+        break;
+      case 'testing-recommendations':
+        setCurrentStep('questionnaire');
+        break;
+      case 'questionnaire':
+        setCurrentStep('recommendations');
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      <Navigation />
+      
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {currentStep === 'welcome' && (
+          <div className="text-center">
+            <div className="mb-8">
+              <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-white text-3xl">🤖</span>
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Your Hackster AI Coach!</h1>
+              <p className="text-xl text-gray-600 mb-8">
+                I'm here to help you optimize your health journey. Let's start with understanding where you are 
+                and where you want to go.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-lg mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">What I'll help you with:</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl mb-3">🎯</div>
+                  <h3 className="font-semibold mb-2">Establish Baseline</h3>
+                  <p className="text-gray-600 text-sm">Identify the right health tests for your goals</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-3">⚡</div>
+                  <h3 className="font-semibold mb-2">Build Your Stack</h3>
+                  <p className="text-gray-600 text-sm">Get personalized supplement recommendations</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-3">🚀</div>
+                  <h3 className="font-semibold mb-2">Optimize Results</h3>
+                  <p className="text-gray-600 text-sm">Connect with expert coaches when ready</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={nextStep}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+            >
+              Let's Start! →
+            </button>
+          </div>
+        )}
+
+        {currentStep === 'baseline-check' && (
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">First, let's talk about your health baseline</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Understanding your current health markers is crucial for effective biohacking. 
+              Have you done any comprehensive health testing in the past 12 months?
+            </p>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  handleResponse('hasBaselineTesting', true);
+                  nextStep();
+                }}
+                className="w-full p-6 text-left bg-green-50 border-2 border-green-200 rounded-xl hover:bg-green-100 transition-colors"
+              >
+                <div className="text-xl font-semibold text-green-800 mb-2">✅ Yes, I have recent test results</div>
+                <p className="text-green-700">I've done blood work, hormone panels, or other health testing recently</p>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleResponse('hasBaselineTesting', false);
+                  nextStep();
+                }}
+                className="w-full p-6 text-left bg-blue-50 border-2 border-blue-200 rounded-xl hover:bg-blue-100 transition-colors"
+              >
+                <div className="text-xl font-semibold text-blue-800 mb-2">📋 No, I need to get tested</div>
+                <p className="text-blue-700">I haven't done comprehensive health testing recently</p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'testing-options' && (
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Let's get your health baseline established</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Getting proper health testing is the foundation of effective biohacking. Would you like to see 
+              our recommended testing options, or would you prefer to skip to building your supplement stack?
+            </p>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  handleResponse('testingPreference', 'show-options');
+                  nextStep();
+                }}
+                className="w-full p-6 text-left bg-emerald-50 border-2 border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors"
+              >
+                <div className="text-xl font-semibold text-emerald-800 mb-2">🎯 Show me testing recommendations</div>
+                <p className="text-emerald-700">I want to see the best health testing options for my goals</p>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleResponse('testingPreference', 'skip');
+                  nextStep();
+                }}
+                className="w-full p-6 text-left bg-purple-50 border-2 border-purple-200 rounded-xl hover:bg-purple-100 transition-colors"
+              >
+                <div className="text-xl font-semibold text-purple-800 mb-2">⚡ Skip to supplement recommendations</div>
+                <p className="text-purple-700">I'll handle testing later, show me supplements now</p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'testing-recommendations' && (
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Recommended Health Testing</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Based on your goals, here are our top recommendations for comprehensive health testing:
+            </p>
+
+            <div className="space-y-6 mb-8">
+              <div className="border-2 border-blue-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">Function Health - Complete Panel</h3>
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                </div>
+                <p className="text-gray-600 mb-4">110+ biomarkers including vitamins, minerals, hormones, and metabolic markers</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-blue-600">$499-699</span>
+                  <a href="https://functionhealth.com" target="_blank" rel="noopener noreferrer" 
+                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
+                    Get Testing →
+                  </a>
+                </div>
+              </div>
+
+              <div className="border-2 border-purple-200 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Thorne - Personalized Testing</h3>
+                <p className="text-gray-600 mb-4">Genetic testing + biomarker analysis for personalized supplement recommendations</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-purple-600">$149-299</span>
+                  <a href="https://thorne.com" target="_blank" rel="noopener noreferrer" 
+                     className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium">
+                    Get Testing →
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={nextStep}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+              >
+                Continue to Questionnaire →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'questionnaire' && (
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Smart Health Questionnaire</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Let's gather some information to create your personalized Hackster Stack:
+            </p>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-lg font-semibold text-gray-700 mb-4">What are your primary health goals? (Select all that apply)</label>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {['Increase Energy', 'Better Sleep', 'Improve Focus', 'Build Muscle', 'Lose Weight', 'Reduce Stress', 'Boost Immunity', 'Optimize Hormones'].map(goal => (
+                    <button
+                      key={goal}
+                      onClick={() => {
+                        const current = userResponses.healthGoals || [];
+                        const updated = current.includes(goal) 
+                          ? current.filter(g => g !== goal)
+                          : [...current, goal];
+                        handleResponse('healthGoals', updated);
+                      }}
+                      className={`p-3 text-left rounded-lg border-2 transition-colors ${
+                        (userResponses.healthGoals || []).includes(goal)
+                          ? 'bg-blue-100 border-blue-500 text-blue-800'
+                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {goal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-lg font-semibold text-gray-700 mb-3">Age Range</label>
+                  <select
+                    value={userResponses.age}
+                    onChange={(e) => handleResponse('age', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select age</option>
+                    <option value="18-25">18-25</option>
+                    <option value="26-35">26-35</option>
+                    <option value="36-45">36-45</option>
+                    <option value="46-55">46-55</option>
+                    <option value="56-65">56-65</option>
+                    <option value="65+">65+</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-lg font-semibold text-gray-700 mb-3">Gender</label>
+                  <select
+                    value={userResponses.gender}
+                    onChange={(e) => handleResponse('gender', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-lg font-semibold text-gray-700 mb-3">Activity Level</label>
+                  <select
+                    value={userResponses.activityLevel}
+                    onChange={(e) => handleResponse('activityLevel', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select level</option>
+                    <option value="sedentary">Sedentary</option>
+                    <option value="light">Light Activity</option>
+                    <option value="moderate">Moderate Activity</option>
+                    <option value="active">Very Active</option>
+                    <option value="athlete">Athlete</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="text-center pt-6">
+                <button
+                  onClick={nextStep}
+                  disabled={!userResponses.healthGoals?.length || !userResponses.age || !userResponses.gender || !userResponses.activityLevel}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors"
+                >
+                  Get My Personalized Stack →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'recommendations' && (
+          <div className="bg-white rounded-xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Your Personalized Hackster Stack</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Based on your responses, here's your AI-powered supplement and biohacking recommendations:
+            </p>
+
+            <div className="space-y-6 mb-8">
+              {/* Priority Supplements based on responses */}
+              <div className="border-l-4 border-blue-500 pl-6">
+                <h3 className="text-xl font-bold text-blue-800 mb-3">🥇 Priority #1: Vitamin D3 + K2</h3>
+                <p className="text-gray-600 mb-2">Essential for immune function, bone health, and mood regulation</p>
+                <p className="text-sm text-blue-600 font-medium">Recommended: Thorne Vitamin D/K2 Liquid</p>
+              </div>
+
+              {userResponses.healthGoals?.includes('Increase Energy') && (
+                <div className="border-l-4 border-green-500 pl-6">
+                  <h3 className="text-xl font-bold text-green-800 mb-3">⚡ For Energy: Magnesium + B-Complex</h3>
+                  <p className="text-gray-600 mb-2">Supports cellular energy production and reduces fatigue</p>
+                  <p className="text-sm text-green-600 font-medium">Recommended: Thorne Magnesium Bisglycinate + Basic B Complex</p>
+                </div>
+              )}
+
+              {userResponses.healthGoals?.includes('Better Sleep') && (
+                <div className="border-l-4 border-purple-500 pl-6">
+                  <h3 className="text-xl font-bold text-purple-800 mb-3">😴 For Sleep: Magnesium + L-Theanine</h3>
+                  <p className="text-gray-600 mb-2">Promotes relaxation and improves sleep quality</p>
+                  <p className="text-sm text-purple-600 font-medium">Recommended: Thorne Magnesium Bisglycinate + L-Theanine</p>
+                </div>
+              )}
+
+              {userResponses.activityLevel === 'athlete' && (
+                <div className="border-l-4 border-orange-500 pl-6">
+                  <h3 className="text-xl font-bold text-orange-800 mb-3">🏃‍♂️ For Athletes: Essential Amino Acids</h3>
+                  <p className="text-gray-600 mb-2">Supports muscle recovery and protein synthesis</p>
+                  <p className="text-sm text-orange-600 font-medium">Recommended: Thorne Amino Complex</p>
+                </div>
+              )}
+
+              <div className="border-l-4 border-gray-500 pl-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">🆓 Free Biohacks</h3>
+                <ul className="space-y-2 text-gray-600">
+                  <li>• Morning sunlight exposure (10-30 minutes)</li>
+                  <li>• Cold shower finish (30-90 seconds)</li>
+                  <li>• Box breathing before bed (4-4-4-4 pattern)</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link 
+                to="/community" 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-semibold text-center transition-colors"
+              >
+                Join Community to Share Results
+              </Link>
+              <Link 
+                to="/coaches" 
+                className="flex-1 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white px-6 py-4 rounded-xl font-semibold text-center transition-colors"
+              >
+                Find a Coach for Advanced Guidance
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Login Component
+const LoginPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    // Mock authentication - replace with actual API
+    setTimeout(() => {
+      setLoading(false);
+      // Mock successful login
+      alert(isLogin ? 'Logged in successfully!' : 'Account created successfully!');
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <Navigation />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">H</span>
+            </div>
+            <span className="text-2xl font-bold text-gray-900">Hackster</span>
+          </Link>
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            {isLogin ? 'Welcome Back' : 'Join Hackster'}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            {isLogin ? 'Sign in to your account' : 'Create your biohacking account'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Username</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-blue-600 hover:text-blue-500"
+            >
+              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Coaches Page (adapted from LauraZook/Hackster)
+const CoachesPage = () => {
+  const [coaches, setCoaches] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Mock coaches data
+  const mockCoaches = [
+    {
+      id: 1,
+      full_name: "Dr. Sarah Martinez",
+      email: "sarah@hackstercoach.com",
+      phone: "(555) 123-4567",
+      location: "Los Angeles, CA",
+      specialties: ["Hormone Optimization", "Gut Health", "Weight Management"],
+      bio: "15+ years helping clients optimize health through personalized nutrition and lifestyle interventions. Certified Functional Medicine Practitioner specializing in hormone balance and metabolic health.",
+      pricing: "$150-200/session",
+      website: "https://sarahmartinez.com",
+      profile_image: null,
+      years_experience: 15
+    },
+    {
+      id: 2,
+      full_name: "Mike Chen",
+      email: "mike@hackstercoach.com", 
+      phone: "(555) 987-6543",
+      location: "Austin, TX",
+      specialties: ["Athletic Performance", "Cold Therapy", "Breathwork"],
+      bio: "Former professional athlete turned biohacking coach specializing in performance optimization. Certified in Wim Hof Method and advanced breathwork techniques.",
+      pricing: "$100-150/session",
+      website: "https://mikechen.fitness",
+      profile_image: null,
+      years_experience: 8
+    }
+  ];
+
+  useEffect(() => {
+    setCoaches(mockCoaches);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Find a Wellness Coach</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Connect with certified health & wellness professionals with biohacking expertise to accelerate your health journey today!
+          </p>
+        </div>
+
+        {/* Become a Coach Section */}
+        <div className="bg-gradient-to-r from-blue-800 to-purple-600 rounded-lg p-8 mb-12 text-center text-white">
+          <h2 className="text-xl font-semibold mb-4 leading-relaxed">
+            Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster community!
+          </h2>
+          <p className="mb-6">Share your expertise and help others optimize their health. Join our community with no upfront cost.</p>
+          <Link to="/community" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            Join Now
+          </Link>
+        </div>
+
+        {/* Coaches Grid */}
+        {coaches.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {coaches.map((coach) => (
+              <div key={coach.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div className="text-center mb-4">
+                  {coach.profile_image ? (
+                    <img
+                      src={coach.profile_image}
+                      alt={coach.full_name}
+                      className="w-20 h-20 object-cover rounded-full mx-auto mb-3 border-4 border-blue-100"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                      <span className="text-white text-2xl font-bold">
+                        {coach.full_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    {coach.full_name}
+                  </h3>
+                  {coach.location && (
+                    <p className="text-sm text-gray-500 mb-2">📍 {coach.location}</p>
+                  )}
+                  
+                  <div className="flex flex-wrap justify-center gap-1 mb-3">
+                    {coach.specialties.map((specialty) => (
+                      <span
+                        key={specialty}
+                        className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs"
+                      >
+                        {specialty}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2">About</h4>
+                    <p className="text-gray-600 text-sm leading-relaxed">{coach.bio}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-700">Services</h4>
+                    <p className="text-blue-600 font-semibold text-sm">{coach.pricing}</p>
+                  </div>
+
+                  {coach.website && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Website</h4>
+                      <a 
+                        href={coach.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                      >
+                        🌐 {coach.website}
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-3">
+                    <h4 className="font-semibold text-sm text-gray-700 mb-2">Contact</h4>
+                    <div className="space-y-1">
+                      <a 
+                        href={`mailto:${coach.email}`}
+                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                      >
+                        📧 {coach.email}
+                      </a>
+                      {coach.phone && (
+                        <a 
+                          href={`tel:${coach.phone}`}
+                          className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                        >
+                          📞 {coach.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                    📞 Contact Coach
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No coaches yet</h3>
+            <p className="text-gray-600 mb-6">Be among the first wellness coaches to join our community!</p>
+            <Link to="/community" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+              Become the First Coach
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Alias for backward compatibility
 const CommunityCoaching = CommunityPlatform;
 
