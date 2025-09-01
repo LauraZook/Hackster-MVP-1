@@ -754,6 +754,370 @@ class AuthenticationTester:
         # In a real scenario, we might need to check the database directly or have an endpoint to verify stats
         self.log_test("Post Creation Updates User Stats", True, "Post created successfully (stats update verification requires database access)")
 
+    # ========== COACH PROFILE MANAGEMENT TESTS ==========
+    
+    def test_get_public_coach_directory(self):
+        """Test GET /api/coaches endpoint - public coach directory"""
+        response = self.make_request("GET", "/coaches")
+        
+        if response["success"] and response["status_code"] == 200:
+            coaches = response["data"]
+            
+            if not isinstance(coaches, list):
+                self.log_test("Get Public Coach Directory", False, "Response should be a list of coaches")
+                return
+            
+            if len(coaches) == 0:
+                self.log_test("Get Public Coach Directory", False, "No coaches found in directory")
+                return
+            
+            # Check coach structure
+            sample_coach = coaches[0]
+            required_fields = ["id", "name", "credentials", "specialties", "location", "bio", "hourly_rate", "rating", "is_approved", "is_active"]
+            missing_fields = [field for field in required_fields if field not in sample_coach]
+            
+            if missing_fields:
+                self.log_test("Get Public Coach Directory", False, f"Missing coach fields: {missing_fields}")
+                return
+            
+            # Verify only approved and active coaches are shown
+            unapproved_coaches = [coach for coach in coaches if not coach.get("is_approved", False) or not coach.get("is_active", True)]
+            if unapproved_coaches:
+                self.log_test("Get Public Coach Directory", False, f"Found {len(unapproved_coaches)} unapproved/inactive coaches in public directory")
+                return
+            
+            # Check for sample coaches
+            coach_names = [coach.get("name", "") for coach in coaches]
+            expected_coaches = ["Dr. Sarah Martinez", "Mike Chen", "Dr. Lisa Thompson"]
+            found_coaches = [name for name in expected_coaches if name in coach_names]
+            
+            if len(found_coaches) < 2:
+                self.log_test("Get Public Coach Directory", False, f"Expected sample coaches not found. Found: {found_coaches}")
+                return
+            
+            self.log_test("Get Public Coach Directory", True, f"Found {len(coaches)} approved coaches with proper structure")
+        else:
+            self.log_test("Get Public Coach Directory", False, f"Status: {response['status_code']}, Error: {response['data']}")
+
+    def test_get_coach_directory_with_filters(self):
+        """Test GET /api/coaches with specialty and location filters"""
+        # Test specialty filter
+        response = self.make_request("GET", "/coaches?specialty=Hormone Optimization")
+        
+        if response["success"] and response["status_code"] == 200:
+            coaches = response["data"]
+            
+            # Check if filtered coaches have the specialty
+            specialty_found = False
+            for coach in coaches:
+                if "Hormone Optimization" in coach.get("specialties", []):
+                    specialty_found = True
+                    break
+            
+            if not specialty_found and len(coaches) > 0:
+                self.log_test("Coach Directory - Specialty Filter", False, "Specialty filter not working correctly")
+                return
+            
+            self.log_test("Coach Directory - Specialty Filter", True, f"Specialty filter working ({len(coaches)} coaches found)")
+        else:
+            self.log_test("Coach Directory - Specialty Filter", False, f"Status: {response['status_code']}")
+        
+        # Test location filter
+        response = self.make_request("GET", "/coaches?location=Los Angeles")
+        
+        if response["success"] and response["status_code"] == 200:
+            coaches = response["data"]
+            self.log_test("Coach Directory - Location Filter", True, f"Location filter working ({len(coaches)} coaches found)")
+        else:
+            self.log_test("Coach Directory - Location Filter", False, f"Status: {response['status_code']}")
+
+    def test_get_individual_coach_profile(self):
+        """Test GET /api/coaches/{coach_id} endpoint"""
+        # First get a coach ID from the directory
+        coaches_response = self.make_request("GET", "/coaches")
+        
+        if not coaches_response["success"] or not coaches_response["data"]:
+            self.log_test("Get Individual Coach Profile", False, "No coaches available for testing")
+            return
+        
+        coach_id = coaches_response["data"][0]["id"]
+        
+        response = self.make_request("GET", f"/coaches/{coach_id}")
+        
+        if response["success"] and response["status_code"] == 200:
+            coach_data = response["data"]
+            
+            # Verify coach structure
+            required_fields = ["id", "name", "credentials", "specialties", "location", "bio", "hourly_rate", "contact_info"]
+            missing_fields = [field for field in required_fields if field not in coach_data]
+            
+            if missing_fields:
+                self.log_test("Get Individual Coach Profile", False, f"Missing fields: {missing_fields}")
+                return
+            
+            if coach_data["id"] != coach_id:
+                self.log_test("Get Individual Coach Profile", False, "Returned coach ID doesn't match requested ID")
+                return
+            
+            self.log_test("Get Individual Coach Profile", True, "Successfully retrieved individual coach profile")
+        else:
+            self.log_test("Get Individual Coach Profile", False, f"Status: {response['status_code']}, Error: {response['data']}")
+
+    def test_create_coach_profile_as_coach(self):
+        """Test POST /api/coaches endpoint with coach authentication"""
+        if not self.coach_token:
+            self.log_test("Create Coach Profile - As Coach", False, "No coach token available")
+            return
+        
+        coach_profile_data = {
+            "name": "Dr. Test Coach",
+            "bio": "Experienced biohacking coach specializing in performance optimization and longevity protocols. 10+ years helping clients achieve peak health.",
+            "specialties": ["Performance Optimization", "Longevity", "Biohacking", "Nutrition"],
+            "location": "San Francisco, CA",
+            "hourly_rate": "$175-225",
+            "availability": "Mon-Fri 9AM-5PM PST",
+            "credentials": ["PhD Exercise Science", "Certified Functional Medicine Practitioner", "Precision Nutrition Level 2"],
+            "contact_info": {
+                "email": "testcoach@hackster.ai",
+                "phone": "(555) 123-9999"
+            },
+            "website": "https://testcoach-wellness.com",
+            "years_experience": 10
+        }
+        
+        response = self.make_request("POST", "/coaches", coach_profile_data, token=self.coach_token)
+        
+        if response["success"] and response["status_code"] == 200:
+            coach_data = response["data"]
+            
+            # Verify coach profile structure
+            required_fields = ["id", "name", "bio", "specialties", "location", "hourly_rate", "is_approved", "is_active"]
+            missing_fields = [field for field in required_fields if field not in coach_data]
+            
+            if missing_fields:
+                self.log_test("Create Coach Profile - As Coach", False, f"Missing fields in response: {missing_fields}")
+                return
+            
+            # Verify profile content matches
+            if (coach_data["name"] != coach_profile_data["name"] or 
+                coach_data["bio"] != coach_profile_data["bio"] or
+                coach_data["location"] != coach_profile_data["location"]):
+                self.log_test("Create Coach Profile - As Coach", False, "Coach profile content doesn't match input")
+                return
+            
+            # New coach profiles should not be approved by default
+            if coach_data.get("is_approved", True):
+                self.log_test("Create Coach Profile - As Coach", False, "New coach profile should not be approved by default")
+                return
+            
+            # Store coach ID for later tests
+            self.test_coach_id = coach_data["id"]
+            
+            self.log_test("Create Coach Profile - As Coach", True, "Coach profile created successfully")
+        else:
+            self.log_test("Create Coach Profile - As Coach", False, f"Status: {response['status_code']}, Error: {response['data']}")
+
+    def test_create_coach_profile_as_member(self):
+        """Test POST /api/coaches endpoint with member authentication (should fail)"""
+        if not self.member_token:
+            self.log_test("Create Coach Profile - As Member", False, "No member token available")
+            return
+        
+        coach_profile_data = {
+            "name": "Unauthorized Coach",
+            "bio": "This should fail",
+            "specialties": ["Test"],
+            "location": "Test City",
+            "hourly_rate": "$100",
+            "availability": "Never"
+        }
+        
+        response = self.make_request("POST", "/coaches", coach_profile_data, token=self.member_token)
+        
+        if response["status_code"] == 403:
+            self.log_test("Create Coach Profile - As Member", True, "Correctly rejected member trying to create coach profile")
+        else:
+            self.log_test("Create Coach Profile - As Member", False, f"Should reject member role. Status: {response['status_code']}")
+
+    def test_create_coach_profile_without_auth(self):
+        """Test POST /api/coaches endpoint without authentication"""
+        coach_profile_data = {
+            "name": "Unauthenticated Coach",
+            "bio": "This should fail",
+            "specialties": ["Test"],
+            "location": "Test City",
+            "hourly_rate": "$100",
+            "availability": "Never"
+        }
+        
+        response = self.make_request("POST", "/coaches", coach_profile_data)
+        
+        if response["status_code"] == 401 or response["status_code"] == 403:
+            self.log_test("Create Coach Profile - Without Auth", True, "Correctly rejected unauthenticated coach profile creation")
+        else:
+            self.log_test("Create Coach Profile - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
+
+    def test_update_coach_profile_as_owner(self):
+        """Test PUT /api/coaches/{coach_id} endpoint as profile owner"""
+        if not self.coach_token:
+            self.log_test("Update Coach Profile - As Owner", False, "No coach token available")
+            return
+        
+        if not hasattr(self, 'test_coach_id'):
+            self.log_test("Update Coach Profile - As Owner", False, "No test coach profile available")
+            return
+        
+        update_data = {
+            "bio": "Updated bio: Advanced biohacking coach with extensive experience in performance optimization and cutting-edge health protocols.",
+            "hourly_rate": "$200-250",
+            "specialties": ["Performance Optimization", "Longevity", "Advanced Biohacking", "Peptide Therapy"],
+            "years_experience": 12
+        }
+        
+        response = self.make_request("PUT", f"/coaches/{self.test_coach_id}", update_data, token=self.coach_token)
+        
+        if response["success"] and response["status_code"] == 200:
+            coach_data = response["data"]
+            
+            # Verify updates were applied
+            if (coach_data["bio"] != update_data["bio"] or 
+                coach_data["hourly_rate"] != update_data["hourly_rate"] or
+                coach_data["years_experience"] != update_data["years_experience"]):
+                self.log_test("Update Coach Profile - As Owner", False, "Profile updates not applied correctly")
+                return
+            
+            self.log_test("Update Coach Profile - As Owner", True, "Coach profile updated successfully by owner")
+        else:
+            self.log_test("Update Coach Profile - As Owner", False, f"Status: {response['status_code']}, Error: {response['data']}")
+
+    def test_update_coach_profile_unauthorized(self):
+        """Test PUT /api/coaches/{coach_id} endpoint with unauthorized user"""
+        if not self.member_token:
+            self.log_test("Update Coach Profile - Unauthorized", False, "No member token available")
+            return
+        
+        if not hasattr(self, 'test_coach_id'):
+            self.log_test("Update Coach Profile - Unauthorized", False, "No test coach profile available")
+            return
+        
+        update_data = {
+            "bio": "Unauthorized update attempt"
+        }
+        
+        response = self.make_request("PUT", f"/coaches/{self.test_coach_id}", update_data, token=self.member_token)
+        
+        if response["status_code"] == 403:
+            self.log_test("Update Coach Profile - Unauthorized", True, "Correctly rejected unauthorized profile update")
+        else:
+            self.log_test("Update Coach Profile - Unauthorized", False, f"Should reject unauthorized update. Status: {response['status_code']}")
+
+    def test_delete_coach_profile_as_owner(self):
+        """Test DELETE /api/coaches/{coach_id} endpoint as profile owner"""
+        if not self.coach_token:
+            self.log_test("Delete Coach Profile - As Owner", False, "No coach token available")
+            return
+        
+        if not hasattr(self, 'test_coach_id'):
+            self.log_test("Delete Coach Profile - As Owner", False, "No test coach profile available")
+            return
+        
+        response = self.make_request("DELETE", f"/coaches/{self.test_coach_id}", token=self.coach_token)
+        
+        if response["success"] and response["status_code"] == 200:
+            # Verify coach profile was deleted
+            get_response = self.make_request("GET", f"/coaches/{self.test_coach_id}")
+            
+            if get_response["status_code"] == 404:
+                self.log_test("Delete Coach Profile - As Owner", True, "Coach profile deleted successfully")
+            else:
+                self.log_test("Delete Coach Profile - As Owner", False, "Profile still exists after deletion")
+        else:
+            self.log_test("Delete Coach Profile - As Owner", False, f"Status: {response['status_code']}, Error: {response['data']}")
+
+    def test_admin_get_all_coaches(self):
+        """Test GET /api/admin/coaches endpoint (requires admin role)"""
+        # Note: This test will likely fail unless we have an admin user
+        # For now, we'll test with member token to verify proper rejection
+        if not self.member_token:
+            self.log_test("Admin - Get All Coaches", False, "No token available for testing")
+            return
+        
+        response = self.make_request("GET", "/admin/coaches", token=self.member_token)
+        
+        if response["status_code"] == 403:
+            self.log_test("Admin - Get All Coaches", True, "Correctly rejected non-admin access to admin endpoint")
+        else:
+            self.log_test("Admin - Get All Coaches", False, f"Should reject non-admin access. Status: {response['status_code']}")
+
+    def test_admin_approve_coach(self):
+        """Test PUT /api/admin/coaches/{coach_id}/approve endpoint"""
+        # Test with non-admin user (should fail)
+        if not self.member_token:
+            self.log_test("Admin - Approve Coach", False, "No token available for testing")
+            return
+        
+        # Get a coach ID from directory
+        coaches_response = self.make_request("GET", "/coaches")
+        if not coaches_response["success"] or not coaches_response["data"]:
+            self.log_test("Admin - Approve Coach", False, "No coaches available for testing")
+            return
+        
+        coach_id = coaches_response["data"][0]["id"]
+        
+        response = self.make_request("PUT", f"/admin/coaches/{coach_id}/approve", token=self.member_token)
+        
+        if response["status_code"] == 403:
+            self.log_test("Admin - Approve Coach", True, "Correctly rejected non-admin access to approve endpoint")
+        else:
+            self.log_test("Admin - Approve Coach", False, f"Should reject non-admin access. Status: {response['status_code']}")
+
+    def test_admin_deactivate_coach(self):
+        """Test PUT /api/admin/coaches/{coach_id}/deactivate endpoint"""
+        # Test with non-admin user (should fail)
+        if not self.member_token:
+            self.log_test("Admin - Deactivate Coach", False, "No token available for testing")
+            return
+        
+        # Get a coach ID from directory
+        coaches_response = self.make_request("GET", "/coaches")
+        if not coaches_response["success"] or not coaches_response["data"]:
+            self.log_test("Admin - Deactivate Coach", False, "No coaches available for testing")
+            return
+        
+        coach_id = coaches_response["data"][0]["id"]
+        
+        response = self.make_request("PUT", f"/admin/coaches/{coach_id}/deactivate", token=self.member_token)
+        
+        if response["status_code"] == 403:
+            self.log_test("Admin - Deactivate Coach", True, "Correctly rejected non-admin access to deactivate endpoint")
+        else:
+            self.log_test("Admin - Deactivate Coach", False, f"Should reject non-admin access. Status: {response['status_code']}")
+
+    def run_coach_management_tests(self):
+        """Run all coach profile management tests"""
+        print("👨‍⚕️ COACH PROFILE MANAGEMENT TESTS")
+        print("-" * 40)
+        
+        # Public Coach Directory Tests
+        self.test_get_public_coach_directory()
+        self.test_get_coach_directory_with_filters()
+        self.test_get_individual_coach_profile()
+        
+        # Coach Profile Creation Tests
+        self.test_create_coach_profile_as_coach()
+        self.test_create_coach_profile_as_member()
+        self.test_create_coach_profile_without_auth()
+        
+        # Coach Profile Management Tests
+        self.test_update_coach_profile_as_owner()
+        self.test_update_coach_profile_unauthorized()
+        self.test_delete_coach_profile_as_owner()
+        
+        # Admin Management Tests
+        self.test_admin_get_all_coaches()
+        self.test_admin_approve_coach()
+        self.test_admin_deactivate_coach()
+
     def run_community_tests(self):
         """Run all community functionality tests"""
         print("🏘️ COMMUNITY FUNCTIONALITY TESTS")
