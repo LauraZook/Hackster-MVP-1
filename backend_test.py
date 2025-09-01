@@ -264,7 +264,7 @@ class AuthenticationTester:
                 self.log_test("Auth Me - Valid Token", False, f"Missing user fields: {missing_fields}")
                 return
             
-            if user_data["email"] != "testmember@hackster.ai":
+            if user_data["email"] != self.member_email:
                 self.log_test("Auth Me - Valid Token", False, "Wrong user data returned")
                 return
             
