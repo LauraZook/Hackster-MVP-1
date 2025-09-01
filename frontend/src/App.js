@@ -1355,7 +1355,7 @@ const AuthSelectionPage = () => {
               to="/signup/coach"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium text-center block transition-colors"
             >
-              Become a Coach
+              Add Coach Profile
             </Link>
           </div>
         </div>
