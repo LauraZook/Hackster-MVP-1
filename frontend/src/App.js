@@ -19,14 +19,19 @@ const Navigation = () => {
         <span className="text-2xl font-bold text-gray-900">Hackster</span>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
-        <a href="#baseline" className="text-gray-700 hover:text-blue-600 transition-colors">Baseline</a>
         <a href="#stack" className="text-gray-700 hover:text-blue-600 transition-colors">Stack</a>
         <a href="#coaching" className="text-gray-700 hover:text-blue-600 transition-colors">Coaching</a>
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
         </Link>
-        <Link to="/community" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        <Link to="/coaches" className={`transition-colors ${location.pathname === '/coaches' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
+          Find a Coach
+        </Link>
+        <Link to="/get-started" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
           Get Started
+        </Link>
+        <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
+          Login
         </Link>
       </div>
     </nav>
