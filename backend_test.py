@@ -1191,6 +1191,9 @@ class AuthenticationTester:
         # Run community tests
         self.run_community_tests()
         
+        # Run coach management tests
+        self.run_coach_management_tests()
+        
         # Summary
         print("📊 TEST SUMMARY")
         print("=" * 60)
