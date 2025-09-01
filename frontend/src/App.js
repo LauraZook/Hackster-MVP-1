@@ -508,68 +508,106 @@ const CommunityPlatform = () => {
 
           {/* Posts */}
           <div className="space-y-6">
-            {mockPosts.map((post) => (
-              <div key={post.id} className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold">{post.username.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900">{post.username}</h3>
-                        {(() => {
-                          const levelInfo = getUserLevel(post.user_level);
-                          return levelInfo ? (
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelInfo.color} flex items-center space-x-1`}>
-                              <span>{levelInfo.icon}</span>
-                              <span>{levelInfo.text}</span>
-                            </span>
-                          ) : null;
-                        })()}
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading posts...</p>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg">
+                <div className="text-6xl mb-4">💬</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
+                <p className="text-gray-600 mb-6">Be the first to share your biohacking experience!</p>
+                <button
+                  onClick={() => setShowNewPostForm(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
+                >
+                  Create First Post
+                </button>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-lg shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold">{post.username.charAt(0).toUpperCase()}</span>
                       </div>
-                      <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-semibold text-gray-900">{post.username}</h3>
+                          {(() => {
+                            const levelInfo = getUserLevel(post.user_level || 'member');
+                            return (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelInfo.color} flex items-center space-x-1`}>
+                                <span>{levelInfo.icon}</span>
+                                <span>{levelInfo.text}</span>
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      post.category === 'supplements' ? 'bg-purple-100 text-purple-700' :
+                      post.category === 'recovery' ? 'bg-blue-100 text-blue-700' :
+                      post.category === 'sleep' ? 'bg-indigo-100 text-indigo-700' :
+                      post.category === 'nutrition' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
+                    </span>
                   </div>
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{post.category}</span>
-                </div>
 
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">{post.title}</h2>
-                <p className="text-gray-700 mb-4">{post.content}</p>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">{post.title}</h2>
+                  <div className="text-gray-700 mb-6 whitespace-pre-wrap">{post.content}</div>
 
-                {/* Engagement Section */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1">
-                        <button className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50">⬆️</button>
-                        <span className="font-semibold text-gray-700">{post.upvotes - post.downvotes}</span>
-                        <button className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50">⬇️</button>
-                      </div>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50">
-                        <span>💬</span>
-                        <span>Comment</span>
+                  {/* Reactions */}
+                  <div className="flex items-center justify-between border-t pt-4">
+                    <div className="flex items-center space-x-6">
+                      <button
+                        onClick={() => handleReaction(post.id, 'upvote')}
+                        className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors"
+                      >
+                        <span className="text-lg">👍</span>
+                        <span className="font-medium">{post.upvotes}</span>
                       </button>
+                      <button
+                        onClick={() => handleReaction(post.id, 'downvote')}
+                        className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+                      >
+                        <span className="text-lg">👎</span>
+                        <span className="font-medium">{post.downvotes}</span>
+                      </button>
+                      <div className="text-gray-600">
+                        <span className="text-lg">💬</span>
+                        <span className="font-medium ml-2">{post.comments_count || 0}</span>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      {[
-                        { type: 'tried_this', emoji: '🔥', count: post.reaction_counts.tried_this || 0 },
-                        { type: 'helpful', emoji: '💡', count: post.reaction_counts.helpful || 0 },
-                        { type: 'results', emoji: '📊', count: post.reaction_counts.results || 0 }
-                      ].map((reaction) => (
-                        reaction.count > 0 && (
-                          <span key={reaction.type} className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded-full text-sm">
-                            <span>{reaction.emoji}</span>
-                            <span>{reaction.count}</span>
-                          </span>
-                        )
+                    <div className="flex items-center space-x-4">
+                      {Object.entries(post.reaction_counts || {}).map(([reaction, count]) => (
+                        <button 
+                          key={reaction}
+                          onClick={() => handleReaction(post.id, reaction)}
+                          className="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                          <span>{
+                            reaction === 'tried_this' ? '✅' :
+                            reaction === 'helpful' ? '🔥' :
+                            reaction === 'results' ? '📊' :
+                            reaction === 'on_point' ? '🎯' : '👍'
+                          }</span>
+                          <span>{count}</span>
+                          <span className="text-xs capitalize">{reaction.replace('_', ' ')}</span>
+                        </button>
                       ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
