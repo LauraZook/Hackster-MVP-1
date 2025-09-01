@@ -763,8 +763,8 @@ class AuthenticationTester:
         self.test_post_creation_updates_user_stats()
 
     def run_all_tests(self):
-        """Run all authentication tests"""
-        print("🚀 Starting Hackster.ai Authentication System Tests")
+        """Run all authentication and community tests"""
+        print("🚀 Starting Hackster.ai Complete Backend Testing")
         print("=" * 60)
         print()
         
@@ -800,6 +800,9 @@ class AuthenticationTester:
         print("-" * 30)
         self.test_password_hashing_security()
         self.test_jwt_token_expiration_format()
+        
+        # Run community tests
+        self.run_community_tests()
         
         # Summary
         print("📊 TEST SUMMARY")
