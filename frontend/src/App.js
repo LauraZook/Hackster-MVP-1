@@ -102,7 +102,8 @@ const CoreFeatures = () => {
       icon: "🚀",
       highlights: [],
       cta: "Find a Coach",
-      color: "blue"
+      color: "blue",
+      link: "/coaches"
     }
   ];
 
