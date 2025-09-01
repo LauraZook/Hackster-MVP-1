@@ -201,8 +201,8 @@ const CommunityCoaching = () => {
               Community & Expert Coaching
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Connect with like-minded biohackers and get personalized guidance from certified coaches 
-              using our F.R.E.E.D.O.M method for optimal results.
+              Connect with like-minded biohackers, chat with our AI coach 24/7 plus get personalized 
+              guidance from certified coaches for optimal results.
             </p>
 
             <div className="grid grid-cols-2 gap-6 mb-8">
