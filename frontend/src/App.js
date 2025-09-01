@@ -882,8 +882,7 @@ const GetStartedFlow = () => {
               </div>
               <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Your Hackster AI Coach!</h1>
               <p className="text-xl text-gray-600 mb-8">
-                I'm here to help you optimize your health journey. Let's start with understanding where you are 
-                and where you want to go.
+                Let's start with understanding where you are today and what goals we'll work on achieving.
               </p>
             </div>
             
