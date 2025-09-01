@@ -155,11 +155,11 @@ const PrioritySupplements = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Priority Supplement Stack
+            Supplement Stacks
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our science-backed supplement priorities, featuring premium brands like Thorne, 
-            Apex Energetics, and Standard Process.
+            Learn science-backed supplement recommendations featuring premium brands like Thorne, 
+            Apex Energetics and Standard Process for foundational health/wellness.
           </p>
         </div>
 
