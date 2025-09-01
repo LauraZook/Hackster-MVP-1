@@ -1434,11 +1434,11 @@ class RailwayDeploymentTester:
         return len(failed_tests) == 0
 
 if __name__ == "__main__":
-    tester = AuthenticationTester()
+    tester = RailwayDeploymentTester()
     all_passed = tester.run_all_tests()
     
     if all_passed:
-        print("\n🎉 All backend tests passed!")
+        print("\n🎉 All Railway deployment and backend tests passed!")
         exit(0)
     else:
         print("\n⚠️ Some tests failed. Please check the issues above.")
