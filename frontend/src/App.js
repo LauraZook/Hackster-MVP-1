@@ -994,7 +994,7 @@ const GetStartedFlow = () => {
 
         {currentStep === 'baseline-check' && (
           <div className="bg-white rounded-xl p-8 shadow-lg">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">First, let's talk about your health baseline</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">First, let's talk about your health data</h2>
             <p className="text-lg text-gray-600 mb-8">
               Understanding your current health markers is crucial for effective biohacking. 
               Have you done any comprehensive health testing in the past 12 months?
