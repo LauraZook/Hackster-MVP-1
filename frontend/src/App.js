@@ -522,6 +522,276 @@ const CommunityPlatform = () => {
   );
 };
 
+// Community Landing Page Component (from LauraZook/Hackster repo)
+const CommunityLanding = () => {
+  const [showSignUp, setShowSignUp] = useState(false);
+
+  if (showSignUp) {
+    return <SignUpForm setShowSignUp={setShowSignUp} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <Navigation />
+
+      {/* Dynamic Wellness Lifestyle Banner */}
+      <div className="relative bg-gradient-to-r from-blue-800 to-purple-600 py-16 overflow-hidden">
+        {/* Background Collage */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="grid grid-cols-6 h-full">
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbGlmZXN0eWxlfGVufDB8fHx8MTc1NDE5MDY5N3ww&ixlib=rb-4.1.0&q=85')"
+              }}
+            ></div>
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1556911073-a517e752729c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxoZWFsdGh5JTIwbGlmZXN0eWxlfGVufDB8fHx8MTc1NDE5MDY5N3ww&ixlib=rb-4.1.0&q=85')"
+              }}
+            ></div>
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1607962837359-5e7e89f86776?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHw0fHxoZWFsdGh5JTIwbGlmZXN0eWxlfGVufDB8fHx8MTc1NDE5MDY5N3ww&ixlib=rb-4.1.0&q=85')"
+              }}
+            ></div>
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.pexels.com/photos/1128678/pexels-photo-1128678.jpeg')"
+              }}
+            ></div>
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1542337010-818168f9bc1f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwxfHx3ZWxsbmVzcyUyMHBlb3BsZXxlbnwwfHx8fDE3NTQxOTA3MDh8MA&ixlib=rb-4.1.0&q=85')"
+              }}
+            ></div>
+            <div 
+              className="bg-cover bg-center"
+              style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1599948093964-321ae97fe7b4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzF8MHwxfHNlYXJjaHwyfHx3ZWxsbmVzcyUyMHBlb3BsZXxlbnwwfHx8fDE3NTQxOTA3MDh8MA&ixlib=rb-4.1.0&q=85')"
+              }}
+            ></div>
+          </div>
+        </div>
+        
+        {/* Content Overlay */}
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Share Your Journey
+          </h1>
+          <p className="text-xl text-blue-100 mb-4 max-w-3xl mx-auto">
+            Connect with fellow Hacksters! Share your experiences, discoveries, and insights.
+          </p>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Join a supportive community of enthusiasts transforming their health daily.
+          </p>
+          
+          {/* Activity Icons */}
+          <div className="flex justify-center items-center space-x-8 mb-8 text-white">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🥤</div>
+              <p className="text-sm text-blue-100">Nutrition</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🏃‍♀️</div>
+              <p className="text-sm text-blue-100">Exercise</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🧘‍♀️</div>
+              <p className="text-sm text-blue-100">Mindfulness</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">⌚</div>
+              <p className="text-sm text-blue-100">Tracking</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">😴</div>
+              <p className="text-sm text-blue-100">Recovery</p>
+            </div>
+          </div>
+          
+          <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
+            <h3 className="text-xl font-semibold text-white mb-4">Ready to Connect?</h3>
+            <p className="text-blue-100 mb-6 text-sm">
+              Please sign up to share your biohacking experiences and connect with the Hackster community.
+            </p>
+            <button
+              onClick={() => setShowSignUp(true)}
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
+            >
+              Join Community
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Features Preview */}
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-blue-600 text-2xl">💬</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Share Experiences</h3>
+            <p className="text-gray-600 text-sm">Post your biohacking experiments, results, and discoveries with the community.</p>
+          </div>
+          <div>
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-purple-600 text-2xl">🤝</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Connect & Learn</h3>
+            <p className="text-gray-600 text-sm">Engage with fellow Hacksters, comment on posts, and learn from each others' journey.</p>
+          </div>
+          <div>
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-blue-600 text-2xl">📈</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Track Progress</h3>
+            <p className="text-gray-600 text-sm">Document your health journey and get feedback from experienced biohackers.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sign Up Form Component
+const SignUpForm = ({ setShowSignUp }) => {
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    // Mock registration - replace with actual API call
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        setShowSignUp(false);
+      }, 2000);
+    }, 1000);
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+          <div className="text-green-600 text-6xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Hackster!</h2>
+          <p className="text-gray-600">Your account has been created successfully.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">H</span>
+            </div>
+            <span className="text-2xl font-bold text-gray-900">Hackster</span>
+          </Link>
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            Join the Community
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Start your biohacking journey with fellow optimizers
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Choose a username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Create a password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {loading ? 'Creating Account...' : 'Join Community'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowSignUp(false)}
+              className="text-blue-600 hover:text-blue-500 text-sm"
+            >
+              ← Back to Community
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Alias for backward compatibility
 const CommunityCoaching = CommunityPlatform;
 
