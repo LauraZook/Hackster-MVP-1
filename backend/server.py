@@ -911,7 +911,7 @@ async def get_biohacks(category: Optional[str] = None):
 @api_router.get("/coaches", response_model=List[Coach])
 async def get_coaches(specialty: Optional[str] = None, location: Optional[str] = None):
     """Get list of available coaches"""
-    query = {}
+    query = {"is_approved": True, "is_active": True}
     if specialty:
         query["specialties"] = {"$in": [specialty]}
     if location:
@@ -919,6 +919,123 @@ async def get_coaches(specialty: Optional[str] = None, location: Optional[str] =
     
     coaches = await db.coaches.find(query).sort("rating", -1).to_list(100)
     return [Coach(**coach) for coach in coaches]
+
+@api_router.post("/coaches", response_model=Coach)
+async def create_coach_profile(coach_data: CoachProfileCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Create a coach profile (authenticated coaches only)"""
+    if current_user.role != UserRole.COACH:
+        raise HTTPException(status_code=403, detail="Only coaches can create coach profiles")
+    
+    # Check if user already has a coach profile
+    existing_coach = await db.coaches.find_one({"user_id": current_user.id})
+    if existing_coach:
+        raise HTTPException(status_code=400, detail="Coach profile already exists")
+    
+    coach_profile = Coach(
+        user_id=current_user.id,
+        **coach_data.dict()
+    )
+    
+    await db.coaches.insert_one(coach_profile.dict())
+    return coach_profile
+
+@api_router.get("/coaches/{coach_id}", response_model=Coach)
+async def get_coach_profile(coach_id: str):
+    """Get a specific coach profile"""
+    coach = await db.coaches.find_one({"id": coach_id})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach not found")
+    return Coach(**coach)
+
+@api_router.get("/coaches/user/{user_id}", response_model=Coach)
+async def get_coach_by_user(user_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Get coach profile by user ID (for profile editing)"""
+    if current_user.id != user_id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Access forbidden")
+    
+    coach = await db.coaches.find_one({"user_id": user_id})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach profile not found")
+    return Coach(**coach)
+
+@api_router.put("/coaches/{coach_id}", response_model=Coach)
+async def update_coach_profile(coach_id: str, coach_update: CoachProfileUpdate, current_user: UserProfile = Depends(get_current_user)):
+    """Update coach profile (coach owner or admin only)"""
+    coach = await db.coaches.find_one({"id": coach_id})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach not found")
+    
+    # Check permissions
+    if coach["user_id"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Access forbidden")
+    
+    # Update fields
+    update_data = {k: v for k, v in coach_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db.coaches.update_one(
+        {"id": coach_id},
+        {"$set": update_data}
+    )
+    
+    updated_coach = await db.coaches.find_one({"id": coach_id})
+    return Coach(**updated_coach)
+
+@api_router.delete("/coaches/{coach_id}")
+async def delete_coach_profile(coach_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Delete coach profile (coach owner or admin only)"""
+    coach = await db.coaches.find_one({"id": coach_id})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach not found")
+    
+    # Check permissions
+    if coach["user_id"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Access forbidden")
+    
+    await db.coaches.delete_one({"id": coach_id})
+    return {"message": "Coach profile deleted successfully"}
+
+# Admin endpoints for coach management
+@api_router.get("/admin/coaches", response_model=List[Coach])
+async def get_all_coaches_admin(current_user: UserProfile = Depends(get_current_user)):
+    """Get all coaches including pending approval (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    coaches = await db.coaches.find({}).sort("created_at", -1).to_list(1000)
+    return [Coach(**coach) for coach in coaches]
+
+@api_router.put("/admin/coaches/{coach_id}/approve")
+async def approve_coach(coach_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Approve a coach profile (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.coaches.update_one(
+        {"id": coach_id},
+        {"$set": {"is_approved": True, "updated_at": datetime.utcnow()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Coach not found")
+    
+    return {"message": "Coach approved successfully"}
+
+@api_router.put("/admin/coaches/{coach_id}/deactivate")
+async def deactivate_coach(coach_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Deactivate a coach profile (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.coaches.update_one(
+        {"id": coach_id},
+        {"$set": {"is_active": False, "updated_at": datetime.utcnow()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Coach not found")
+    
+    return {"message": "Coach deactivated successfully"}
 
 @api_router.post("/users", response_model=UserProfile)
 async def create_user_profile(user_data: UserProfileCreate, current_user: UserProfile = Depends(get_current_user)):
