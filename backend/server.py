@@ -27,9 +27,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+try:
+    mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[os.environ.get('DB_NAME', 'hackster_db')]
+    print(f"✅ MongoDB configured with URL: {mongo_url[:20]}...")  # Log first 20 chars for debugging
+except Exception as e:
+    print(f"❌ MongoDB connection error: {e}")
+    # Create a dummy client for now
+    client = None
+    db = None
 
 # Create the main app without a prefix
 app = FastAPI(title="Hackster Health Platform API", version="1.0.0")
