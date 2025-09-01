@@ -71,7 +71,7 @@ const CoreFeatures = () => {
       id: "stack",
       title: "2. Build Your Hackster Stack",
       subtitle: "Personalized Product Recommendations",
-      description: "Answer our smart questionnaire for personalized biohacking recommendations tailored to your unique health goals and needs.",
+      description: "Answer our smart questionnaire for personalized biohacking recommendations tailored to your unique health goals.",
       icon: "⚡",
       highlights: [],
       cta: "Build My Stack",
