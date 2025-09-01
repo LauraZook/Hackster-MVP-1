@@ -398,7 +398,7 @@ const CommunityPlatform = () => {
 
   if (activeView === 'forum') {
     return (
-      <div className="py-20 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+      <div className="py-14 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
         <div className="max-w-4xl mx-auto px-6">
           {/* Header */}
           <div className="text-center mb-8">
