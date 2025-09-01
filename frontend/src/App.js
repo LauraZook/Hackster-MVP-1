@@ -1350,7 +1350,7 @@ const CoachesPage = () => {
           <h2 className="text-xl font-semibold mb-4 leading-relaxed">
             Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster community!
           </h2>
-          <p className="mb-6">Share your expertise and help others optimize their health. Join our community with no upfront cost.</p>
+          <p className="mb-6">Share your expertise and help others. Join the Hackster community for free.</p>
           <Link to="/community" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
             Join Now
           </Link>
