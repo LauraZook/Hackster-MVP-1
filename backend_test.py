@@ -14,9 +14,10 @@ BASE_URL = "https://health-optimize.preview.emergentagent.com/api"
 HEALTH_URL = "https://health-optimize.preview.emergentagent.com"
 HEADERS = {"Content-Type": "application/json"}
 
-class AuthenticationTester:
+class RailwayDeploymentTester:
     def __init__(self):
         self.base_url = BASE_URL
+        self.health_url = HEALTH_URL
         self.headers = HEADERS
         self.test_results = []
         self.member_token = None
@@ -25,6 +26,7 @@ class AuthenticationTester:
         self.coach_email = None
         self.test_post_id = None
         self.test_comment_id = None
+        self.database_connected = False
         
     def log_test(self, test_name: str, passed: bool, details: str = ""):
         """Log test results"""
