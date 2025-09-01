@@ -36,7 +36,7 @@ const Navigation = () => {
 // Hero Section Component
 const HeroSection = () => {
   return (
-    <div className="bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
       <Navigation />
 
       {/* Hero Content */}
