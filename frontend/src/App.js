@@ -640,7 +640,7 @@ const CommunityLanding = () => {
           <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
             <h3 className="text-xl font-semibold text-white mb-4">Ready to Connect?</h3>
             <p className="text-blue-100 mb-6 text-sm">
-              Please sign up to share your biohacking experiences and connect with the Hackster community.
+              Please sign up to share your biohacking experiences and connect with the Hackster.ai community.
             </p>
             <button
               onClick={() => setShowSignUp(true)}
