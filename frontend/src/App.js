@@ -158,9 +158,9 @@ const CoreFeatures = () => {
   const features = [
     {
       id: "baseline",
-      title: "1. Establish Your Baseline",
+      title: "1. Establish a Vision",
       subtitle: "Comprehensive Health Panels",
-      description: "Get recommended health tests to identify deficiencies and establish your starting point for optimal health and vitality.",
+      description: "Identify the right health tests for benchmark data and then we'll set your specific goals.",
       icon: "🎯",
       highlights: [],
       cta: "Get My Biomarkers",
