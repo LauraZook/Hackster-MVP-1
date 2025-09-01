@@ -234,7 +234,7 @@ const CommunityCoaching = () => {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Human Expert Directory</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">Coach Directory</h3>
               <p className="text-gray-600 mb-4">Connect with certified nutritionists, fitness coaches, and wellness experts in your area.</p>
               <button className="text-blue-600 font-semibold hover:text-blue-700">Browse Coaches →</button>
             </div>
