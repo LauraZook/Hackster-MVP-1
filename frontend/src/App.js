@@ -603,6 +603,25 @@ const CommunityPlatform = () => {
                           <span className="text-xs capitalize">{reaction.replace('_', ' ')}</span>
                         </button>
                       ))}
+                      <button
+                        onClick={() => {
+                          const postUrl = `${window.location.origin}/posts/${post.id}`;
+                          if (navigator.share) {
+                            navigator.share({
+                              title: post.title,
+                              text: `Check out this biohacking post: ${post.title}`,
+                              url: postUrl,
+                            });
+                          } else {
+                            navigator.clipboard.writeText(postUrl);
+                            alert('Post link copied! Share it with fellow biohackers.');
+                          }
+                        }}
+                        className="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                      >
+                        <span>🔗</span>
+                        <span className="text-xs">Share</span>
+                      </button>
                     </div>
                   </div>
                 </div>
