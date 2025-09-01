@@ -184,8 +184,12 @@ class AuthenticationTester:
 
     def test_valid_login(self):
         """Test login with valid credentials"""
+        if not hasattr(self, 'member_email'):
+            self.log_test("Valid Login", False, "No member email available from registration")
+            return
+            
         test_data = {
-            "email": "testmember@hackster.ai",
+            "email": self.member_email,
             "password": "SecurePass123!"
         }
         
