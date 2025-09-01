@@ -1184,7 +1184,7 @@ async def health_check():
         await client.admin.command('ping')
         return {"status": "healthy", "service": "Hackster.ai API", "database": "connected"}
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        print(f"Health check failed: {e}")
         return {"status": "unhealthy", "service": "Hackster.ai API", "error": str(e), "database": "disconnected"}
 
 # Health check endpoint for API route  
