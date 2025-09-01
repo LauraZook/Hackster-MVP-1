@@ -1673,7 +1673,7 @@ const CoachSignUpPage = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
           <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-            <h3 className="text-sm font-semibold text-purple-900 mb-2">Your 30-day FREE trial includes:</h3>
+            <h3 className="text-sm font-semibold text-purple-900 mb-2">Your FREE trial includes:</h3>
             <ul className="text-sm text-purple-800 space-y-1">
               <li>• Complete professional profile</li>
               <li>• Direct client connections & inquiries</li>
