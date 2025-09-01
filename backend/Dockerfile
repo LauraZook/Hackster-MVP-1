@@ -1,23 +1,23 @@
-# Use Python 3.11 slim image
+# Use Python 3.11 slim image  
 FROM python:3.11-slim
 
-# Set working directory
-WORKDIR /app
+# Set working directory to backend where server.py is located
+WORKDIR /app/backend
 
-# Copy all files from current directory (Railway root = backend)
-COPY . ./
+# Copy requirements file
+COPY backend/requirements.txt ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Debug: List all files to see what's actually copied
-RUN echo "=== Current directory ===" && pwd && echo "=== Files in /app ===" && ls -la && echo "=== End debug ==="
+# Copy the entire project
+COPY . /app/
+
+# Debug: Show what's in /app/backend where server.py should be
+RUN echo "=== Working directory ===" && pwd && echo "=== Files in /app/backend ===" && ls -la /app/backend/ && echo "=== End debug ==="
 
 # Expose the port
 EXPOSE 8001
 
-# Make start script executable
-RUN chmod +x backend/start.sh
-
-# Start the application using the debug script  
-CMD ["./backend/start.sh"]
+# Start the server directly - no script needed
+CMD ["python", "/app/backend/server.py"]
