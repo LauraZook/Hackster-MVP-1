@@ -37,7 +37,11 @@ app = FastAPI(title="Hackster Health Platform API", version="1.0.0")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Enums
+class UserRole(str, Enum):
+    MEMBER = "member"
+    COACH = "coach"
+    ADMIN = "admin"
+
 class SupplementCategory(str, Enum):
     VITAMIN = "vitamin"
     MINERAL = "mineral"
