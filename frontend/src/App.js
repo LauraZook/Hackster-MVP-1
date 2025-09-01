@@ -1328,8 +1328,8 @@ const AuthSelectionPage = () => {
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-purple-600 text-2xl">🎯</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Become a Coach</h3>
-              <p className="text-gray-600">Connect with Hackster members to shape better, healthier futures.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Listed</h3>
+              <p className="text-gray-600">Connect with Hackster.ai members to shape better, healthier futures.</p>
             </div>
             
             <div className="space-y-3 mb-8">
