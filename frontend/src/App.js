@@ -75,7 +75,7 @@ const CoreFeatures = () => {
       icon: "🎯",
       highlights: [],
       cta: "Get My Biomarkers",
-      color: "emerald"
+      color: "blue"
     },
     {
       id: "stack",
@@ -85,7 +85,7 @@ const CoreFeatures = () => {
       icon: "⚡",
       highlights: [],
       cta: "Build My Stack",
-      color: "blue"
+      color: "purple"
     },
     {
       id: "coaching",
@@ -95,7 +95,7 @@ const CoreFeatures = () => {
       icon: "🚀",
       highlights: [],
       cta: "Start Coaching",
-      color: "purple"
+      color: "blue"
     }
   ];
 
