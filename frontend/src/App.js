@@ -594,7 +594,7 @@ const CommunityPlatform = () => {
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Hackster AI Coach</h3>
               <p className="text-gray-600 mb-4">Get 24/7 personalized biohacking guidance with the Hackster AI Coach using our proprietary F.R.E.E.D.O.M. method.</p>
-              <button className="text-blue-600 font-semibold hover:text-blue-700">Try AI Coach →</button>
+              <Link to="/chat" className="text-blue-600 font-semibold hover:text-blue-700">Try AI Coach →</Link>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
