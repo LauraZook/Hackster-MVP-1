@@ -131,8 +131,9 @@ const CoreFeatures = () => {
 
                 <div className={feature.highlights.length === 0 ? "mt-8" : ""}>
                   <button className={`w-full bg-${feature.color}-600 text-white py-3 rounded-xl font-semibold hover:bg-${feature.color}-700 transition-colors shadow-md hover:shadow-lg`}>
-                  {feature.cta}
-                </button>
+                    {feature.cta}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
