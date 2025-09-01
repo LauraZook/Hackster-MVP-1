@@ -144,7 +144,7 @@ const HeroSection = () => {
               Start Your Health Journey
             </Link>
             <Link to="/chat" className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:border-green-600 hover:text-green-600 transition-all text-center">
-              Chat with Conner AI
+              Chat with AI Coach
             </Link>
           </div>
         </div>
