@@ -1974,13 +1974,18 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/community" element={<CommunityLanding />} />
-          <Route path="/get-started" element={<GetStartedFlow />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/coaches" element={<CoachesPage />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/community" element={<CommunityLanding />} />
+            <Route path="/get-started" element={<GetStartedFlow />} />
+            <Route path="/login" element={<AuthSelectionPage />} />
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/signup/member" element={<MemberSignUpPage />} />
+            <Route path="/signup/coach" element={<CoachSignUpPage />} />
+            <Route path="/coaches" element={<CoachesPage />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );
