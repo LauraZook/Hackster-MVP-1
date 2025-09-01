@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY . .
 
+# Debug: List files to verify server.py is copied
+RUN ls -la /app/
+
 # Expose the port
 EXPOSE 8001
 
