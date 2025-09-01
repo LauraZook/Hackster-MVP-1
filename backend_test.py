@@ -353,7 +353,7 @@ class AuthenticationTester:
         # We already checked this in registration, but let's verify in login too
         
         test_data = {
-            "email": "testmember@hackster.ai",
+            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
             "password": "SecurePass123!"
         }
         
