@@ -73,12 +73,7 @@ const CoreFeatures = () => {
       subtitle: "Personalized Product Recommendations",
       description: "Answer our smart questionnaire to get personalized biohacking recommendations tailored to your unique health goals and needs.",
       icon: "⚡",
-      highlights: [
-        "Thorne & Apex Energetics supplements",
-        "Oura Ring & health devices",
-        "Free biohacking protocols",
-        "Age & goal-specific stacks"
-      ],
+      highlights: [],
       cta: "Build My Stack",
       color: "blue"
     },
