@@ -289,7 +289,7 @@ const PrioritySupplements = () => {
   ];
 
   return (
-    <div className="py-20 bg-gray-50">
+    <div className="py-14 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
