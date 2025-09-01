@@ -6,6 +6,63 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Auth Context
+const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp * 1000 > Date.now()) {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          setUser(userData);
+        } else {
+          logout();
+        }
+      } catch {
+        logout();
+      }
+    }
+  }, [token]);
+
+  const login = (userData, authToken) => {
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
+
+  const value = {
+    user,
+    token,
+    login,
+    logout,
+    isAuthenticated: !!user,
+    isCoach: user?.role === 'coach'
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 // Navigation Component
 const Navigation = () => {
   const location = useLocation();
