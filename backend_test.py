@@ -74,9 +74,12 @@ class AuthenticationTester:
 
     def test_member_registration(self):
         """Test member registration endpoint"""
+        import time
+        timestamp = str(int(time.time()))
+        
         test_data = {
-            "email": "testmember@hackster.ai",
-            "username": "testmember123",
+            "email": f"testmember{timestamp}@hackster.ai",
+            "username": f"testmember{timestamp}",
             "password": "SecurePass123!",
             "role": "member",
             "age": 28,
