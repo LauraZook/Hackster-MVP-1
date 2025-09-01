@@ -1210,8 +1210,14 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     """Initialize sample data on startup"""
-    await initialize_sample_data()
-    logger.info("Hackster Health Platform API started successfully")
+    try:
+        # Only initialize if database is accessible
+        await db.admin.command('ping')
+        await initialize_sample_data()
+        logger.info("Hackster Health Platform API started successfully with database")
+    except Exception as e:
+        logger.warning(f"Database not accessible during startup: {e}")
+        logger.info("Hackster Health Platform API started in database-free mode")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
