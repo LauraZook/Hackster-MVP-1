@@ -422,6 +422,79 @@ async def initialize_sample_data():
         coach_docs = [Coach(**coach).dict() for coach in coaches]
         await db.coaches.insert_many(coach_docs)
 
+# Authentication API Routes
+@api_router.post("/auth/register", response_model=dict)
+async def register_user(user_data: UserRegister):
+    """Register a new user (member or coach)"""
+    # Check if user already exists
+    existing_user = await get_user_by_email(user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+    
+    # Check if username is taken
+    existing_username = await db.users.find_one({"username": user_data.username})
+    if existing_username:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already taken"
+        )
+   
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    user_dict = user_data.dict()
+    user_dict.pop("password")
+    
+    user_in_db = UserInDB(
+        **user_dict,
+        hashed_password=hashed_password
+    )
+    
+    # Insert user into database
+    await db.users.insert_one(user_in_db.dict())
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_data.email}, expires_delta=access_token_expires
+    )
+    
+    return {
+        "message": "User registered successfully",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": UserProfile(**user_in_db.dict())
+    }
+
+@api_router.post("/auth/login", response_model=dict)
+async def login_user(user_credentials: UserLogin):
+    """Login an existing user"""
+    user = await authenticate_user(user_credentials.email, user_credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": UserProfile(**user.dict())
+    }
+
+@api_router.get("/auth/me", response_model=UserProfile)
+async def get_current_user_info(current_user: UserProfile = Depends(get_current_user)):
+    """Get current user information"""
+    return current_user
+
 # API Routes
 @api_router.get("/")
 async def root():
