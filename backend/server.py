@@ -1181,7 +1181,7 @@ async def health_check():
     """Health check endpoint for deployment platforms"""
     try:
         # Simple database connectivity check
-        await db.admin.command('ping')
+        await client.admin.command('ping')
         return {"status": "healthy", "service": "Hackster.ai API", "database": "connected"}
     except Exception as e:
         logger.error(f"Health check failed: {e}")
