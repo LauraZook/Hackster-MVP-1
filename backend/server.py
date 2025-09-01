@@ -551,19 +551,26 @@ async def get_coaches(specialty: Optional[str] = None, location: Optional[str] =
     return [Coach(**coach) for coach in coaches]
 
 @api_router.post("/users", response_model=UserProfile)
-async def create_user_profile(user_data: UserProfileCreate):
-    """Create a new user profile"""
-    user = UserProfile(**user_data.dict())
-    await db.users.insert_one(user.dict())
-    return user
+async def create_user_profile(user_data: UserProfileCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Update user profile (authenticated)"""
+    # Update the current user's profile
+    update_data = user_data.dict()
+    await db.users.update_one(
+        {"email": current_user.email},
+        {"$set": update_data}
+    )
+    
+    # Return updated user
+    updated_user = await get_user_by_email(current_user.email)
+    return UserProfile(**updated_user.dict())
 
 @api_router.get("/users/{user_id}", response_model=UserProfile)
-async def get_user_profile(user_id: str):
-    """Get user profile by ID"""
-    user = await db.users.find_one({"id": user_id})
-    if not user:
+async def get_user_profile(user_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Get user profile by ID (authenticated)"""
+    user_doc = await db.users.find_one({"id": user_id})
+    if not user_doc:
         raise HTTPException(status_code=404, detail="User not found")
-    return UserProfile(**user)
+    return UserProfile(**user_doc)
 
 @api_router.post("/assessments", response_model=HealthAssessment)
 async def create_health_assessment(assessment_data: HealthAssessmentCreate):
