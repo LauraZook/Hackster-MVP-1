@@ -71,7 +71,7 @@ const CoreFeatures = () => {
       id: "stack",
       title: "2. Build Your Hackster Stack",
       subtitle: "Personalized Product Recommendations",
-      description: "Answer our smart questionnaire to get personalized supplement and biohacking recommendations tailored to your unique needs.",
+      description: "Answer our smart questionnaire to get personalized biohacking recommendations tailored to your unique health goals and needs.",
       icon: "⚡",
       highlights: [
         "Thorne & Apex Energetics supplements",
