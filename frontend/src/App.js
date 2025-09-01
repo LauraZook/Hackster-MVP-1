@@ -1508,6 +1508,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/community" element={<CommunityLanding />} />
+          <Route path="/get-started" element={<GetStartedFlow />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/coaches" element={<CoachesPage />} />
         </Routes>
       </BrowserRouter>
     </div>
