@@ -676,6 +676,20 @@ async def get_posts(
     posts = await db.posts.find(query).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
     return [Post(**post) for post in posts]
 
+@api_router.get("/posts/public/{post_id}", response_model=Post)
+async def get_public_post(post_id: str):
+    """Get a specific post by ID - PUBLIC ACCESS (no authentication required)"""
+    post = await db.posts.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return Post(**post)
+
+@api_router.get("/posts/public/{post_id}/comments", response_model=List[Comment])
+async def get_public_post_comments(post_id: str):
+    """Get comments for a specific post - PUBLIC ACCESS (no authentication required)"""
+    comments = await db.comments.find({"post_id": post_id}).sort("created_at", 1).to_list(100)
+    return [Comment(**comment) for comment in comments]
+
 @api_router.post("/posts", response_model=Post)
 async def create_post(post_data: PostCreate, current_user: UserProfile = Depends(get_current_user)):
     """Create a new community post"""
