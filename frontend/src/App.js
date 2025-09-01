@@ -13,19 +13,19 @@ const Navigation = () => {
   return (
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
       <Link to="/" className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-lg">H</span>
         </div>
         <span className="text-2xl font-bold text-gray-900">Hackster</span>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
-        <a href="#baseline" className="text-gray-700 hover:text-emerald-600 transition-colors">Baseline</a>
-        <a href="#stack" className="text-gray-700 hover:text-emerald-600 transition-colors">Stack</a>
-        <a href="#coaching" className="text-gray-700 hover:text-emerald-600 transition-colors">Coaching</a>
-        <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-emerald-600 font-semibold' : 'text-gray-700 hover:text-emerald-600'}`}>
+        <a href="#baseline" className="text-gray-700 hover:text-blue-600 transition-colors">Baseline</a>
+        <a href="#stack" className="text-gray-700 hover:text-blue-600 transition-colors">Stack</a>
+        <a href="#coaching" className="text-gray-700 hover:text-blue-600 transition-colors">Coaching</a>
+        <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
         </Link>
-        <button className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
           Get Started
         </button>
       </div>
