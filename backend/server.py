@@ -1196,7 +1196,7 @@ async def api_health_check():
         await client.admin.command('ping')
         return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0", "database": "connected"}
     except Exception as e:
-        logger.error(f"API Health check failed: {e}")
+        print(f"API Health check failed: {e}")
         return {"status": "unhealthy", "service": "Hackster.ai API", "version": "1.0", "error": str(e), "database": "disconnected"}
 
 app.add_middleware(
