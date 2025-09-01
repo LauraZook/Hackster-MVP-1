@@ -573,8 +573,11 @@ async def get_user_profile(user_id: str, current_user: UserProfile = Depends(get
     return UserProfile(**user_doc)
 
 @api_router.post("/assessments", response_model=HealthAssessment)
-async def create_health_assessment(assessment_data: HealthAssessmentCreate):
-    """Create a health assessment and get recommendations"""
+async def create_health_assessment(assessment_data: HealthAssessmentCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Create a health assessment and get recommendations (authenticated)"""
+    # Ensure the assessment is for the current user
+    assessment_data.user_id = current_user.id
+    
     # This would contain logic to analyze responses and generate recommendations
     # For now, we'll create a basic assessment
     assessment = HealthAssessment(**assessment_data.dict())
@@ -588,8 +591,12 @@ async def create_health_assessment(assessment_data: HealthAssessmentCreate):
     return assessment
 
 @api_router.get("/assessments/{user_id}", response_model=List[HealthAssessment])
-async def get_user_assessments(user_id: str):
-    """Get all assessments for a user"""
+async def get_user_assessments(user_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Get all assessments for a user (authenticated)"""
+    # Users can only access their own assessments
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access forbidden")
+    
     assessments = await db.assessments.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return [HealthAssessment(**assessment) for assessment in assessments]
 
