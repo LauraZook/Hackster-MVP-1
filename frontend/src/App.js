@@ -113,35 +113,69 @@ const CoreFeatures = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div key={feature.id} className="group hover:scale-105 transition-all duration-300">
-              <div className={`bg-gradient-to-br from-${feature.color}-50 to-${feature.color}-100 rounded-2xl p-8 h-full border border-${feature.color}-200 shadow-lg hover:shadow-xl transition-all`}>
-                <div className="text-center mb-6">
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className={`text-${feature.color}-600 font-semibold mb-4`}>{feature.subtitle}</p>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                </div>
-
-                {feature.highlights.length > 0 && (
-                  <div className="space-y-3 mb-8">
-                    {feature.highlights.map((highlight, idx) => (
-                      <div key={idx} className="flex items-center space-x-3">
-                        <div className={`w-2 h-2 bg-${feature.color}-500 rounded-full`}></div>
-                        <span className="text-gray-700">{highlight}</span>
-                      </div>
-                    ))}
+          {features.map((feature, index) => {
+            // Define color classes explicitly to ensure Tailwind includes them
+            const getColorClasses = (color) => {
+              switch(color) {
+                case 'blue':
+                  return {
+                    background: 'bg-gradient-to-br from-blue-50 to-blue-100',
+                    border: 'border-blue-200',
+                    text: 'text-blue-600',
+                    button: 'bg-blue-600 hover:bg-blue-700',
+                    dot: 'bg-blue-500'
+                  };
+                case 'purple':
+                  return {
+                    background: 'bg-gradient-to-br from-purple-50 to-purple-100',
+                    border: 'border-purple-200',
+                    text: 'text-purple-600',
+                    button: 'bg-purple-600 hover:bg-purple-700',
+                    dot: 'bg-purple-500'
+                  };
+                default:
+                  return {
+                    background: 'bg-gradient-to-br from-gray-50 to-gray-100',
+                    border: 'border-gray-200',
+                    text: 'text-gray-600',
+                    button: 'bg-gray-600 hover:bg-gray-700',
+                    dot: 'bg-gray-500'
+                  };
+              }
+            };
+            
+            const colorClasses = getColorClasses(feature.color);
+            
+            return (
+              <div key={feature.id} className="group hover:scale-105 transition-all duration-300">
+                <div className={`${colorClasses.background} rounded-2xl p-8 h-full border ${colorClasses.border} shadow-lg hover:shadow-xl transition-all`}>
+                  <div className="text-center mb-6">
+                    <div className="text-4xl mb-4">{feature.icon}</div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{feature.title}</h3>
+                    <p className={`${colorClasses.text} font-semibold mb-4`}>{feature.subtitle}</p>
+                    <p className="text-gray-600 leading-relaxed">{feature.description}</p>
                   </div>
-                )}
 
-                <div className={feature.highlights.length === 0 ? "mt-8" : ""}>
-                  <button className={`w-full bg-${feature.color}-600 text-white py-3 rounded-xl font-semibold hover:bg-${feature.color}-700 transition-colors shadow-md hover:shadow-lg`}>
-                    {feature.cta}
-                  </button>
+                  {feature.highlights.length > 0 && (
+                    <div className="space-y-3 mb-8">
+                      {feature.highlights.map((highlight, idx) => (
+                        <div key={idx} className="flex items-center space-x-3">
+                          <div className={`w-2 h-2 ${colorClasses.dot} rounded-full`}></div>
+                          <span className="text-gray-700">{highlight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className={feature.highlights.length === 0 ? "mt-8" : ""}>
+                    <button className={`w-full ${colorClasses.button} text-white py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg`}>
+                      {feature.cta}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
