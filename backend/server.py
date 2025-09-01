@@ -1166,6 +1166,18 @@ async def get_user_assessments(user_id: str, current_user: UserProfile = Depends
     assessments = await db.assessments.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return [HealthAssessment(**assessment) for assessment in assessments]
 
+# Health check endpoint for API route  
+@api_router.get("/health")
+async def api_health_check():
+    """API Health check endpoint"""
+    try:
+        # Simple database connectivity check
+        await client.admin.command('ping')
+        return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0", "database": "connected"}
+    except Exception as e:
+        print(f"API Health check failed: {e}")
+        return {"status": "unhealthy", "service": "Hackster.ai API", "version": "1.0", "error": str(e), "database": "disconnected"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
