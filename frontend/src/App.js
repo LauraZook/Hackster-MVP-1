@@ -2390,11 +2390,15 @@ const CoachOnboardingPage = () => {
             <div className="bg-purple-50 p-4 rounded-lg">
               <h3 className="text-purple-800 font-semibold mb-2">🚀 Ready to Launch Your Profile?</h3>
               <ul className="text-purple-700 text-sm space-y-1">
-                <li>• Full 30-day trial with ALL premium features</li>
+                <li>• <strong>FREE during BETA</strong> - No payment required!</li>
                 <li>• Contact details visible to potential clients</li>
                 <li>• Start receiving client inquiries immediately</li>
-                <li>• After trial: Continue for just $99/year</li>
+                <li>• Help us build the best wellness coach directory</li>
+                <li>• Get early access to premium features</li>
               </ul>
+              <div className="mt-3 p-2 bg-purple-100 rounded text-xs text-purple-600">
+                <strong>Beta Note:</strong> Your profile will be free during our beta phase. We'll notify you before any future changes.
+              </div>
             </div>
 
             {error && (
