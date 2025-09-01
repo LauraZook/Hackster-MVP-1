@@ -686,6 +686,7 @@ const CommunityPlatform = () => {
 
 // Community Landing Page Component (from LauraZook/Hackster repo)
 const CommunityLanding = () => {
+  const { isAuthenticated, user } = useAuth();
   const [showSignUp, setShowSignUp] = useState(false);
 
   if (showSignUp) {
