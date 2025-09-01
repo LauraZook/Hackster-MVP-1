@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Hackster.ai Authentication System
-Tests all authentication endpoints and protected routes
+Comprehensive Backend Testing for Hackster.ai Platform on Railway
+Tests Railway deployment, MongoDB connectivity, and all API endpoints
 """
 
 import requests
@@ -9,8 +9,9 @@ import json
 import time
 from typing import Dict, Any, Optional
 
-# Configuration
+# Configuration - Railway Deployment URLs
 BASE_URL = "https://health-optimize.preview.emergentagent.com/api"
+HEALTH_URL = "https://health-optimize.preview.emergentagent.com"
 HEADERS = {"Content-Type": "application/json"}
 
 class AuthenticationTester:
