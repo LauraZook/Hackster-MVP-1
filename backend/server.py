@@ -97,13 +97,38 @@ class BiohackingTip(BaseModel):
 
 class UserProfile(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    email: str
+    email: EmailStr
+    username: str
+    role: UserRole = UserRole.MEMBER
     age: Optional[int] = None
     gender: Optional[str] = None
     goals: List[str] = []
     current_supplements: List[str] = []
     health_conditions: List[str] = []
+    is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserInDB(UserProfile):
+    hashed_password: str
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    role: UserRole = UserRole.MEMBER
+    age: Optional[int] = None
+    gender: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class HealthAssessment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
