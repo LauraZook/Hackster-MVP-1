@@ -20,6 +20,8 @@ class AuthenticationTester:
         self.test_results = []
         self.member_token = None
         self.coach_token = None
+        self.member_email = None
+        self.coach_email = None
         self.test_post_id = None
         self.test_comment_id = None
         
