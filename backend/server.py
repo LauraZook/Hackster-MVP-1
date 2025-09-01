@@ -37,6 +37,30 @@ app = FastAPI(title="Hackster Health Platform API", version="1.0.0")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+class UserLevel(str, Enum):
+    MEMBER = "member"
+    CONTRIBUTOR = "contributor" 
+    HACKSTER_PRO = "hackster_pro"
+    ADMIN = "admin"
+
+class PostCategory(str, Enum):
+    GENERAL = "general"
+    NUTRITION = "nutrition"
+    SUPPLEMENTS = "supplements"
+    RECOVERY = "recovery"
+    SLEEP = "sleep"
+    TECHNOLOGY = "technology"
+    EXERCISE = "exercise"
+    MINDFULNESS = "mindfulness"
+
+class ReactionType(str, Enum):
+    UPVOTE = "upvote"
+    DOWNVOTE = "downvote"
+    TRIED_THIS = "tried_this"
+    HELPFUL = "helpful"
+    RESULTS = "results"
+    ON_POINT = "on_point"
+
 class UserRole(str, Enum):
     MEMBER = "member"
     COACH = "coach"
