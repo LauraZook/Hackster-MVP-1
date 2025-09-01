@@ -239,7 +239,7 @@ const CommunityCoaching = () => {
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-3">F.R.E.E.D.O.M Method AI Coach</h3>
               <p className="text-gray-600 mb-4">Get 24/7 personalized biohacking guidance powered by our proprietary F.R.E.E.D.O.M methodology.</p>
-              <button className="text-emerald-600 font-semibold hover:text-emerald-700">Try AI Coach →</button>
+              <button className="text-blue-600 font-semibold hover:text-blue-700">Try AI Coach →</button>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
