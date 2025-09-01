@@ -253,6 +253,41 @@
   test_all: false
   test_priority: "high_first"
 
+  - task: "User Authentication System"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported that Member account creation isn't working. Frontend has signup pages but backend missing authentication endpoints like /auth/register and /auth/login"
+        - working: false
+          agent: "main"
+          comment: "Analysis confirmed: Frontend calls /auth/register and /auth/login but backend only has /users endpoints. Need to implement complete JWT authentication system with password hashing, user roles (member/coach), and proper signup/signin endpoints."
+
+## frontend:
+  - task: "Member/Coach Signup Pages"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported Member account creation not working - unable to create account"
+        - working: false
+          agent: "main"
+          comment: "Frontend has MemberSignUpPage and CoachSignUpPage components but they're calling non-existent backend auth endpoints. UI is complete but backend connection broken."
+
 ## agent_communication:
     - agent: "main"
       message: "Successfully transformed basic status checker into comprehensive Hackster health platform. Backend has full API infrastructure with sample data. Frontend has beautiful, professional design showcasing all 3 core features. Next priority: integrate frontend with backend APIs to display dynamic data and create interactive user experience. Ready for testing agent to validate full user flows."
+    - agent: "user"
+      message: "The login experience to create an account for Members still isn't working. I tested that and it didn't allow me to create an account."
+    - agent: "main"
+      message: "CRITICAL ISSUE IDENTIFIED: User authentication system is incomplete. Frontend has signup/login pages but backend is missing authentication endpoints (/auth/register, /auth/login). Need to implement complete JWT authentication system with password hashing and user roles before testing."
