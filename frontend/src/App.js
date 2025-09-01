@@ -2610,6 +2610,282 @@ const TermsOfService = () => (
   </div>
 );
 
+// Public Post View Component (for external sharing)
+const PublicPostView = () => {
+  const { postId } = useParams();
+  const { isAuthenticated, user } = useAuth();
+  const [post, setPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+
+  useEffect(() => {
+    fetchPublicPost();
+    fetchPublicComments();
+  }, [postId]);
+
+  const fetchPublicPost = async () => {
+    try {
+      const response = await axios.get(`${API}/posts/public/${postId}`);
+      setPost(response.data);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPublicComments = async () => {
+    try {
+      const response = await axios.get(`${API}/posts/public/${postId}/comments`);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
+  const handleEngagementClick = () => {
+    if (!isAuthenticated) {
+      setShowSignupPrompt(true);
+    }
+    // If authenticated, handle the actual engagement
+  };
+
+  const sharePost = () => {
+    const postUrl = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: `Check out this biohacking post on Hackster.ai: ${post.title}`,
+        url: postUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      alert('Post link copied to clipboard!');
+    }
+  };
+
+  const getUserLevel = (level) => {
+    switch(level) {
+      case 'hackster_pro': return { icon: '🟡', text: 'Hackster Pro', color: 'text-yellow-600 bg-yellow-100' };
+      case 'contributor': return { icon: '🔵', text: 'Contributor', color: 'text-blue-600 bg-blue-100' };
+      case 'member': return { icon: '🟢', text: 'Member', color: 'text-green-600 bg-green-100' };
+      default: return { icon: '🟢', text: 'Member', color: 'text-green-600 bg-green-100' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h2>
+          <p className="text-gray-600 mb-6">The biohacking post you're looking for doesn't exist.</p>
+          <Link to="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">
+            Explore Hackster.ai
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Post Header */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-lg">{post.username.charAt(0).toUpperCase()}</span>
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-lg font-semibold text-gray-900">{post.username}</h3>
+                  {(() => {
+                    const levelInfo = getUserLevel(post.user_level || 'member');
+                    return (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelInfo.color} flex items-center space-x-1`}>
+                        <span>{levelInfo.icon}</span>
+                        <span>{levelInfo.text}</span>
+                      </span>
+                    );
+                  })()}
+                </div>
+                <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                post.category === 'supplements' ? 'bg-purple-100 text-purple-700' :
+                post.category === 'recovery' ? 'bg-blue-100 text-blue-700' :
+                post.category === 'sleep' ? 'bg-indigo-100 text-indigo-700' :
+                post.category === 'nutrition' ? 'bg-green-100 text-green-700' :
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
+              </span>
+              <button
+                onClick={sharePost}
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <span>🔗</span>
+                <span className="text-sm">Share</span>
+              </button>
+            </div>
+          </div>
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">{post.title}</h1>
+          <div className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap mb-8">{post.content}</div>
+
+          {/* Engagement Section */}
+          <div className="border-t pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <button
+                  onClick={handleEngagementClick}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors"
+                >
+                  <span className="text-xl">👍</span>
+                  <span className="font-medium">{post.upvotes}</span>
+                  <span className="text-sm">Upvotes</span>
+                </button>
+                <button
+                  onClick={handleEngagementClick}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+                >
+                  <span className="text-xl">👎</span>
+                  <span className="font-medium">{post.downvotes}</span>
+                </button>
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <span className="text-xl">💬</span>
+                  <span className="font-medium">{comments.length}</span>
+                  <span className="text-sm">Comments</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                {Object.entries(post.reaction_counts || {}).map(([reaction, count]) => (
+                  <button 
+                    key={reaction}
+                    onClick={handleEngagementClick}
+                    className="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                  >
+                    <span>{
+                      reaction === 'tried_this' ? '✅' :
+                      reaction === 'helpful' ? '🔥' :
+                      reaction === 'results' ? '📊' :
+                      reaction === 'on_point' ? '🎯' : '👍'
+                    }</span>
+                    <span>{count}</span>
+                    <span className="text-xs capitalize">{reaction.replace('_', ' ')}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        {comments.length > 0 && (
+          <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Community Discussion ({comments.length})</h3>
+            <div className="space-y-6">
+              {comments.map((comment) => (
+                <div key={comment.id} className="border-l-4 border-blue-200 pl-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-xs">{comment.username.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">{comment.username}</span>
+                    <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-gray-700">{comment.content}</p>
+                </div>
+              ))}
+            </div>
+            
+            {!isAuthenticated && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-blue-800 mb-3">Want to join the discussion?</p>
+                <Link
+                  to="/login"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Sign Up to Comment
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Join Community CTA for non-authenticated users */}
+        {!isAuthenticated && (
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-8 text-white text-center">
+            <h2 className="text-2xl font-bold mb-4">Love this biohacking content?</h2>
+            <p className="text-blue-100 mb-6 text-lg">
+              Join thousands of biohackers sharing their experiments, results, and insights on Hackster.ai
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/signup/member"
+                className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Join the Community
+              </Link>
+              <Link
+                to="/community"
+                className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+              >
+                Explore More Posts
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Signup Prompt Modal */}
+      {showSignupPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🚀</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Join the Biohacking Community!</h3>
+              <p className="text-gray-600 mb-6">
+                Sign up to upvote, comment, and share your own biohacking experiments with fellow optimizers.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  to="/signup/member"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Create Free Account
+                </Link>
+                <button
+                  onClick={() => setShowSignupPrompt(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Continue Browsing
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
