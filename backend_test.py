@@ -20,6 +20,8 @@ class AuthenticationTester:
         self.test_results = []
         self.member_token = None
         self.coach_token = None
+        self.test_post_id = None
+        self.test_comment_id = None
         
     def log_test(self, test_name: str, passed: bool, details: str = ""):
         """Log test results"""
