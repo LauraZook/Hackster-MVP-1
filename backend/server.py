@@ -220,6 +220,7 @@ class HealthAssessment(BaseModel):
 
 class Coach(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None  # Link to user account
     name: str
     credentials: List[str]
     specialties: List[str]
@@ -230,6 +231,39 @@ class Coach(BaseModel):
     contact_info: Dict[str, str]
     rating: float = 0.0
     total_reviews: int = 0
+    profile_image: Optional[str] = None
+    website: Optional[str] = None
+    years_experience: Optional[int] = None
+    is_approved: bool = False  # For admin approval
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CoachProfileCreate(BaseModel):
+    name: str
+    bio: str
+    specialties: List[str]
+    location: str
+    hourly_rate: str
+    availability: str
+    credentials: List[str] = []
+    contact_info: Dict[str, str] = {}
+    profile_image: Optional[str] = None
+    website: Optional[str] = None
+    years_experience: Optional[int] = None
+
+class CoachProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    specialties: Optional[List[str]] = None
+    location: Optional[str] = None
+    hourly_rate: Optional[str] = None
+    availability: Optional[str] = None
+    credentials: Optional[List[str]] = None
+    contact_info: Optional[Dict[str, str]] = None
+    profile_image: Optional[str] = None
+    website: Optional[str] = None
+    years_experience: Optional[int] = None
 
 # Create request models
 class UserProfileCreate(BaseModel):
