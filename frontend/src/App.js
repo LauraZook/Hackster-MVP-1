@@ -233,8 +233,228 @@ const PrioritySupplements = () => {
   );
 };
 
-// Community and Coaching Section
-const CommunityCoaching = () => {
+// Community Platform Component
+const CommunityPlatform = () => {
+  const [activeView, setActiveView] = useState('overview');
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState({ 
+    title: '', 
+    content: '', 
+    category: 'general',
+    image_url: '',
+    youtube_url: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [showNewPostForm, setShowNewPostForm] = useState(false);
+
+  // Mock data for demo purposes
+  const mockPosts = [
+    {
+      id: 1,
+      username: "BiohackerPro",
+      title: "My 30-Day Cold Exposure Journey",
+      content: "Started with 30-second cold showers and worked up to 3-minute ice baths. The mental clarity and energy boost has been incredible. Here's what I learned...",
+      category: "Recovery",
+      created_at: "2024-12-28",
+      upvotes: 24,
+      downvotes: 2,
+      reaction_counts: { tried_this: 8, helpful: 12, results: 5 },
+      user_level: "contributor"
+    },
+    {
+      id: 2,
+      username: "OptimizeDaily",
+      title: "Vitamin D3 + K2 Protocol Results",
+      content: "After 3 months on this protocol, my energy levels have improved significantly. Blood work shows optimal vitamin D levels for the first time in years.",
+      category: "Supplements",
+      created_at: "2024-12-27",
+      upvotes: 18,
+      downvotes: 1,
+      reaction_counts: { helpful: 15, on_point: 7, results: 9 },
+      user_level: "hackster_pro"
+    }
+  ];
+
+  const getUserLevel = (level) => {
+    switch(level) {
+      case 'hackster_pro': return { icon: '🟡', text: 'Hackster Pro', color: 'text-yellow-600 bg-yellow-100' };
+      case 'contributor': return { icon: '🔵', text: 'Contributor', color: 'text-blue-600 bg-blue-100' };
+      default: return null;
+    }
+  };
+
+  const createPost = async (e) => {
+    e.preventDefault();
+    // Mock post creation
+    const newPostData = {
+      id: Date.now(),
+      username: "You",
+      ...newPost,
+      created_at: new Date().toISOString().split('T')[0],
+      upvotes: 0,
+      downvotes: 0,
+      reaction_counts: {},
+      user_level: "member"
+    };
+    setPosts([newPostData, ...posts]);
+    setNewPost({ title: '', content: '', category: 'general', image_url: '', youtube_url: '' });
+    setShowNewPostForm(false);
+  };
+
+  if (activeView === 'forum') {
+    return (
+      <div className="py-20 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+        <div className="max-w-4xl mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <button 
+              onClick={() => setActiveView('overview')}
+              className="text-blue-600 hover:text-blue-700 mb-4 flex items-center mx-auto"
+            >
+              ← Back to Community Overview
+            </button>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Community Forum</h1>
+            <p className="text-xl text-gray-600">Share your biohacking journey and connect with fellow optimizers</p>
+          </div>
+
+          {/* New Post Button */}
+          <div className="mb-8 flex justify-between items-center">
+            <button
+              onClick={() => setShowNewPostForm(!showNewPostForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
+            >
+              <span>📝</span>
+              <span>Share Your Biohack</span>
+            </button>
+          </div>
+
+          {/* New Post Form */}
+          {showNewPostForm && (
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+              <form onSubmit={createPost} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPost.title}
+                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                    placeholder="What's your biohacking discovery?"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={newPost.category}
+                    onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="general">General</option>
+                    <option value="nutrition">Nutrition</option>
+                    <option value="supplements">Supplements</option>
+                    <option value="recovery">Recovery</option>
+                    <option value="sleep">Sleep</option>
+                    <option value="technology">Technology</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={newPost.content}
+                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                    placeholder="Share your experience, results, and insights..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex space-x-4">
+                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
+                    Post
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPostForm(false)}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Posts */}
+          <div className="space-y-6">
+            {mockPosts.map((post) => (
+              <div key={post.id} className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold">{post.username.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-semibold text-gray-900">{post.username}</h3>
+                        {(() => {
+                          const levelInfo = getUserLevel(post.user_level);
+                          return levelInfo ? (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelInfo.color} flex items-center space-x-1`}>
+                              <span>{levelInfo.icon}</span>
+                              <span>{levelInfo.text}</span>
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
+                      <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">{post.category}</span>
+                </div>
+
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">{post.title}</h2>
+                <p className="text-gray-700 mb-4">{post.content}</p>
+
+                {/* Engagement Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-1">
+                        <button className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50">⬆️</button>
+                        <span className="font-semibold text-gray-700">{post.upvotes - post.downvotes}</span>
+                        <button className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50">⬇️</button>
+                      </div>
+                      <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50">
+                        <span>💬</span>
+                        <span>Comment</span>
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {[
+                        { type: 'tried_this', emoji: '🔥', count: post.reaction_counts.tried_this || 0 },
+                        { type: 'helpful', emoji: '💡', count: post.reaction_counts.helpful || 0 },
+                        { type: 'results', emoji: '📊', count: post.reaction_counts.results || 0 }
+                      ].map((reaction) => (
+                        reaction.count > 0 && (
+                          <span key={reaction.type} className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded-full text-sm">
+                            <span>{reaction.emoji}</span>
+                            <span>{reaction.count}</span>
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-6">
@@ -250,17 +470,20 @@ const CommunityCoaching = () => {
 
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600 mb-2">1,000+</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">1,000+</div>
                 <div className="text-gray-600">Active Members</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">50+</div>
+                <div className="text-3xl font-bold text-purple-600 mb-2">50+</div>
                 <div className="text-gray-600">Certified Coaches</div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => setActiveView('forum')}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+              >
                 Join Community
               </button>
               <button className="border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all">
@@ -285,7 +508,12 @@ const CommunityCoaching = () => {
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Community Forum</h3>
               <p className="text-gray-600 mb-4">Share your results, get support, and learn from thousands of fellow biohackers.</p>
-              <button className="text-purple-600 font-semibold hover:text-purple-700">Join Discussion →</button>
+              <button 
+                onClick={() => setActiveView('forum')}
+                className="text-purple-600 font-semibold hover:text-purple-700"
+              >
+                Join Discussion →
+              </button>
             </div>
           </div>
         </div>
@@ -293,6 +521,9 @@ const CommunityCoaching = () => {
     </div>
   );
 };
+
+// Alias for backward compatibility
+const CommunityCoaching = CommunityPlatform;
 
 // Main Home Component
 const Home = () => {
