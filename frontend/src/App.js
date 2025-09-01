@@ -2233,14 +2233,37 @@ const CoachOnboardingPage = () => {
     setError('');
 
     try {
-      // Mock successful profile creation for demo
-      setTimeout(() => {
-        setLoading(false);
-        alert('🎉 Congratulations! Your coach profile is now live with a 30-day free trial!');
+      const response = await axios.post(`${API}/coaches`, {
+        name: coachProfile.full_name,
+        bio: coachProfile.bio,
+        specialties: coachProfile.specialties,
+        location: coachProfile.location,
+        hourly_rate: coachProfile.pricing,
+        availability: 'Mon-Fri 9AM-6PM',  // Default, can be made configurable
+        credentials: [],  // Can be added in profile editing
+        contact_info: {
+          email: user?.email || '',
+          phone: coachProfile.phone,
+          website: coachProfile.website
+        },
+        profile_image: coachProfile.profile_image,
+        website: coachProfile.website,
+        years_experience: coachProfile.years_experience
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 200) {
+        alert('🎉 Congratulations! Your coach profile has been created and is pending approval.');
         window.location.href = '/coaches';
-      }, 1000);
+      }
     } catch (err) {
-      setError('Profile creation failed. Please try again.');
+      console.error('Profile creation error:', err);
+      setError(err.response?.data?.detail || 'Profile creation failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
