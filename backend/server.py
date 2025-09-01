@@ -1061,6 +1061,52 @@ async def deactivate_coach(coach_id: str, current_user: UserProfile = Depends(ge
     
     return {"message": "Coach deactivated successfully"}
 
+@api_router.get("/admin/coaches/export/emails")
+async def export_coach_emails(current_user: UserProfile = Depends(get_current_user)):
+    """Export coach emails for marketing campaigns (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all coaches with their user information
+    coaches = await db.coaches.find({}).to_list(1000)
+    coach_emails = []
+    
+    for coach in coaches:
+        # Get user email from user_id
+        if coach.get("user_id"):
+            user = await db.users.find_one({"id": coach["user_id"]})
+            if user:
+                coach_emails.append({
+                    "name": coach.get("name", ""),
+                    "email": user.get("email", ""),
+                    "location": coach.get("location", ""),
+                    "specialties": coach.get("specialties", []),
+                    "is_approved": coach.get("is_approved", False),
+                    "is_active": coach.get("is_active", True),
+                    "created_at": coach.get("created_at", ""),
+                    "last_updated": coach.get("updated_at", "")
+                })
+        
+        # Also check contact_info for email if no user_id
+        if not coach.get("user_id") and coach.get("contact_info", {}).get("email"):
+            coach_emails.append({
+                "name": coach.get("name", ""),
+                "email": coach["contact_info"]["email"],
+                "location": coach.get("location", ""),
+                "specialties": coach.get("specialties", []),
+                "is_approved": coach.get("is_approved", False),
+                "is_active": coach.get("is_active", True),
+                "created_at": coach.get("created_at", ""),
+                "last_updated": coach.get("updated_at", "")
+            })
+    
+    return {
+        "total_coaches": len(coach_emails),
+        "approved_coaches": len([c for c in coach_emails if c["is_approved"]]),
+        "active_coaches": len([c for c in coach_emails if c["is_active"]]),
+        "coach_emails": coach_emails
+    }
+
 @api_router.post("/users", response_model=UserProfile)
 async def create_user_profile(user_data: UserProfileCreate, current_user: UserProfile = Depends(get_current_user)):
     """Update user profile (authenticated)"""
