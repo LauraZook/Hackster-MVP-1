@@ -86,12 +86,13 @@ const CoreFeatures = () => {
     {
       id: "stack",
       title: "2. Build Your Hackster Stack",
-      subtitle: "Personalized Product Recommendations",
+      subtitle: "Personalized Product Recommendations", 
       description: "Take our smart questionnaire for personalized biohacking recommendations powered by AI.",
       icon: "⚡",
       highlights: [],
       cta: "Start Questionnaire",
-      color: "purple"
+      color: "purple",
+      link: "/get-started"
     },
     {
       id: "coaching",
