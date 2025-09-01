@@ -16,5 +16,8 @@ RUN echo "=== Current directory ===" && pwd && echo "=== Files in /app ===" && l
 # Expose the port
 EXPOSE 8001
 
-# Start the application
-CMD ["python", "server.py"]
+# Make start script executable
+RUN chmod +x start.sh
+
+# Start the application using the debug script
+CMD ["./start.sh"]
