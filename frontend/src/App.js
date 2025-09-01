@@ -1346,7 +1346,7 @@ const CoachesPage = () => {
         </div>
 
         {/* Become a Coach Section */}
-        <div className="bg-gradient-to-r from-blue-800 to-purple-600 rounded-lg p-8 mb-12 text-center text-white">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-lg p-8 mb-12 text-center text-white">
           <h2 className="text-xl font-semibold mb-4 leading-relaxed">
             Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster community!
           </h2>
