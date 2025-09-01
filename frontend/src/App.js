@@ -118,14 +118,16 @@ const CoreFeatures = () => {
                   <p className="text-gray-600 leading-relaxed">{feature.description}</p>
                 </div>
 
-                <div className="space-y-3 mb-8">
-                  {feature.highlights.map((highlight, idx) => (
-                    <div key={idx} className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 bg-${feature.color}-500 rounded-full`}></div>
-                      <span className="text-gray-700">{highlight}</span>
-                    </div>
-                  ))}
-                </div>
+                {feature.highlights.length > 0 && (
+                  <div className="space-y-3 mb-8">
+                    {feature.highlights.map((highlight, idx) => (
+                      <div key={idx} className="flex items-center space-x-3">
+                        <div className={`w-2 h-2 bg-${feature.color}-500 rounded-full`}></div>
+                        <span className="text-gray-700">{highlight}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <button className={`w-full bg-${feature.color}-600 text-white py-3 rounded-xl font-semibold hover:bg-${feature.color}-700 transition-colors shadow-md hover:shadow-lg`}>
                   {feature.cta}
