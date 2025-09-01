@@ -44,7 +44,7 @@ const HeroSection = () => {
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
             Optimize Your Health with
-            <span className="text-emerald-600 block">Biohacking Excellence</span>
+            <span className="text-blue-600 block">Biohacking Excellence</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
             Establish your baseline, build your personalized Hackster stack, and optimize 
