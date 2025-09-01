@@ -152,6 +152,9 @@
         - working: true
           agent: "main"
           comment: "Coach directory with ratings, specialties, location filtering implemented. Ready for revenue generation like Noomii model."
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE COACH PROFILE MANAGEMENT TESTING COMPLETED: All 13 coach-related tests passed (100% success rate). Verified: Public coach directory (GET /api/coaches) with approved coaches only, specialty and location filtering, individual coach profiles (GET /api/coaches/{id}), coach profile creation (POST /api/coaches) with proper authentication (coaches only), profile updates (PUT /api/coaches/{id}) with owner permissions, profile deletion (DELETE /api/coaches/{id}) with proper authorization, admin endpoints (GET /api/admin/coaches, PUT /api/admin/coaches/{id}/approve, PUT /api/admin/coaches/{id}/deactivate) with admin-only access. Fixed sample data initialization issue where coaches were not approved by default. Complete coach onboarding → profile creation → directory listing → admin management workflow is fully functional."
 
   - task: "User Profile & Assessment System"
     implemented: true
