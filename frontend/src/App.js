@@ -797,12 +797,12 @@ const CommunityLanding = () => {
                 <p className="text-blue-100 mb-6 text-sm">
                   Please sign up to share your biohacking experiences and connect with the Hackster.ai community.
                 </p>
-                <button
-                  onClick={() => setShowSignUp(true)}
-                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
+                <Link
+                  to="/login"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full block text-center"
                 >
                   Join Community
-                </button>
+                </Link>
               </>
             )}
           </div>
