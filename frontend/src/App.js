@@ -60,16 +60,11 @@ const CoreFeatures = () => {
     {
       id: "baseline",
       title: "1. Establish Your Baseline",
-      subtitle: "Comprehensive Health Assessment",
+      subtitle: "Comprehensive Health Panels",
       description: "Get recommended health tests to identify deficiencies and establish your starting point for optimal health and vitality.",
       icon: "🎯",
-      highlights: [
-        "Function Health comprehensive panels",
-        "Thorne personalized testing",
-        "Deficiency identification",
-        "Baseline health metrics"
-      ],
-      cta: "Get Health Tests",
+      highlights: [],
+      cta: "Get My Biomarkers",
       color: "emerald"
     },
     {
