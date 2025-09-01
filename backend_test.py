@@ -144,6 +144,7 @@ class AuthenticationTester:
                 return
             
             self.coach_token = data["access_token"]
+            self.coach_email = test_data["email"]  # Store for login test
             self.log_test("Coach Registration", True, "Coach registered successfully")
         else:
             self.log_test("Coach Registration", False, f"Status: {response['status_code']}, Error: {response['data']}")
