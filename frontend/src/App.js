@@ -94,7 +94,7 @@ const CoreFeatures = () => {
       description: "Get personalized guidance from the Hackster AI coach 24/7, plus connect with certified coaches for advanced results.",
       icon: "🚀",
       highlights: [],
-      cta: "Start Coaching",
+      cta: "Find a Coach",
       color: "blue"
     }
   ];
