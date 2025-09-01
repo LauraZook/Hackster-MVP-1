@@ -892,17 +892,17 @@ const GetStartedFlow = () => {
                 <div className="text-center">
                   <div className="text-3xl mb-3">🎯</div>
                   <h3 className="font-semibold mb-2">Establish Baseline</h3>
-                  <p className="text-gray-600 text-sm">Identify the right health tests for your goals</p>
+                  <p className="text-gray-600 text-sm">Identify the right health tests for your specific goals</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-3">⚡</div>
                   <h3 className="font-semibold mb-2">Build Your Stack</h3>
-                  <p className="text-gray-600 text-sm">Get personalized supplement recommendations</p>
+                  <p className="text-gray-600 text-sm">Get personalized Hackster recommendations</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-3">🚀</div>
                   <h3 className="font-semibold mb-2">Optimize Results</h3>
-                  <p className="text-gray-600 text-sm">Connect with expert coaches when ready</p>
+                  <p className="text-gray-600 text-sm">Connect you with expert live coaches when you're ready</p>
                 </div>
               </div>
             </div>
