@@ -1341,7 +1341,7 @@ const CoachesPage = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Find a Wellness Coach</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Connect with certified health & wellness professionals with biohacking expertise to accelerate your health journey today!
+            Connect with certified health & wellness pros with biohacking expertise to accelerate your Hackster journey today!
           </p>
         </div>
 
