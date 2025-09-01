@@ -502,7 +502,11 @@ async def initialize_sample_data():
             "availability": "Mon-Fri 9AM-6PM PST",
             "contact_info": {"email": "sarah@hackstercoach.com", "phone": "(555) 123-4567"},
             "rating": 4.9,
-            "total_reviews": 127
+            "total_reviews": 127,
+            "years_experience": 15,
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://sarahmartinez-wellness.com"
         },
         {
             "name": "Mike Chen",
@@ -514,7 +518,27 @@ async def initialize_sample_data():
             "availability": "Tue-Sat 6AM-8PM CST",
             "contact_info": {"email": "mike@hackstercoach.com", "phone": "(555) 987-6543"},
             "rating": 4.8,
-            "total_reviews": 89
+            "total_reviews": 89,
+            "years_experience": 8,
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://mikechen-performance.com"
+        },
+        {
+            "name": "Dr. Lisa Thompson",
+            "credentials": ["MD", "Functional Medicine Certified", "Biohacking Institute Graduate"],
+            "specialties": ["Longevity", "Biohacking", "Sleep Optimization", "Stress Management"],
+            "location": "New York, NY",
+            "bio": "Medical doctor specializing in longevity and biohacking protocols. Helping clients optimize their healthspan through cutting-edge interventions.",
+            "hourly_rate": "$200-300",
+            "availability": "Mon-Thu 10AM-4PM EST",
+            "contact_info": {"email": "lisa@longevityhub.com", "phone": "(555) 234-5678"},
+            "rating": 4.95,
+            "total_reviews": 203,
+            "years_experience": 12,
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://longevityhub.com"
         }
     ]
     
