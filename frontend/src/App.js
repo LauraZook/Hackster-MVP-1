@@ -1231,7 +1231,7 @@ const LoginPage = () => {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">H</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Hackster</span>
+            <span className="text-2xl font-bold text-gray-900">Hackster.ai</span>
           </Link>
           <h2 className="text-3xl font-extrabold text-gray-900">
             {isLogin ? 'Welcome Back' : 'Join Hackster'}
