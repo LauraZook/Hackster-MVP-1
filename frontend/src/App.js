@@ -12,11 +12,19 @@ const Navigation = () => {
   
   return (
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
-      <Link to="/" className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">H</span>
+      <Link to="/" className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">H</span>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-bold text-gray-900">Hackster</span>
+              <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
+            </div>
+            <span className="text-xs text-gray-500 -mt-1">Your biohacking buddy</span>
+          </div>
         </div>
-        <span className="text-2xl font-bold text-gray-900">Hackster</span>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
         <a href="#stack" className="text-gray-700 hover:text-blue-600 transition-colors">Stack</a>
