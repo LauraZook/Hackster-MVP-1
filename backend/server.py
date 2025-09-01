@@ -1199,18 +1199,6 @@ async def health_check():
         print(f"Health check failed: {e}")
         return {"status": "unhealthy", "service": "Hackster.ai API", "error": str(e), "database": "disconnected"}
 
-# Health check endpoint for API route  
-@api_router.get("/health")
-async def api_health_check():
-    """API Health check endpoint"""
-    try:
-        # Simple database connectivity check
-        await client.admin.command('ping')
-        return {"status": "healthy", "service": "Hackster.ai API", "version": "1.0", "database": "connected"}
-    except Exception as e:
-        print(f"API Health check failed: {e}")
-        return {"status": "unhealthy", "service": "Hackster.ai API", "version": "1.0", "error": str(e), "database": "disconnected"}
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
