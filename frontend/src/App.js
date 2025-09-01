@@ -1506,11 +1506,19 @@ const Home = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">H</span>
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">H</span>
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl font-bold">Hackster</span>
+                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
+                </div>
+                <span className="text-xs text-gray-400 -mt-1">Your biohacking buddy</span>
+              </div>
             </div>
-            <span className="text-2xl font-bold">Hackster</span>
           </div>
           <p className="text-gray-400 mb-8">
             Empowering your biohacking journey with science-backed solutions and expert guidance.
