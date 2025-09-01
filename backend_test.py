@@ -832,7 +832,7 @@ if __name__ == "__main__":
     all_passed = tester.run_all_tests()
     
     if all_passed:
-        print("\n🎉 All authentication tests passed!")
+        print("\n🎉 All backend tests passed!")
         exit(0)
     else:
         print("\n⚠️ Some tests failed. Please check the issues above.")
