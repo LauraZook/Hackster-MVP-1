@@ -43,6 +43,210 @@ class RailwayDeploymentTester:
             print(f"   Details: {details}")
         print()
     
+    # ========== RAILWAY DEPLOYMENT & HEALTH CHECK TESTS ==========
+    
+    def test_railway_health_endpoint(self):
+        """Test /health endpoint for Railway deployment"""
+        try:
+            response = requests.get(f"{self.health_url}/health", timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required health check fields
+                required_fields = ["status", "service"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Railway Health Check", False, f"Missing fields: {missing_fields}")
+                    return
+                
+                if data["status"] == "healthy":
+                    self.log_test("Railway Health Check", True, f"Service healthy: {data.get('service', 'Unknown')}")
+                    
+                    # Check database connectivity
+                    if data.get("database") == "connected":
+                        self.database_connected = True
+                        self.log_test("MongoDB Connection via Health Check", True, "Database connected successfully")
+                    else:
+                        self.log_test("MongoDB Connection via Health Check", False, f"Database status: {data.get('database', 'unknown')}")
+                else:
+                    self.log_test("Railway Health Check", False, f"Service unhealthy: {data.get('status', 'unknown')}")
+            else:
+                self.log_test("Railway Health Check", False, f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_test("Railway Health Check", False, f"Connection error: {str(e)}")
+    
+    def test_api_health_endpoint(self):
+        """Test /api/health endpoint"""
+        response = self.make_request("GET", "/health")
+        
+        if response["success"] and response["status_code"] == 200:
+            data = response["data"]
+            
+            # Check API health response structure
+            required_fields = ["status", "service", "version"]
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                self.log_test("API Health Check", False, f"Missing fields: {missing_fields}")
+                return
+            
+            if data["status"] == "healthy":
+                self.log_test("API Health Check", True, f"API healthy - Version: {data.get('version', 'unknown')}")
+                
+                # Verify database connection through API
+                if data.get("database") == "connected":
+                    self.database_connected = True
+                    self.log_test("MongoDB Connection via API", True, "Database accessible through API")
+                else:
+                    self.log_test("MongoDB Connection via API", False, f"Database status: {data.get('database', 'unknown')}")
+            else:
+                self.log_test("API Health Check", False, f"API unhealthy: {data.get('status', 'unknown')}")
+        else:
+            self.log_test("API Health Check", False, f"Status: {response['status_code']}, Error: {response['data']}")
+    
+    def test_ping_endpoint(self):
+        """Test /ping endpoint"""
+        try:
+            response = requests.get(f"{self.health_url}/ping", timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("message") == "pong":
+                    self.log_test("Ping Endpoint", True, "Ping/pong successful")
+                else:
+                    self.log_test("Ping Endpoint", False, f"Unexpected response: {data}")
+            else:
+                self.log_test("Ping Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_test("Ping Endpoint", False, f"Connection error: {str(e)}")
+    
+    def test_sample_data_initialization(self):
+        """Test that sample data was properly initialized in MongoDB"""
+        if not self.database_connected:
+            self.log_test("Sample Data Initialization", False, "Database not connected - cannot test sample data")
+            return
+        
+        # Test health tests data
+        health_tests_response = self.make_request("GET", "/health-tests")
+        if not health_tests_response["success"]:
+            self.log_test("Sample Data - Health Tests", False, f"Failed to retrieve health tests: {health_tests_response['data']}")
+            return
+        
+        health_tests = health_tests_response["data"]
+        if len(health_tests) < 2:
+            self.log_test("Sample Data - Health Tests", False, f"Expected at least 2 health tests, found {len(health_tests)}")
+            return
+        
+        # Check for expected providers
+        providers = [test.get("provider", "") for test in health_tests]
+        expected_providers = ["function_health", "thorne"]
+        found_providers = [p for p in expected_providers if p in providers]
+        
+        if len(found_providers) < 2:
+            self.log_test("Sample Data - Health Tests", False, f"Expected providers not found. Found: {found_providers}")
+            return
+        
+        self.log_test("Sample Data - Health Tests", True, f"Found {len(health_tests)} health tests with proper providers")
+        
+        # Test supplements data
+        supplements_response = self.make_request("GET", "/supplements")
+        if not supplements_response["success"]:
+            self.log_test("Sample Data - Supplements", False, f"Failed to retrieve supplements: {supplements_response['data']}")
+            return
+        
+        supplements = supplements_response["data"]
+        if len(supplements) < 5:
+            self.log_test("Sample Data - Supplements", False, f"Expected at least 5 supplements, found {len(supplements)}")
+            return
+        
+        # Check for expected brands
+        brands = [supp.get("brand", "") for supp in supplements]
+        expected_brands = ["Thorne", "Standard Process", "Apex Energetics"]
+        found_brands = [b for b in expected_brands if b in brands]
+        
+        if len(found_brands) < 2:
+            self.log_test("Sample Data - Supplements", False, f"Expected brands not found. Found: {found_brands}")
+            return
+        
+        self.log_test("Sample Data - Supplements", True, f"Found {len(supplements)} supplements with proper brands")
+        
+        # Test biohacks data
+        biohacks_response = self.make_request("GET", "/biohacks")
+        if not biohacks_response["success"]:
+            self.log_test("Sample Data - Biohacks", False, f"Failed to retrieve biohacks: {biohacks_response['data']}")
+            return
+        
+        biohacks = biohacks_response["data"]
+        if len(biohacks) < 3:
+            self.log_test("Sample Data - Biohacks", False, f"Expected at least 3 biohacks, found {len(biohacks)}")
+            return
+        
+        # Check for expected categories
+        categories = [tip.get("category", "") for tip in biohacks]
+        expected_categories = ["Recovery", "Circadian Rhythm", "Stress Management"]
+        found_categories = [c for c in expected_categories if c in categories]
+        
+        if len(found_categories) < 2:
+            self.log_test("Sample Data - Biohacks", False, f"Expected categories not found. Found: {found_categories}")
+            return
+        
+        self.log_test("Sample Data - Biohacks", True, f"Found {len(biohacks)} biohacks with proper categories")
+    
+    def test_database_dependent_endpoints(self):
+        """Test critical endpoints that depend on database connectivity"""
+        if not self.database_connected:
+            self.log_test("Database Dependent Endpoints", False, "Database not connected - cannot test dependent endpoints")
+            return
+        
+        # Test endpoints that require database
+        endpoints_to_test = [
+            ("/health-tests", "Health Tests API"),
+            ("/supplements", "Supplements API"),
+            ("/supplements/priority", "Priority Supplements API"),
+            ("/biohacks", "Biohacks API"),
+            ("/coaches", "Coaches API"),
+            ("/posts", "Community Posts API")
+        ]
+        
+        failed_endpoints = []
+        successful_endpoints = []
+        
+        for endpoint, name in endpoints_to_test:
+            response = self.make_request("GET", endpoint)
+            if response["success"] and response["status_code"] == 200:
+                data = response["data"]
+                if isinstance(data, list) and len(data) > 0:
+                    successful_endpoints.append(name)
+                else:
+                    failed_endpoints.append(f"{name} (empty data)")
+            else:
+                failed_endpoints.append(f"{name} (HTTP {response['status_code']})")
+        
+        if len(failed_endpoints) == 0:
+            self.log_test("Database Dependent Endpoints", True, f"All {len(successful_endpoints)} endpoints working with data")
+        else:
+            self.log_test("Database Dependent Endpoints", False, f"Failed endpoints: {failed_endpoints}")
+    
+    def run_railway_deployment_tests(self):
+        """Run all Railway deployment and database connectivity tests"""
+        print("🚀 RAILWAY DEPLOYMENT & DATABASE TESTS")
+        print("=" * 50)
+        
+        # Basic connectivity tests
+        self.test_railway_health_endpoint()
+        self.test_api_health_endpoint()
+        self.test_ping_endpoint()
+        
+        # Database and sample data tests
+        self.test_sample_data_initialization()
+        self.test_database_dependent_endpoints()
+        
+        print()
+
     def make_request(self, method: str, endpoint: str, data: Dict = None, token: str = None) -> Dict[str, Any]:
         """Make HTTP request with proper error handling"""
         url = f"{self.base_url}{endpoint}"
