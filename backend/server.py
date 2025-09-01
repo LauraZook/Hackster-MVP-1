@@ -124,12 +124,51 @@ class UserProfile(BaseModel):
     email: EmailStr
     username: str
     role: UserRole = UserRole.MEMBER
+    level: UserLevel = UserLevel.MEMBER
+    reputation_score: int = 0
+    posts_count: int = 0
+    comments_count: int = 0
+    reactions_received: int = 0
     age: Optional[int] = None
     gender: Optional[str] = None
     goals: List[str] = []
     current_supplements: List[str] = []
     health_conditions: List[str] = []
     is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Post(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    title: str
+    content: str
+    category: PostCategory
+    image_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    upvotes: int = 0
+    downvotes: int = 0
+    reaction_counts: Dict[str, int] = Field(default_factory=dict)
+    comments_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Comment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    post_id: str
+    user_id: str
+    username: str
+    content: str
+    upvotes: int = 0
+    downvotes: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Reaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    post_id: Optional[str] = None
+    comment_id: Optional[str] = None
+    reaction_type: ReactionType
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserInDB(UserProfile):
