@@ -255,7 +255,6 @@
 
 ## test_plan:
   current_focus:
-    - "Frontend Deployment Preparation"
     - "Production Environment Verification"
   stuck_tasks: []
   test_all: false
