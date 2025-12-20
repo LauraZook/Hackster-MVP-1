@@ -2880,7 +2880,7 @@ const MarketplacePage = () => {
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-900">{item.product_name}</h4>
                           <p className="text-sm text-gray-500">{item.vendor_name}</p>
-                          <p className="text-green-600 font-medium">${item.price} × {item.quantity}</p>
+                          <p className="text-blue-600 font-medium">${item.price} × {item.quantity}</p>
                         </div>
                       </div>
                     ))}
@@ -2888,9 +2888,9 @@ const MarketplacePage = () => {
                   <div className="border-t pt-4">
                     <div className="flex justify-between text-lg font-bold mb-4">
                       <span>Subtotal:</span>
-                      <span className="text-green-600">${cart.subtotal?.toFixed(2) || '0.00'}</span>
+                      <span className="text-blue-600">${cart.subtotal?.toFixed(2) || '0.00'}</span>
                     </div>
-                    <button className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">
+                    <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">
                       Proceed to Checkout
                     </button>
                     <p className="text-xs text-gray-500 text-center mt-2">
