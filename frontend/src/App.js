@@ -3962,6 +3962,12 @@ function App() {
             <Route path="/chat" element={<AICoachChat />} />
             <Route path="/coach/conner" element={<AICoachChat />} />
             
+            {/* Marketplace & AI Features */}
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/questionnaire" element={<AIQuestionnairePage />} />
+            <Route path="/my-stack" element={<MyStackPage />} />
+            <Route path="/stack/:stackId" element={<MyStackPage />} />
+            
             {/* Blog System (Phase 2) */}
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/experiments" element={<BlogPage />} />
