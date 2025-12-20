@@ -100,6 +100,55 @@ class HealthTestProvider(str, Enum):
     FUNCTION_HEALTH = "function_health"
     THORNE = "thorne"
 
+# ============== NEW MARKETPLACE ENUMS ==============
+class VendorStatus(str, Enum):
+    ACTIVE = "active"
+    PENDING = "pending"
+    INACTIVE = "inactive"
+
+class ProductCategory(str, Enum):
+    SUPPLEMENTS = "supplements"
+    VITAMINS = "vitamins"
+    MINERALS = "minerals"
+    ADAPTOGENS = "adaptogens"
+    AMINO_ACIDS = "amino_acids"
+    PROBIOTICS = "probiotics"
+    NOOTROPICS = "nootropics"
+    SLEEP_AIDS = "sleep_aids"
+    ENERGY = "energy"
+    RECOVERY = "recovery"
+    DEVICES = "devices"
+    LAB_TESTS = "lab_tests"
+    APPAREL = "apparel"
+
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    SHIPPED = "shipped"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+    REFUNDED = "refunded"
+
+class WishlistVisibility(str, Enum):
+    PRIVATE = "private"
+    FRIENDS = "friends"
+    COMMUNITY = "community"
+    PUBLIC = "public"
+
+class HealthGoal(str, Enum):
+    ENERGY = "energy"
+    SLEEP = "sleep"
+    FOCUS = "focus"
+    LONGEVITY = "longevity"
+    ATHLETIC_PERFORMANCE = "athletic_performance"
+    WEIGHT_MANAGEMENT = "weight_management"
+    STRESS_MANAGEMENT = "stress_management"
+    IMMUNE_SUPPORT = "immune_support"
+    GUT_HEALTH = "gut_health"
+    HORMONE_BALANCE = "hormone_balance"
+    SKIN_HEALTH = "skin_health"
+    HEART_HEALTH = "heart_health"
+
 # Data Models
 class HealthTest(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
