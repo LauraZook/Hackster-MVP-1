@@ -85,7 +85,7 @@ const Navigation = () => {
         </div>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
-        <Link to="/marketplace" className={`transition-colors ${location.pathname === '/marketplace' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+        <Link to="/marketplace" className={`transition-colors ${location.pathname === '/marketplace' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Marketplace
         </Link>
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
