@@ -7,7 +7,7 @@ Tests that protected and public endpoints work correctly with the auth system
 import requests
 import json
 
-BASE_URL = "https://health-optimize.preview.emergentagent.com/api"
+BASE_URL = "https://lab-connect-3.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 def get_auth_token():
