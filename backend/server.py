@@ -27,6 +27,9 @@ SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'hackster-ai-secret-key-for-jwt-to
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# Emergent LLM Key for AI
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
