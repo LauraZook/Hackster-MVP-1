@@ -3028,7 +3028,7 @@ const AIQuestionnairePage = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-4">💊 Recommended Products</h3>
             <div className="space-y-4">
               {recommendations.recommended_products?.map((product, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
+                <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-gray-900">{product.name}</h4>
                     <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">{product.brand}</span>
@@ -3036,8 +3036,8 @@ const AIQuestionnairePage = () => {
                   <p className="text-sm text-gray-600 mt-1">{product.reason}</p>
                   <div className="mt-2">
                     <span className={`text-xs px-2 py-1 rounded ${
-                      product.priority === 1 ? 'bg-green-100 text-green-700' :
-                      product.priority === 2 ? 'bg-blue-100 text-blue-700' :
+                      product.priority === 1 ? 'bg-blue-100 text-blue-700' :
+                      product.priority === 2 ? 'bg-purple-100 text-purple-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
                       Priority {product.priority}
@@ -3048,7 +3048,7 @@ const AIQuestionnairePage = () => {
             </div>
             <Link 
               to="/marketplace" 
-              className="mt-6 inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700"
+              className="mt-6 inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
             >
               Shop Recommended Products →
             </Link>
