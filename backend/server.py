@@ -1138,7 +1138,7 @@ async def initialize_sample_data():
                 "affiliate_url": "https://thorne.com/products/dp/magnesium-bisglycinate?aff=hackster",
                 "benefits": ["Better sleep quality", "Muscle relaxation", "Stress reduction", "Energy production"],
                 "dosage_instructions": "Take 1-2 capsules daily, preferably in the evening",
-                "health_goals": ["sleep", "stress_management", "athletic_performance", "recovery"],
+                "health_goals": ["sleep", "stress_management", "athletic_performance"],
                 "demographic_targets": ["men", "women", "athletes"],
                 "rating": 4.8,
                 "review_count": 1823,
