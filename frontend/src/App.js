@@ -3885,6 +3885,61 @@ const PublicPostView = () => {
   );
 };
 
+// Footer Component
+const Footer = () => {
+  return (
+    <footer className="bg-gray-900 text-white py-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-4 gap-8">
+          <div>
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">H</span>
+              </div>
+              <span className="text-xl font-bold">Hackster.ai</span>
+            </div>
+            <p className="text-gray-400 text-sm">
+              Your biohacking buddy for optimal health and performance.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link to="/get-started" className="hover:text-white">Get Started</Link></li>
+              <li><Link to="/marketplace" className="hover:text-white">Marketplace</Link></li>
+              <li><Link to="/questionnaire" className="hover:text-white">AI Questionnaire</Link></li>
+              <li><Link to="/my-stack" className="hover:text-white">My Stack</Link></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-4">Community</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link to="/community" className="hover:text-white">Forum</Link></li>
+              <li><Link to="/coaches" className="hover:text-white">Find Coaches</Link></li>
+              <li><Link to="/chat" className="hover:text-white">AI Coach</Link></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-4">Support</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><a href="#" className="hover:text-white">Help Center</a></li>
+              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+          <p>&copy; 2024 Hackster.ai. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
