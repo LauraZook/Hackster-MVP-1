@@ -2297,6 +2297,9 @@ async def get_questionnaire():
     questionnaire = await db.questionnaire_templates.find_one({"id": "biohacking-assessment-v1"})
     if not questionnaire:
         raise HTTPException(status_code=404, detail="Questionnaire not found")
+    # Remove MongoDB ObjectId before returning
+    if "_id" in questionnaire:
+        del questionnaire["_id"]
     return questionnaire
 
 @api_router.post("/questionnaire/submit", response_model=AIRecommendation)
