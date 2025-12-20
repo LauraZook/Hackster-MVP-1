@@ -3966,6 +3966,11 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/experiments" element={<BlogPage />} />
             
+            {/* New Features */}
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/questionnaire" element={<AIQuestionnairePage />} />
+            <Route path="/my-stack" element={<MyStackPage />} />
+            
             {/* Legal Pages */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
