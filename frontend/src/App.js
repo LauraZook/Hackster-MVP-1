@@ -2710,10 +2710,10 @@ const MarketplacePage = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-6">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Hackster Marketplace</h1>
-          <p className="text-xl text-green-100 max-w-2xl">
+          <p className="text-xl text-blue-100 max-w-2xl">
             Premium biohacking products from trusted vendors. Science-backed supplements, 
             cutting-edge devices, and everything you need to optimize your health.
           </p>
@@ -2731,7 +2731,7 @@ const MarketplacePage = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -2739,7 +2739,7 @@ const MarketplacePage = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 {categories.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -2751,7 +2751,7 @@ const MarketplacePage = () => {
               <select
                 value={selectedVendor}
                 onChange={(e) => setSelectedVendor(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Vendors</option>
                 {vendors.map(vendor => (
@@ -2762,7 +2762,7 @@ const MarketplacePage = () => {
             <div className="flex items-end">
               <button
                 onClick={() => setShowCart(true)}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center"
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center"
               >
                 🛒 Cart ({cart.items?.length || 0})
               </button>
@@ -2773,7 +2773,7 @@ const MarketplacePage = () => {
         {/* Products Grid */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading products...</p>
           </div>
         ) : (
