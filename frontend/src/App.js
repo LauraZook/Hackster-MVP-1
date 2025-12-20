@@ -146,7 +146,7 @@ const HeroSection = () => {
             <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-xl text-center">
               Get AI Recommendations
             </Link>
-            <Link to="/marketplace" className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-600 hover:text-white transition-all text-center">
+            <Link to="/marketplace" className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-600 hover:text-white transition-all text-center">
               Shop Marketplace
             </Link>
           </div>
