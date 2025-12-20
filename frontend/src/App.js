@@ -190,11 +190,11 @@ const CoreFeatures = () => {
       highlights: [],
       cta: "Create My Stack",
       color: "purple",
-      link: "/get-started"
+      link: "/my-stack"
     },
     {
       id: "coaching",
-      title: "3. Optimize with Coaching",
+      title: "4. Expert Coaching",
       subtitle: "AI Coach + Human Experts",
       description: "Get personalized guidance from the Hackster AI coach 24/7, plus connect with certified coaches for advanced results.",
       icon: "🚀",
