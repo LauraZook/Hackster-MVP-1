@@ -599,6 +599,123 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
     return UserProfile(**user.dict())
 
+# ============== AI RECOMMENDATION ENGINE ==============
+async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse], user_profile: Optional[UserProfile] = None) -> Dict[str, Any]:
+    """Generate personalized product recommendations using GPT"""
+    
+    if not EMERGENT_LLM_KEY:
+        # Return mock recommendations if no API key
+        return {
+            "health_score": 75,
+            "primary_goals": ["energy", "sleep"],
+            "recommended_products": [
+                {"product_id": "vitamin_d3_k2", "name": "Vitamin D3 + K2", "reason": "Essential for immune and bone health", "priority": 1},
+                {"product_id": "magnesium", "name": "Magnesium Bisglycinate", "reason": "Supports sleep and recovery", "priority": 2}
+            ],
+            "recommended_lab_tests": [
+                {"test_id": "comprehensive_panel", "name": "Comprehensive Metabolic Panel", "reason": "Establish baseline health metrics"}
+            ],
+            "lifestyle_tips": [
+                "Get 10-30 minutes of morning sunlight",
+                "Practice box breathing for stress management",
+                "End showers with 30-60 seconds of cold water"
+            ],
+            "personalized_summary": "Based on your responses, we recommend focusing on foundational health with Vitamin D3+K2 and Magnesium.",
+            "ai_reasoning": "Mock response - API key not configured"
+        }
+    
+    # Format responses for AI
+    responses_text = "\n".join([f"Q: {r.question_id} - A: {r.answer}" for r in user_responses])
+    
+    user_context = ""
+    if user_profile:
+        user_context = f"\nUser Info: Age: {user_profile.age or 'Unknown'}, Gender: {user_profile.gender or 'Unknown'}, Goals: {', '.join(user_profile.goals)}"
+    
+    system_prompt = """You are an expert biohacking and health optimization AI assistant for Hackster.ai. 
+    Your role is to analyze user health questionnaire responses and provide personalized supplement, 
+    product, and lifestyle recommendations.
+    
+    You have deep knowledge of:
+    - Supplements (Thorne, Apex Energetics, Standard Process brands)
+    - Biohacking protocols (cold exposure, breathwork, light therapy)
+    - Lab testing (Function Health, Superpower, Thorne tests)
+    - Health optimization strategies
+    
+    IMPORTANT: Always respond with valid JSON in this exact format:
+    {
+        "health_score": <number 0-100>,
+        "primary_goals": ["goal1", "goal2"],
+        "recommended_products": [
+            {"product_id": "id", "name": "Product Name", "brand": "Brand", "reason": "Why recommended", "priority": 1}
+        ],
+        "recommended_lab_tests": [
+            {"test_id": "id", "name": "Test Name", "provider": "provider", "reason": "Why needed"}
+        ],
+        "lifestyle_tips": ["tip1", "tip2", "tip3"],
+        "personalized_summary": "2-3 sentence summary of recommendations",
+        "ai_reasoning": "Detailed analysis of user's responses and why these recommendations were made"
+    }
+    
+    Base your recommendations on evidence-based health science and biohacking best practices."""
+    
+    user_prompt = f"""Please analyze the following health questionnaire responses and provide personalized recommendations:
+    
+    {responses_text}
+    {user_context}
+    
+    Consider the user's health goals, current lifestyle, and any concerns mentioned. 
+    Provide specific product recommendations from Thorne, Apex Energetics, or Standard Process brands.
+    Include relevant lab tests they should consider.
+    Suggest practical biohacking tips they can implement immediately."""
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"hackster-questionnaire-{uuid.uuid4()}",
+            system_message=system_prompt
+        ).with_model("openai", "gpt-5.1")
+        
+        message = UserMessage(text=user_prompt)
+        response = await chat.send_message(message)
+        
+        # Parse JSON response
+        # Try to extract JSON from the response
+        response_text = str(response)
+        
+        # Find JSON in response
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}') + 1
+        
+        if start_idx != -1 and end_idx > start_idx:
+            json_str = response_text[start_idx:end_idx]
+            result = json.loads(json_str)
+            return result
+        else:
+            raise ValueError("No JSON found in response")
+            
+    except Exception as e:
+        logging.error(f"AI recommendation error: {e}")
+        # Return default recommendations on error
+        return {
+            "health_score": 70,
+            "primary_goals": ["energy", "sleep"],
+            "recommended_products": [
+                {"product_id": "vitamin_d3_k2", "name": "Vitamin D3 + K2", "brand": "Thorne", "reason": "Essential for most people, supports immune function and bone health", "priority": 1},
+                {"product_id": "magnesium", "name": "Magnesium Bisglycinate", "brand": "Thorne", "reason": "Supports sleep, recovery, and over 300 enzymatic processes", "priority": 2},
+                {"product_id": "omega3", "name": "Super EPA", "brand": "Thorne", "reason": "Supports brain health and reduces inflammation", "priority": 3}
+            ],
+            "recommended_lab_tests": [
+                {"test_id": "comprehensive_panel", "name": "Comprehensive Metabolic Panel", "provider": "function_health", "reason": "Establish baseline health metrics"}
+            ],
+            "lifestyle_tips": [
+                "Get 10-30 minutes of morning sunlight within 1 hour of waking",
+                "Practice 5 minutes of box breathing daily for stress management",
+                "End showers with 30-60 seconds of cold water to boost energy"
+            ],
+            "personalized_summary": "We recommend starting with foundational supplements (Vitamin D3+K2 and Magnesium) and establishing your baseline through comprehensive lab testing.",
+            "ai_reasoning": f"Error generating AI response: {str(e)}. Providing default evidence-based recommendations."
+        }
+
 # Initialize sample data
 async def initialize_sample_data():
     """Initialize the database with sample health tests, supplements, and biohacks"""
