@@ -178,7 +178,7 @@ const CoreFeatures = () => {
       icon: "🛒",
       highlights: [],
       cta: "Visit Marketplace",
-      color: "green",
+      color: "blue",
       link: "/marketplace"
     },
     {
