@@ -139,15 +139,15 @@ const HeroSection = () => {
             <span className="text-blue-600 block">Biohacking Excellence</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
-            Establish your baseline, build your personalized Hackster stack, and optimize 
-            with world-class coaching for a healthier + happier you.
+            Get AI-powered recommendations, shop premium supplements from trusted vendors, 
+            and build your personalized Hackster stack for optimal health.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/get-started" className="bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl text-center">
-              Start Your Health Journey
+            <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-xl text-center">
+              Get AI Recommendations
             </Link>
-            <Link to="/chat" className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:border-green-600 hover:text-green-600 transition-all text-center">
-              Chat with AI Coach
+            <Link to="/marketplace" className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-600 hover:text-white transition-all text-center">
+              Shop Marketplace
             </Link>
           </div>
         </div>
