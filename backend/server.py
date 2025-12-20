@@ -1034,6 +1034,359 @@ async def initialize_sample_data():
         for user_data in sample_users:
             user = UserInDB(**user_data)
             await db.users.insert_one(user.dict())
+    
+    # ============== MARKETPLACE SAMPLE DATA ==============
+    # Sample Vendors
+    if await db.vendors.count_documents({}) == 0:
+        sample_vendors = [
+            {
+                "name": "Thorne",
+                "slug": "thorne",
+                "description": "Science-backed supplements with the highest quality standards. Trusted by healthcare practitioners worldwide.",
+                "logo_url": "https://cdn.thorne.com/logo.png",
+                "website": "https://thorne.com",
+                "affiliate_url_pattern": "https://thorne.com/products/dp/{product_slug}?aff=hackster",
+                "commission_rate": 0.15,
+                "status": "active",
+                "shipping_info": "Free shipping on orders $50+. Ships within 1-2 business days.",
+                "return_policy": "60-day satisfaction guarantee",
+                "categories": ["supplements", "vitamins", "minerals", "amino_acids", "probiotics"]
+            },
+            {
+                "name": "Apex Energetics",
+                "slug": "apex-energetics",
+                "description": "Practitioner-grade supplements designed for optimal therapeutic outcomes.",
+                "logo_url": "https://apexenergetics.com/logo.png",
+                "website": "https://apexenergetics.com",
+                "affiliate_url_pattern": "https://apexenergetics.com/products/{product_slug}?ref=hackster",
+                "commission_rate": 0.12,
+                "status": "active",
+                "shipping_info": "Ships within 2-3 business days.",
+                "return_policy": "30-day return policy",
+                "categories": ["supplements", "adaptogens", "amino_acids"]
+            },
+            {
+                "name": "Standard Process",
+                "slug": "standard-process",
+                "description": "Whole food-based supplements made from organically grown ingredients.",
+                "logo_url": "https://standardprocess.com/logo.png",
+                "website": "https://standardprocess.com",
+                "affiliate_url_pattern": "https://standardprocess.com/products/{product_slug}?partner=hackster",
+                "commission_rate": 0.10,
+                "status": "active",
+                "shipping_info": "Ships within 2-4 business days.",
+                "return_policy": "30-day return policy",
+                "categories": ["supplements", "vitamins", "minerals"]
+            },
+            {
+                "name": "Oura",
+                "slug": "oura",
+                "description": "Advanced wearable technology for sleep and recovery tracking.",
+                "logo_url": "https://ouraring.com/logo.png",
+                "website": "https://ouraring.com",
+                "affiliate_url_pattern": "https://ouraring.com/product/{product_slug}?ref=hackster",
+                "commission_rate": 0.08,
+                "status": "active",
+                "shipping_info": "Free shipping. Ships within 3-5 business days.",
+                "return_policy": "30-day return policy",
+                "categories": ["devices"]
+            }
+        ]
+        
+        for vendor_data in sample_vendors:
+            vendor = Vendor(**vendor_data)
+            await db.vendors.insert_one(vendor.dict())
+    
+    # Sample Marketplace Products
+    if await db.marketplace_products.count_documents({}) == 0:
+        sample_products = [
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "D138",
+                "name": "Vitamin D-5,000",
+                "slug": "vitamin-d-5000",
+                "description": "Each capsule contains 5,000 IU of vitamin D3 to maintain healthy levels of vitamin D for bone, immune, and cardiovascular health.",
+                "short_description": "5,000 IU vitamin D3 for immune and bone support",
+                "category": "vitamins",
+                "price": 19.00,
+                "sale_price": None,
+                "image_url": "https://d1vo8zfysxy97v.cloudfront.net/media/product/d138__v6d6301b3870baca3936f42dd3ac197ac421e097e.png",
+                "affiliate_url": "https://thorne.com/products/dp/vitamin-d-5000?aff=hackster",
+                "benefits": ["Immune system support", "Bone health", "Cardiovascular support", "Mood regulation"],
+                "dosage_instructions": "Take 1 capsule daily or as recommended by your health professional",
+                "health_goals": ["immune_support", "energy", "longevity"],
+                "demographic_targets": ["men", "women", "athletes", "seniors"],
+                "rating": 4.9,
+                "review_count": 2547,
+                "is_featured": True,
+                "priority_score": 95,
+                "tags": ["vitamin d", "immune", "bones", "bestseller"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "M284",
+                "name": "Magnesium Bisglycinate",
+                "slug": "magnesium-bisglycinate",
+                "description": "Highly absorbable magnesium chelate that promotes restful sleep, helps muscles relax, and supports stress management.",
+                "short_description": "Highly absorbable magnesium for sleep and relaxation",
+                "category": "minerals",
+                "price": 25.00,
+                "sale_price": None,
+                "image_url": "https://d1vo8zfysxy97v.cloudfront.net/media/product/m284__v722511088310a527d9bd4f32ff1f8a38e3e4fa0f.png",
+                "affiliate_url": "https://thorne.com/products/dp/magnesium-bisglycinate?aff=hackster",
+                "benefits": ["Better sleep quality", "Muscle relaxation", "Stress reduction", "Energy production"],
+                "dosage_instructions": "Take 1-2 capsules daily, preferably in the evening",
+                "health_goals": ["sleep", "stress_management", "athletic_performance", "recovery"],
+                "demographic_targets": ["men", "women", "athletes"],
+                "rating": 4.8,
+                "review_count": 1823,
+                "is_featured": True,
+                "priority_score": 90,
+                "tags": ["magnesium", "sleep", "relaxation", "recovery"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SP608NC",
+                "name": "Super EPA",
+                "slug": "super-epa",
+                "description": "High-concentration EPA fish oil for cardiovascular, brain, and joint support with superior absorption.",
+                "short_description": "High-potency omega-3 EPA for heart and brain health",
+                "category": "supplements",
+                "price": 40.00,
+                "sale_price": None,
+                "image_url": "https://d1vo8zfysxy97v.cloudfront.net/media/product/sp608nc__v85ffd3158c5fcd199d35f8f66966125217d62306.png",
+                "affiliate_url": "https://thorne.com/products/dp/super-epa?aff=hackster",
+                "benefits": ["Heart health", "Brain function", "Joint support", "Anti-inflammatory"],
+                "dosage_instructions": "Take 2-3 gelcaps daily with food",
+                "health_goals": ["heart_health", "focus", "longevity"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.7,
+                "review_count": 1456,
+                "is_featured": True,
+                "priority_score": 85,
+                "tags": ["omega-3", "fish oil", "EPA", "heart health"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF828",
+                "name": "Ashwagandha",
+                "slug": "ashwagandha",
+                "description": "Clinically studied Sensoril ashwagandha for stress resilience, mental clarity, and hormonal balance.",
+                "short_description": "Premium ashwagandha for stress and adaptogen support",
+                "category": "adaptogens",
+                "price": 21.00,
+                "sale_price": None,
+                "image_url": "https://d1vo8zfysxy97v.cloudfront.net/media/product/sf828__v859970c678922ca16ed2a0f883614b8a597361b3.png",
+                "affiliate_url": "https://thorne.com/products/dp/ashwagandha?aff=hackster",
+                "benefits": ["Stress resilience", "Mental clarity", "Energy levels", "Sleep quality"],
+                "dosage_instructions": "Take 1 capsule two times daily",
+                "health_goals": ["stress_management", "energy", "focus", "sleep"],
+                "demographic_targets": ["men", "women", "athletes"],
+                "rating": 4.8,
+                "review_count": 987,
+                "is_featured": True,
+                "priority_score": 88,
+                "tags": ["ashwagandha", "adaptogen", "stress", "energy"]
+            },
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-EAA",
+                "name": "Essential Amino Acids Complex",
+                "slug": "essential-amino-acids",
+                "description": "Complete spectrum of essential amino acids for muscle protein synthesis and neurotransmitter support.",
+                "short_description": "Complete EAA formula for muscle and brain support",
+                "category": "amino_acids",
+                "price": 54.00,
+                "sale_price": 48.00,
+                "image_url": "https://apexenergetics.com/images/eaa-complex.png",
+                "affiliate_url": "https://apexenergetics.com/products/essential-amino-acids?ref=hackster",
+                "benefits": ["Muscle recovery", "Protein synthesis", "Mood support", "Energy production"],
+                "dosage_instructions": "Mix 1 scoop with water, take 1-2 times daily",
+                "health_goals": ["athletic_performance", "energy", "focus"],
+                "demographic_targets": ["athletes", "men", "women"],
+                "rating": 4.6,
+                "review_count": 342,
+                "is_featured": False,
+                "priority_score": 75,
+                "tags": ["amino acids", "EAA", "muscle", "recovery"]
+            },
+            {
+                "vendor_id": "standard-process",
+                "vendor_name": "Standard Process",
+                "sku": "SP-VA",
+                "name": "Cataplex A",
+                "slug": "cataplex-a",
+                "description": "Whole food vitamin A complex derived from organic carrots for vision, immune, and skin health.",
+                "short_description": "Whole food vitamin A for vision and immune support",
+                "category": "vitamins",
+                "price": 28.00,
+                "sale_price": None,
+                "image_url": "https://standardprocess.com/images/cataplex-a.png",
+                "affiliate_url": "https://standardprocess.com/products/cataplex-a?partner=hackster",
+                "benefits": ["Vision support", "Immune function", "Skin health", "Antioxidant protection"],
+                "dosage_instructions": "Take 1 tablet 3 times daily with meals",
+                "health_goals": ["immune_support", "skin_health"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.5,
+                "review_count": 567,
+                "is_featured": False,
+                "priority_score": 70,
+                "tags": ["vitamin a", "vision", "immune", "whole food"]
+            },
+            {
+                "vendor_id": "oura",
+                "vendor_name": "Oura",
+                "sku": "OURA-G3",
+                "name": "Oura Ring Generation 3",
+                "slug": "oura-ring-gen3",
+                "description": "Advanced health tracking ring with sleep analysis, readiness scores, and activity tracking.",
+                "short_description": "Premium sleep and recovery tracking wearable",
+                "category": "devices",
+                "price": 299.00,
+                "sale_price": None,
+                "image_url": "https://ouraring.com/images/oura-ring-gen3.png",
+                "affiliate_url": "https://ouraring.com/product/oura-ring-gen3?ref=hackster",
+                "benefits": ["Sleep tracking", "HRV monitoring", "Activity tracking", "Recovery scores"],
+                "dosage_instructions": "Wear 24/7 for best tracking results",
+                "health_goals": ["sleep", "athletic_performance", "longevity"],
+                "demographic_targets": ["men", "women", "athletes"],
+                "rating": 4.7,
+                "review_count": 15234,
+                "is_featured": True,
+                "priority_score": 92,
+                "tags": ["wearable", "sleep tracker", "HRV", "biohacking"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF674",
+                "name": "NiaCel 400",
+                "slug": "niacel-400",
+                "description": "Nicotinamide riboside (NR) for cellular energy, healthy aging, and NAD+ support.",
+                "short_description": "NAD+ precursor for cellular energy and longevity",
+                "category": "supplements",
+                "price": 68.00,
+                "sale_price": None,
+                "image_url": "https://d1vo8zfysxy97v.cloudfront.net/media/product/niacel.png",
+                "affiliate_url": "https://thorne.com/products/dp/niacel-400?aff=hackster",
+                "benefits": ["Cellular energy", "Healthy aging", "Brain function", "Metabolic support"],
+                "dosage_instructions": "Take 1 capsule twice daily",
+                "health_goals": ["longevity", "energy", "focus"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.6,
+                "review_count": 678,
+                "is_featured": True,
+                "priority_score": 82,
+                "tags": ["NAD+", "NR", "longevity", "cellular health"]
+            }
+        ]
+        
+        for product_data in sample_products:
+            product = MarketplaceProduct(**product_data)
+            await db.marketplace_products.insert_one(product.dict())
+    
+    # Sample Questionnaire
+    if await db.questionnaire_templates.count_documents({}) == 0:
+        questionnaire = {
+            "id": "biohacking-assessment-v1",
+            "name": "Biohacking Health Assessment",
+            "description": "Comprehensive questionnaire to determine your personalized Hackster Stack",
+            "questions": [
+                {
+                    "id": "age_range",
+                    "question": "What is your age range?",
+                    "question_type": "single_choice",
+                    "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "65+"],
+                    "category": "demographics"
+                },
+                {
+                    "id": "gender",
+                    "question": "What is your biological sex?",
+                    "question_type": "single_choice",
+                    "options": ["Male", "Female", "Other/Prefer not to say"],
+                    "category": "demographics"
+                },
+                {
+                    "id": "primary_goal",
+                    "question": "What is your PRIMARY health goal?",
+                    "question_type": "single_choice",
+                    "options": ["More Energy", "Better Sleep", "Mental Focus", "Athletic Performance", "Longevity", "Stress Management", "Weight Management", "Immune Support"],
+                    "category": "health_goals"
+                },
+                {
+                    "id": "secondary_goals",
+                    "question": "Select any SECONDARY health goals:",
+                    "question_type": "multiple_choice",
+                    "options": ["More Energy", "Better Sleep", "Mental Focus", "Athletic Performance", "Longevity", "Stress Management", "Weight Management", "Immune Support", "Gut Health", "Hormone Balance", "Heart Health"],
+                    "category": "health_goals"
+                },
+                {
+                    "id": "energy_level",
+                    "question": "How would you rate your current energy levels?",
+                    "question_type": "scale",
+                    "scale_min": 1,
+                    "scale_max": 10,
+                    "category": "current_health"
+                },
+                {
+                    "id": "sleep_quality",
+                    "question": "How would you rate your sleep quality?",
+                    "question_type": "scale",
+                    "scale_min": 1,
+                    "scale_max": 10,
+                    "category": "current_health"
+                },
+                {
+                    "id": "stress_level",
+                    "question": "How would you rate your stress levels?",
+                    "question_type": "scale",
+                    "scale_min": 1,
+                    "scale_max": 10,
+                    "category": "current_health"
+                },
+                {
+                    "id": "exercise_frequency",
+                    "question": "How often do you exercise?",
+                    "question_type": "single_choice",
+                    "options": ["Never", "1-2 times/week", "3-4 times/week", "5+ times/week", "Daily"],
+                    "category": "lifestyle"
+                },
+                {
+                    "id": "diet_type",
+                    "question": "How would you describe your diet?",
+                    "question_type": "single_choice",
+                    "options": ["Standard American Diet", "Mostly Healthy", "Clean Eating", "Keto/Low Carb", "Mediterranean", "Vegan/Vegetarian", "Carnivore", "Other"],
+                    "category": "diet"
+                },
+                {
+                    "id": "current_supplements",
+                    "question": "Which supplements do you currently take?",
+                    "question_type": "multiple_choice",
+                    "options": ["None", "Multivitamin", "Vitamin D", "Magnesium", "Omega-3/Fish Oil", "Probiotics", "Protein Powder", "Creatine", "Pre-workout", "Other"],
+                    "category": "current_health"
+                },
+                {
+                    "id": "health_concerns",
+                    "question": "Do you have any specific health concerns?",
+                    "question_type": "multiple_choice",
+                    "options": ["None", "Fatigue", "Poor Sleep", "Brain Fog", "Digestive Issues", "Joint Pain", "Mood/Anxiety", "Blood Sugar", "Thyroid", "Hormonal Imbalance"],
+                    "category": "current_health"
+                },
+                {
+                    "id": "budget",
+                    "question": "What's your monthly supplement budget?",
+                    "question_type": "single_choice",
+                    "options": ["Under $50", "$50-100", "$100-200", "$200-300", "$300+"],
+                    "category": "preferences"
+                }
+            ]
+        }
+        await db.questionnaire_templates.insert_one(questionnaire)
 
 # Authentication API Routes
 @api_router.post("/auth/register", response_model=dict)
