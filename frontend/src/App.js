@@ -2799,7 +2799,7 @@ const MarketplacePage = () => {
                   {product.health_goals && product.health_goals.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
                       {product.health_goals.slice(0, 3).map(goal => (
-                        <span key={goal} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded">
+                        <span key={goal} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
                           {goal.replace('_', ' ')}
                         </span>
                       ))}
@@ -2810,7 +2810,7 @@ const MarketplacePage = () => {
                     <div>
                       {product.sale_price ? (
                         <div className="flex items-center space-x-2">
-                          <span className="text-lg font-bold text-green-600">${product.sale_price}</span>
+                          <span className="text-lg font-bold text-blue-600">${product.sale_price}</span>
                           <span className="text-sm text-gray-400 line-through">${product.price}</span>
                         </div>
                       ) : (
@@ -2825,7 +2825,7 @@ const MarketplacePage = () => {
                   <div className="mt-4 flex space-x-2">
                     <button
                       onClick={() => addToCart(product)}
-                      className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
                     >
                       Add to Cart
                     </button>
@@ -2834,7 +2834,7 @@ const MarketplacePage = () => {
                         href={product.affiliate_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 text-sm"
+                        className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 text-sm"
                       >
                         View
                       </a>
