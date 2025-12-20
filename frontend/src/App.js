@@ -85,13 +85,16 @@ const Navigation = () => {
         </div>
       </Link>
       <div className="hidden md:flex items-center space-x-8">
+        <Link to="/marketplace" className={`transition-colors ${location.pathname === '/marketplace' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}>
+          Marketplace
+        </Link>
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
         </Link>
         <Link to="/coaches" className={`transition-colors ${location.pathname === '/coaches' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Find a Coach
         </Link>
-        <Link to="/get-started" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
           Get Started
         </Link>
         
