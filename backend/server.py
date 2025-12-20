@@ -2303,22 +2303,15 @@ async def get_questionnaire():
     return questionnaire
 
 @api_router.post("/questionnaire/submit", response_model=AIRecommendation)
-async def submit_questionnaire(submission: AIQuestionnaireSubmission, current_user: Optional[UserProfile] = None):
+async def submit_questionnaire(submission: AIQuestionnaireSubmission):
     """Submit questionnaire and get AI-powered recommendations"""
     try:
-        # Get current user if authenticated
-        user_profile = None
-        user_id = "anonymous"
-        
-        if current_user:
-            user_profile = current_user
-            user_id = current_user.id
-        
-        # Generate AI recommendations
-        ai_result = await generate_ai_recommendations(submission.responses, user_profile)
+        # Generate AI recommendations (works for both authenticated and anonymous users)
+        ai_result = await generate_ai_recommendations(submission.responses, None)
         
         # Create session ID for this questionnaire submission
         session_id = str(uuid.uuid4())
+        user_id = "anonymous"
         
         # Convert health goals from strings to enum values if needed
         primary_goals = []
