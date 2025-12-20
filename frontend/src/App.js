@@ -2902,7 +2902,7 @@ const MarketplacePage = () => {
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
                   <span className="text-6xl mb-4">🛒</span>
                   <p>Your cart is empty</p>
-                  <Link to="/marketplace" className="mt-4 text-green-600 hover:underline" onClick={() => setShowCart(false)}>
+                  <Link to="/marketplace" className="mt-4 text-blue-600 hover:underline" onClick={() => setShowCart(false)}>
                     Browse Products
                   </Link>
                 </div>
