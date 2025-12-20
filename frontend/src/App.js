@@ -160,24 +160,35 @@ const HeroSection = () => {
 const CoreFeatures = () => {
   const features = [
     {
-      id: "baseline",
-      title: "1. Establish a Vision",
-      subtitle: "Comprehensive Health Panels",
-      description: "Identify the right health tests for benchmark data and then we'll set your specific goals.",
+      id: "questionnaire",
+      title: "1. AI Health Assessment",
+      subtitle: "Personalized Recommendations",
+      description: "Take our AI-powered questionnaire for personalized supplement, lab test, and biohacking recommendations.",
       icon: "🎯",
       highlights: [],
-      cta: "Get My Biomarkers",
+      cta: "Start Assessment",
       color: "blue",
-      link: "/get-started"
+      link: "/questionnaire"
+    },
+    {
+      id: "marketplace",
+      title: "2. Shop Trusted Vendors",
+      subtitle: "Premium Biohacking Products", 
+      description: "Browse products from Thorne, Apex Energetics, Standard Process, Oura, and more top brands.",
+      icon: "🛒",
+      highlights: [],
+      cta: "Visit Marketplace",
+      color: "green",
+      link: "/marketplace"
     },
     {
       id: "stack",
-      title: "2. Build Your Hackster Stack",
-      subtitle: "Personalized Product Recommendations", 
-      description: "Take our smart questionnaire for personalized biohacking recommendations powered by AI.",
+      title: "3. Build Your Stack",
+      subtitle: "Save & Share Your Favorites",
+      description: "Create your personalized Hackster Stack, save products, and share with the community.",
       icon: "⚡",
       highlights: [],
-      cta: "Start Questionnaire",
+      cta: "Create My Stack",
       color: "purple",
       link: "/get-started"
     },
