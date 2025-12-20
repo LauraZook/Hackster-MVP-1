@@ -2600,19 +2600,968 @@ const AICoachChat = () => {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
 
-        <div className="mt-6 text-center p-6 bg-yellow-50 rounded-xl border border-yellow-200">
-          <h3 className="text-lg font-semibold text-yellow-800 mb-2">🤖 Conner is Learning!</h3>
-          <p className="text-yellow-700">
-            Our AI coach Conner is currently in training. Soon he'll provide personalized biohacking 
-            recommendations using the F.R.E.E.D.O.M method. For now, try our Get Started flow for 
-            immediate guidance!
+// ============== MARKETPLACE PAGE ==============
+const MarketplacePage = () => {
+  const [products, setProducts] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedVendor, setSelectedVendor] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cart, setCart] = useState({ items: [], subtotal: 0 });
+  const [showCart, setShowCart] = useState(false);
+  const { isAuthenticated, token } = useAuth();
+
+  const categories = [
+    { value: 'all', label: 'All Products' },
+    { value: 'supplements', label: 'Supplements' },
+    { value: 'vitamins', label: 'Vitamins' },
+    { value: 'minerals', label: 'Minerals' },
+    { value: 'adaptogens', label: 'Adaptogens' },
+    { value: 'amino_acids', label: 'Amino Acids' },
+    { value: 'devices', label: 'Devices' }
+  ];
+
+  useEffect(() => {
+    fetchProducts();
+    fetchVendors();
+    if (isAuthenticated) {
+      fetchCart();
+    }
+  }, [selectedCategory, selectedVendor, searchQuery, isAuthenticated]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      let url = `${API}/products?limit=50`;
+      if (selectedCategory !== 'all') url += `&category=${selectedCategory}`;
+      if (selectedVendor !== 'all') url += `&vendor_id=${selectedVendor}`;
+      if (searchQuery) url += `&search=${searchQuery}`;
+      
+      const response = await axios.get(url);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await axios.get(`${API}/vendors`);
+      setVendors(response.data);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
+  };
+
+  const fetchCart = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get(`${API}/cart`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCart(response.data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
+
+  const addToCart = async (product) => {
+    if (!isAuthenticated) {
+      alert('Please sign in to add items to your cart');
+      return;
+    }
+    try {
+      const response = await axios.post(`${API}/cart/items`, 
+        { product_id: product.id, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setCart(response.data);
+      setShowCart(true);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Error adding to cart. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Hackster Marketplace</h1>
+          <p className="text-xl text-green-100 max-w-2xl">
+            Premium biohacking products from trusted vendors. Science-backed supplements, 
+            cutting-edge devices, and everything you need to optimize your health.
           </p>
-          <Link to="/get-started" className="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            Get Started Instead
-          </Link>
         </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Filters & Search */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="grid md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              >
+                {categories.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Vendor</label>
+              <select
+                value={selectedVendor}
+                onChange={(e) => setSelectedVendor(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              >
+                <option value="all">All Vendors</option>
+                {vendors.map(vendor => (
+                  <option key={vendor.slug} value={vendor.slug}>{vendor.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => setShowCart(true)}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center"
+              >
+                🛒 Cart ({cart.items?.length || 0})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map(product => (
+              <div key={product.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="h-48 bg-gray-100 flex items-center justify-center">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.name} className="h-full w-full object-contain p-4" />
+                  ) : (
+                    <span className="text-6xl">💊</span>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">{product.vendor_name}</span>
+                    <span className="text-xs text-gray-500">{product.category}</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-1">{product.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.short_description || product.description}</p>
+                  
+                  {/* Health Goals Tags */}
+                  {product.health_goals && product.health_goals.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {product.health_goals.slice(0, 3).map(goal => (
+                        <span key={goal} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded">
+                          {goal.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      {product.sale_price ? (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg font-bold text-green-600">${product.sale_price}</span>
+                          <span className="text-sm text-gray-400 line-through">${product.price}</span>
+                        </div>
+                      ) : (
+                        <span className="text-lg font-bold text-gray-900">${product.price}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center text-yellow-500 text-sm">
+                      ⭐ {product.rating.toFixed(1)}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex space-x-2">
+                    <button
+                      onClick={() => addToCart(product)}
+                      className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm font-medium"
+                    >
+                      Add to Cart
+                    </button>
+                    {product.affiliate_url && (
+                      <a
+                        href={product.affiliate_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 text-sm"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {products.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <span className="text-6xl">🔍</span>
+            <h3 className="text-xl font-bold text-gray-900 mt-4">No products found</h3>
+            <p className="text-gray-600">Try adjusting your filters or search query</p>
+          </div>
+        )}
+      </div>
+
+      {/* Shopping Cart Sidebar */}
+      {showCart && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCart(false)}>
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-lg" onClick={e => e.stopPropagation()}>
+            <div className="p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Your Cart</h2>
+                <button onClick={() => setShowCart(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              
+              {cart.items?.length > 0 ? (
+                <>
+                  <div className="flex-1 overflow-y-auto">
+                    {cart.items.map(item => (
+                      <div key={item.id} className="flex items-center py-4 border-b">
+                        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                          {item.image_url ? (
+                            <img src={item.image_url} alt={item.product_name} className="h-full w-full object-contain" />
+                          ) : (
+                            <span className="text-2xl">💊</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{item.product_name}</h4>
+                          <p className="text-sm text-gray-500">{item.vendor_name}</p>
+                          <p className="text-green-600 font-medium">${item.price} × {item.quantity}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between text-lg font-bold mb-4">
+                      <span>Subtotal:</span>
+                      <span className="text-green-600">${cart.subtotal?.toFixed(2) || '0.00'}</span>
+                    </div>
+                    <button className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">
+                      Proceed to Checkout
+                    </button>
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      Orders ship directly from vendor partners
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+                  <span className="text-6xl mb-4">🛒</span>
+                  <p>Your cart is empty</p>
+                  <Link to="/marketplace" className="mt-4 text-green-600 hover:underline" onClick={() => setShowCart(false)}>
+                    Browse Products
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </div>
+  );
+};
+
+// ============== AI QUESTIONNAIRE PAGE ==============
+const AIQuestionnairePage = () => {
+  const [questionnaire, setQuestionnaire] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [responses, setResponses] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [recommendations, setRecommendations] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchQuestionnaire();
+  }, []);
+
+  const fetchQuestionnaire = async () => {
+    try {
+      const response = await axios.get(`${API}/questionnaire`);
+      setQuestionnaire(response.data);
+    } catch (error) {
+      console.error('Error fetching questionnaire:', error);
+      setError('Failed to load questionnaire. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResponse = (questionId, answer) => {
+    setResponses(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const submitQuestionnaire = async () => {
+    try {
+      setSubmitting(true);
+      const formattedResponses = Object.entries(responses).map(([question_id, answer]) => ({
+        question_id,
+        answer
+      }));
+
+      const response = await axios.post(`${API}/questionnaire/submit`, {
+        responses: formattedResponses
+      });
+      
+      setRecommendations(response.data);
+    } catch (error) {
+      console.error('Error submitting questionnaire:', error);
+      setError('Failed to generate recommendations. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const questions = questionnaire?.questions || [];
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const currentQ = questions[currentQuestion];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your personalized assessment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (recommendations) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        
+        <div className="max-w-4xl mx-auto px-6 py-12">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">🎯</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Personalized Hackster Stack</h1>
+            <p className="text-gray-600">AI-powered recommendations based on your health profile</p>
+          </div>
+
+          {/* Health Score */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg opacity-90">Your Health Score</h2>
+                <p className="text-4xl font-bold">{recommendations.health_score}/100</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm opacity-90">Primary Goals</p>
+                <div className="flex flex-wrap gap-2 justify-end mt-1">
+                  {recommendations.primary_goals?.map(goal => (
+                    <span key={goal} className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                      {goal.replace('_', ' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Personalized Summary */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">📋 Your Personalized Summary</h3>
+            <p className="text-gray-700 leading-relaxed">{recommendations.personalized_summary}</p>
+          </div>
+
+          {/* Recommended Products */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">💊 Recommended Products</h3>
+            <div className="space-y-4">
+              {recommendations.recommended_products?.map((product, index) => (
+                <div key={index} className="border-l-4 border-green-500 pl-4 py-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-900">{product.name}</h4>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">{product.brand}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{product.reason}</p>
+                  <div className="mt-2">
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      product.priority === 1 ? 'bg-green-100 text-green-700' :
+                      product.priority === 2 ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      Priority {product.priority}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link 
+              to="/marketplace" 
+              className="mt-6 inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700"
+            >
+              Shop Recommended Products →
+            </Link>
+          </div>
+
+          {/* Recommended Lab Tests */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">🔬 Recommended Lab Tests</h3>
+            <div className="space-y-4">
+              {recommendations.recommended_lab_tests?.map((test, index) => (
+                <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h4 className="font-semibold text-gray-900">{test.name}</h4>
+                  <p className="text-xs text-blue-600 mb-1">{test.provider}</p>
+                  <p className="text-sm text-gray-600">{test.reason}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Lifestyle Tips */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">🌟 Biohacking Tips</h3>
+            <ul className="space-y-3">
+              {recommendations.lifestyle_tips?.map((tip, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="text-green-500 mr-3 mt-1">✓</span>
+                  <span className="text-gray-700">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* AI Reasoning (Expandable) */}
+          <details className="bg-gray-100 rounded-xl p-6 mb-8">
+            <summary className="cursor-pointer font-semibold text-gray-700">🤖 View AI Analysis Details</summary>
+            <div className="mt-4 text-sm text-gray-600 whitespace-pre-wrap">
+              {recommendations.ai_reasoning}
+            </div>
+          </details>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link 
+              to="/my-stack" 
+              className="flex-1 bg-purple-600 text-white px-6 py-4 rounded-xl font-semibold text-center hover:bg-purple-700"
+            >
+              Save to My Stack
+            </Link>
+            <Link 
+              to="/community" 
+              className="flex-1 border-2 border-blue-600 text-blue-600 px-6 py-4 rounded-xl font-semibold text-center hover:bg-blue-50"
+            >
+              Share with Community
+            </Link>
+          </div>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      <Navigation />
+      
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Question {currentQuestion + 1} of {questions.length}</span>
+            <span>{Math.round(progress)}% Complete</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Question Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="text-center mb-6">
+            <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-wide">
+              {currentQ?.category}
+            </span>
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            {currentQ?.question}
+          </h2>
+
+          {/* Answer Options */}
+          <div className="space-y-3 mb-8">
+            {currentQ?.question_type === 'single_choice' && currentQ?.options?.map(option => (
+              <button
+                key={option}
+                onClick={() => handleResponse(currentQ.id, option)}
+                className={`w-full p-4 text-left rounded-xl border-2 transition-all ${
+                  responses[currentQ.id] === option
+                    ? 'border-blue-500 bg-blue-50 text-blue-800'
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+
+            {currentQ?.question_type === 'multiple_choice' && currentQ?.options?.map(option => {
+              const selected = responses[currentQ.id] || [];
+              const isSelected = selected.includes(option);
+              return (
+                <button
+                  key={option}
+                  onClick={() => {
+                    const updated = isSelected 
+                      ? selected.filter(o => o !== option)
+                      : [...selected, option];
+                    handleResponse(currentQ.id, updated);
+                  }}
+                  className={`w-full p-4 text-left rounded-xl border-2 transition-all flex items-center ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50 text-blue-800'
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${
+                    isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                  }`}>
+                    {isSelected && <span className="text-white text-xs">✓</span>}
+                  </div>
+                  {option}
+                </button>
+              );
+            })}
+
+            {currentQ?.question_type === 'scale' && (
+              <div className="py-4">
+                <input
+                  type="range"
+                  min={currentQ.scale_min || 1}
+                  max={currentQ.scale_max || 10}
+                  value={responses[currentQ.id] || 5}
+                  onChange={(e) => handleResponse(currentQ.id, parseInt(e.target.value))}
+                  className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between mt-2 text-sm text-gray-600">
+                  <span>{currentQ.scale_min || 1} (Low)</span>
+                  <span className="text-2xl font-bold text-blue-600">{responses[currentQ.id] || 5}</span>
+                  <span>{currentQ.scale_max || 10} (High)</span>
+                </div>
+              </div>
+            )}
+
+            {currentQ?.question_type === 'text' && (
+              <textarea
+                value={responses[currentQ.id] || ''}
+                onChange={(e) => handleResponse(currentQ.id, e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                rows="4"
+                placeholder="Enter your response..."
+              />
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between">
+            <button
+              onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+              disabled={currentQuestion === 0}
+              className="px-6 py-3 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Back
+            </button>
+
+            {currentQuestion < questions.length - 1 ? (
+              <button
+                onClick={() => setCurrentQuestion(prev => prev + 1)}
+                disabled={!responses[currentQ?.id]}
+                className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                onClick={submitQuestionnaire}
+                disabled={submitting || !responses[currentQ?.id]}
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {submitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  'Get My Recommendations 🚀'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg text-center">
+            {error}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============== MY STACK (WISHLIST) PAGE ==============
+const MyStackPage = () => {
+  const { isAuthenticated, token, user } = useAuth();
+  const [stacks, setStacks] = useState([]);
+  const [publicStacks, setPublicStacks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newStack, setNewStack] = useState({ name: '', description: '', visibility: 'private', health_goals: [] });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchMyStacks();
+    }
+    fetchPublicStacks();
+  }, [isAuthenticated]);
+
+  const fetchMyStacks = async () => {
+    try {
+      const response = await axios.get(`${API}/stacks/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStacks(response.data);
+    } catch (error) {
+      console.error('Error fetching stacks:', error);
+    }
+  };
+
+  const fetchPublicStacks = async () => {
+    try {
+      const response = await axios.get(`${API}/stacks?limit=20`);
+      setPublicStacks(response.data);
+    } catch (error) {
+      console.error('Error fetching public stacks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createStack = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${API}/stacks`, newStack, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStacks([response.data, ...stacks]);
+      setShowCreateModal(false);
+      setNewStack({ name: '', description: '', visibility: 'private', health_goals: [] });
+    } catch (error) {
+      console.error('Error creating stack:', error);
+      alert('Error creating stack. Please try again.');
+    }
+  };
+
+  const healthGoalOptions = [
+    'energy', 'sleep', 'focus', 'longevity', 'athletic_performance', 
+    'weight_management', 'stress_management', 'immune_support', 'gut_health'
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <h1 className="text-4xl font-bold mb-4">Hackster Stacks</h1>
+          <p className="text-xl text-purple-100 max-w-2xl">
+            Create and share your personalized biohacking product stacks. 
+            Save your favorite products, get recommendations, and discover what others are using.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* My Stacks Section */}
+        {isAuthenticated ? (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">My Stacks</h2>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
+              >
+                <span className="mr-2">+</span> Create New Stack
+              </button>
+            </div>
+
+            {stacks.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stacks.map(stack => (
+                  <div key={stack.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-gray-900">{stack.name}</h3>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        stack.visibility === 'private' ? 'bg-gray-100 text-gray-600' :
+                        stack.visibility === 'community' ? 'bg-blue-100 text-blue-600' :
+                        'bg-green-100 text-green-600'
+                      }`}>
+                        {stack.visibility}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">{stack.description || 'No description'}</p>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>{stack.items?.length || 0} products</span>
+                      <span>${stack.total_value?.toFixed(2) || '0.00'} total</span>
+                    </div>
+
+                    {stack.health_goals?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {stack.health_goals.map(goal => (
+                          <span key={goal} className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded">
+                            {goal.replace('_', ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center space-x-3 text-sm text-gray-500">
+                        <span>❤️ {stack.likes_count || 0}</span>
+                        <span>💬 {stack.comments_count || 0}</span>
+                      </div>
+                      <Link 
+                        to={`/stack/${stack.id}`}
+                        className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                      >
+                        View Stack →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                <span className="text-6xl">📦</span>
+                <h3 className="text-xl font-bold text-gray-900 mt-4">No stacks yet</h3>
+                <p className="text-gray-600 mt-2">Create your first Hackster Stack to save products and share with the community</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+                >
+                  Create Your First Stack
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mb-12 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign in to create your stack</h2>
+            <p className="text-gray-600 mb-6">Save your favorite products, track your biohacking journey, and share with the community</p>
+            <Link to="/signin" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+              Sign In
+            </Link>
+          </div>
+        )}
+
+        {/* Community Stacks Section */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Community Stacks</h2>
+          
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+            </div>
+          ) : publicStacks.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {publicStacks.map(stack => (
+                <div key={stack.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {stack.username?.[0]?.toUpperCase() || 'H'}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">{stack.name}</h3>
+                      <p className="text-xs text-gray-500">by {stack.username}</p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{stack.description || 'A curated biohacking stack'}</p>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                    <span>{stack.items?.length || 0} products</span>
+                    <span>${stack.total_value?.toFixed(2) || '0.00'}</span>
+                  </div>
+
+                  {stack.health_goals?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {stack.health_goals.slice(0, 3).map(goal => (
+                        <span key={goal} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                          {goal.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                      <span>❤️ {stack.likes_count || 0}</span>
+                      <span>💬 {stack.comments_count || 0}</span>
+                    </div>
+                    <Link 
+                      to={`/stack/${stack.id}`}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      View →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <span className="text-4xl">🌱</span>
+              <p className="mt-4">No community stacks yet. Be the first to share!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create Stack Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Create New Stack</h2>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+
+            <form onSubmit={createStack} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stack Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newStack.name}
+                  onChange={(e) => setNewStack({...newStack, name: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., My Energy Stack"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newStack.description}
+                  onChange={(e) => setNewStack({...newStack, description: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  rows="3"
+                  placeholder="What's this stack for?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+                <select
+                  value={newStack.visibility}
+                  onChange={(e) => setNewStack({...newStack, visibility: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="private">Private - Only you can see</option>
+                  <option value="friends">Friends - Share with link</option>
+                  <option value="community">Community - Visible on Hackster</option>
+                  <option value="public">Public - Visible to everyone</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Health Goals</label>
+                <div className="flex flex-wrap gap-2">
+                  {healthGoalOptions.map(goal => (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => {
+                        const current = newStack.health_goals || [];
+                        const updated = current.includes(goal)
+                          ? current.filter(g => g !== goal)
+                          : [...current, goal];
+                        setNewStack({...newStack, health_goals: updated});
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        (newStack.health_goals || []).includes(goal)
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {goal.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                >
+                  Create Stack
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Footer />
     </div>
   );
 };
