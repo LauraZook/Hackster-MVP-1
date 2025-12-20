@@ -520,6 +520,34 @@ class HealthAssessmentCreate(BaseModel):
     user_id: str
     responses: Dict[str, Any]
 
+# ============== MARKETPLACE REQUEST MODELS ==============
+class AddToCartRequest(BaseModel):
+    product_id: str
+    quantity: int = 1
+
+class UpdateCartItemRequest(BaseModel):
+    quantity: int
+
+class CreateStackRequest(BaseModel):
+    name: str = "My Hackster Stack"
+    description: Optional[str] = None
+    visibility: WishlistVisibility = WishlistVisibility.PRIVATE
+    health_goals: List[HealthGoal] = []
+
+class AddToStackRequest(BaseModel):
+    product_id: str
+    priority: int = 0
+    notes: Optional[str] = None
+
+class StackCommentCreate(BaseModel):
+    content: str
+
+class LabResultUploadRequest(BaseModel):
+    provider: str
+    test_date: str  # ISO format
+    biomarkers: Dict[str, Any]
+    notes: Optional[str] = None
+
 # Authentication utility functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
