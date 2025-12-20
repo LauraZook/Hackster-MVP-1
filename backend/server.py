@@ -1901,6 +1901,503 @@ async def get_user_assessments(user_id: str, current_user: UserProfile = Depends
     assessments = await db.assessments.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return [HealthAssessment(**assessment) for assessment in assessments]
 
+# ============== MARKETPLACE API ROUTES ==============
+
+# Vendors
+@api_router.get("/vendors", response_model=List[Vendor])
+async def get_vendors():
+    """Get all active vendors"""
+    vendors = await db.vendors.find({"status": "active"}).to_list(100)
+    return [Vendor(**vendor) for vendor in vendors]
+
+@api_router.get("/vendors/{vendor_slug}", response_model=Vendor)
+async def get_vendor(vendor_slug: str):
+    """Get a specific vendor by slug"""
+    vendor = await db.vendors.find_one({"slug": vendor_slug})
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return Vendor(**vendor)
+
+# Products
+@api_router.get("/products", response_model=List[MarketplaceProduct])
+async def get_products(
+    category: Optional[ProductCategory] = None,
+    vendor_id: Optional[str] = None,
+    health_goal: Optional[HealthGoal] = None,
+    featured: Optional[bool] = None,
+    search: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    sort_by: str = "priority_score",
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get marketplace products with filtering and search"""
+    query = {}
+    
+    if category:
+        query["category"] = category
+    if vendor_id:
+        query["vendor_id"] = vendor_id
+    if health_goal:
+        query["health_goals"] = health_goal
+    if featured is not None:
+        query["is_featured"] = featured
+    if min_price is not None:
+        query["price"] = {"$gte": min_price}
+    if max_price is not None:
+        if "price" in query:
+            query["price"]["$lte"] = max_price
+        else:
+            query["price"] = {"$lte": max_price}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"tags": {"$in": [search.lower()]}}
+        ]
+    
+    sort_field = "priority_score" if sort_by == "priority_score" else sort_by
+    sort_order = -1 if sort_by in ["priority_score", "rating", "review_count"] else 1
+    
+    products = await db.marketplace_products.find(query).sort(sort_field, sort_order).skip(offset).limit(limit).to_list(limit)
+    return [MarketplaceProduct(**product) for product in products]
+
+@api_router.get("/products/featured", response_model=List[MarketplaceProduct])
+async def get_featured_products(limit: int = 10):
+    """Get featured products"""
+    products = await db.marketplace_products.find({"is_featured": True}).sort("priority_score", -1).limit(limit).to_list(limit)
+    return [MarketplaceProduct(**product) for product in products]
+
+@api_router.get("/products/{product_slug}", response_model=MarketplaceProduct)
+async def get_product(product_slug: str):
+    """Get a specific product by slug"""
+    product = await db.marketplace_products.find_one({"slug": product_slug})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return MarketplaceProduct(**product)
+
+@api_router.get("/products/by-goal/{health_goal}", response_model=List[MarketplaceProduct])
+async def get_products_by_goal(health_goal: HealthGoal, limit: int = 10):
+    """Get products recommended for a specific health goal"""
+    products = await db.marketplace_products.find({"health_goals": health_goal}).sort("priority_score", -1).limit(limit).to_list(limit)
+    return [MarketplaceProduct(**product) for product in products]
+
+# Shopping Cart
+@api_router.get("/cart", response_model=ShoppingCart)
+async def get_cart(current_user: UserProfile = Depends(get_current_user)):
+    """Get current user's shopping cart"""
+    cart = await db.carts.find_one({"user_id": current_user.id})
+    if not cart:
+        # Create empty cart
+        new_cart = ShoppingCart(user_id=current_user.id)
+        await db.carts.insert_one(new_cart.dict())
+        return new_cart
+    return ShoppingCart(**cart)
+
+@api_router.post("/cart/items", response_model=ShoppingCart)
+async def add_to_cart(item_request: AddToCartRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Add item to shopping cart"""
+    # Get product details
+    product = await db.marketplace_products.find_one({"id": item_request.product_id})
+    if not product:
+        # Try by slug
+        product = await db.marketplace_products.find_one({"slug": item_request.product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Get or create cart
+    cart = await db.carts.find_one({"user_id": current_user.id})
+    if not cart:
+        cart = ShoppingCart(user_id=current_user.id).dict()
+        await db.carts.insert_one(cart)
+    
+    # Check if item already in cart
+    existing_item = None
+    for idx, item in enumerate(cart.get("items", [])):
+        if item["product_id"] == product["id"]:
+            existing_item = (idx, item)
+            break
+    
+    if existing_item:
+        # Update quantity
+        idx, item = existing_item
+        item["quantity"] += item_request.quantity
+        cart["items"][idx] = item
+    else:
+        # Add new item
+        cart_item = CartItem(
+            product_id=product["id"],
+            product_name=product["name"],
+            vendor_id=product["vendor_id"],
+            vendor_name=product["vendor_name"],
+            quantity=item_request.quantity,
+            price=product.get("sale_price") or product["price"],
+            image_url=product.get("image_url")
+        )
+        cart["items"].append(cart_item.dict())
+    
+    # Update subtotal
+    subtotal = sum(item["price"] * item["quantity"] for item in cart["items"])
+    cart["subtotal"] = subtotal
+    cart["updated_at"] = datetime.utcnow()
+    
+    await db.carts.update_one(
+        {"user_id": current_user.id},
+        {"$set": cart}
+    )
+    
+    return ShoppingCart(**cart)
+
+@api_router.put("/cart/items/{item_id}", response_model=ShoppingCart)
+async def update_cart_item(item_id: str, update_request: UpdateCartItemRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Update cart item quantity"""
+    cart = await db.carts.find_one({"user_id": current_user.id})
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+    
+    item_found = False
+    for idx, item in enumerate(cart["items"]):
+        if item["id"] == item_id:
+            if update_request.quantity <= 0:
+                cart["items"].pop(idx)
+            else:
+                cart["items"][idx]["quantity"] = update_request.quantity
+            item_found = True
+            break
+    
+    if not item_found:
+        raise HTTPException(status_code=404, detail="Item not found in cart")
+    
+    # Update subtotal
+    subtotal = sum(item["price"] * item["quantity"] for item in cart["items"])
+    cart["subtotal"] = subtotal
+    cart["updated_at"] = datetime.utcnow()
+    
+    await db.carts.update_one(
+        {"user_id": current_user.id},
+        {"$set": cart}
+    )
+    
+    return ShoppingCart(**cart)
+
+@api_router.delete("/cart/items/{item_id}", response_model=ShoppingCart)
+async def remove_from_cart(item_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Remove item from cart"""
+    cart = await db.carts.find_one({"user_id": current_user.id})
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+    
+    cart["items"] = [item for item in cart["items"] if item["id"] != item_id]
+    
+    # Update subtotal
+    subtotal = sum(item["price"] * item["quantity"] for item in cart["items"])
+    cart["subtotal"] = subtotal
+    cart["updated_at"] = datetime.utcnow()
+    
+    await db.carts.update_one(
+        {"user_id": current_user.id},
+        {"$set": cart}
+    )
+    
+    return ShoppingCart(**cart)
+
+@api_router.delete("/cart", response_model=dict)
+async def clear_cart(current_user: UserProfile = Depends(get_current_user)):
+    """Clear all items from cart"""
+    await db.carts.update_one(
+        {"user_id": current_user.id},
+        {"$set": {"items": [], "subtotal": 0, "updated_at": datetime.utcnow()}}
+    )
+    return {"message": "Cart cleared"}
+
+# ============== HACKSTER STACK (WISHLIST) API ROUTES ==============
+
+@api_router.get("/stacks", response_model=List[HacksterStack])
+async def get_public_stacks(
+    health_goal: Optional[HealthGoal] = None,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get public/community stacks"""
+    query = {"visibility": {"$in": ["community", "public"]}}
+    if health_goal:
+        query["health_goals"] = health_goal
+    
+    stacks = await db.stacks.find(query).sort("likes_count", -1).skip(offset).limit(limit).to_list(limit)
+    return [HacksterStack(**stack) for stack in stacks]
+
+@api_router.get("/stacks/my", response_model=List[HacksterStack])
+async def get_my_stacks(current_user: UserProfile = Depends(get_current_user)):
+    """Get current user's stacks"""
+    stacks = await db.stacks.find({"user_id": current_user.id}).sort("created_at", -1).to_list(100)
+    return [HacksterStack(**stack) for stack in stacks]
+
+@api_router.post("/stacks", response_model=HacksterStack)
+async def create_stack(stack_request: CreateStackRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Create a new Hackster Stack"""
+    share_token = str(uuid.uuid4())[:8]
+    
+    stack = HacksterStack(
+        user_id=current_user.id,
+        username=current_user.username,
+        share_token=share_token,
+        **stack_request.dict()
+    )
+    
+    await db.stacks.insert_one(stack.dict())
+    return stack
+
+@api_router.get("/stacks/{stack_id}", response_model=HacksterStack)
+async def get_stack(stack_id: str, current_user: Optional[UserProfile] = None):
+    """Get a specific stack"""
+    stack = await db.stacks.find_one({"id": stack_id})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found")
+    
+    stack_obj = HacksterStack(**stack)
+    
+    # Check visibility
+    if stack_obj.visibility == WishlistVisibility.PRIVATE:
+        if not current_user or stack_obj.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="This stack is private")
+    
+    return stack_obj
+
+@api_router.get("/stacks/share/{share_token}", response_model=HacksterStack)
+async def get_stack_by_share_token(share_token: str):
+    """Get a stack by its share token (for gift registry)"""
+    stack = await db.stacks.find_one({"share_token": share_token})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found")
+    return HacksterStack(**stack)
+
+@api_router.post("/stacks/{stack_id}/items", response_model=HacksterStack)
+async def add_to_stack(stack_id: str, item_request: AddToStackRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Add product to a stack"""
+    stack = await db.stacks.find_one({"id": stack_id, "user_id": current_user.id})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found or access denied")
+    
+    # Get product details
+    product = await db.marketplace_products.find_one({"id": item_request.product_id})
+    if not product:
+        product = await db.marketplace_products.find_one({"slug": item_request.product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Check if already in stack
+    for item in stack["items"]:
+        if item["product_id"] == product["id"]:
+            raise HTTPException(status_code=400, detail="Product already in stack")
+    
+    wishlist_item = WishlistItem(
+        product_id=product["id"],
+        product_name=product["name"],
+        vendor_name=product["vendor_name"],
+        price=product.get("sale_price") or product["price"],
+        image_url=product.get("image_url"),
+        priority=item_request.priority,
+        notes=item_request.notes
+    )
+    
+    stack["items"].append(wishlist_item.dict())
+    stack["total_value"] = sum(item["price"] for item in stack["items"])
+    stack["updated_at"] = datetime.utcnow()
+    
+    await db.stacks.update_one(
+        {"id": stack_id},
+        {"$set": stack}
+    )
+    
+    return HacksterStack(**stack)
+
+@api_router.delete("/stacks/{stack_id}/items/{item_id}", response_model=HacksterStack)
+async def remove_from_stack(stack_id: str, item_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Remove item from a stack"""
+    stack = await db.stacks.find_one({"id": stack_id, "user_id": current_user.id})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found or access denied")
+    
+    stack["items"] = [item for item in stack["items"] if item["id"] != item_id]
+    stack["total_value"] = sum(item["price"] for item in stack["items"])
+    stack["updated_at"] = datetime.utcnow()
+    
+    await db.stacks.update_one(
+        {"id": stack_id},
+        {"$set": stack}
+    )
+    
+    return HacksterStack(**stack)
+
+@api_router.post("/stacks/{stack_id}/like", response_model=dict)
+async def like_stack(stack_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Like/unlike a stack"""
+    existing_like = await db.stack_likes.find_one({"stack_id": stack_id, "user_id": current_user.id})
+    
+    if existing_like:
+        await db.stack_likes.delete_one({"id": existing_like["id"]})
+        await db.stacks.update_one({"id": stack_id}, {"$inc": {"likes_count": -1}})
+        return {"message": "Like removed", "liked": False}
+    else:
+        like = StackLike(stack_id=stack_id, user_id=current_user.id)
+        await db.stack_likes.insert_one(like.dict())
+        await db.stacks.update_one({"id": stack_id}, {"$inc": {"likes_count": 1}})
+        return {"message": "Stack liked", "liked": True}
+
+@api_router.post("/stacks/{stack_id}/comments", response_model=StackComment)
+async def add_stack_comment(stack_id: str, comment_request: StackCommentCreate, current_user: UserProfile = Depends(get_current_user)):
+    """Add comment to a stack"""
+    stack = await db.stacks.find_one({"id": stack_id})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found")
+    
+    comment = StackComment(
+        stack_id=stack_id,
+        user_id=current_user.id,
+        username=current_user.username,
+        content=comment_request.content
+    )
+    
+    await db.stack_comments.insert_one(comment.dict())
+    await db.stacks.update_one({"id": stack_id}, {"$inc": {"comments_count": 1}})
+    
+    return comment
+
+@api_router.get("/stacks/{stack_id}/comments", response_model=List[StackComment])
+async def get_stack_comments(stack_id: str):
+    """Get comments for a stack"""
+    comments = await db.stack_comments.find({"stack_id": stack_id}).sort("created_at", -1).to_list(100)
+    return [StackComment(**comment) for comment in comments]
+
+# Mark item as purchased (for gift registry)
+@api_router.put("/stacks/share/{share_token}/items/{item_id}/purchase", response_model=dict)
+async def mark_item_purchased(share_token: str, item_id: str, purchaser_name: Optional[str] = None):
+    """Mark an item as purchased in a shared stack (gift registry)"""
+    stack = await db.stacks.find_one({"share_token": share_token})
+    if not stack:
+        raise HTTPException(status_code=404, detail="Stack not found")
+    
+    for item in stack["items"]:
+        if item["id"] == item_id:
+            item["is_purchased"] = True
+            item["purchased_by"] = purchaser_name or "Anonymous"
+            break
+    else:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    await db.stacks.update_one({"id": stack["id"]}, {"$set": {"items": stack["items"]}})
+    return {"message": "Item marked as purchased"}
+
+# ============== AI QUESTIONNAIRE API ROUTES ==============
+
+@api_router.get("/questionnaire")
+async def get_questionnaire():
+    """Get the biohacking health assessment questionnaire"""
+    questionnaire = await db.questionnaire_templates.find_one({"id": "biohacking-assessment-v1"})
+    if not questionnaire:
+        raise HTTPException(status_code=404, detail="Questionnaire not found")
+    return questionnaire
+
+@api_router.post("/questionnaire/submit", response_model=AIRecommendation)
+async def submit_questionnaire(submission: AIQuestionnaireSubmission, current_user: Optional[UserProfile] = None):
+    """Submit questionnaire and get AI-powered recommendations"""
+    try:
+        # Get current user if authenticated
+        user_profile = None
+        user_id = "anonymous"
+        
+        if current_user:
+            user_profile = current_user
+            user_id = current_user.id
+        
+        # Generate AI recommendations
+        ai_result = await generate_ai_recommendations(submission.responses, user_profile)
+        
+        # Create session ID for this questionnaire submission
+        session_id = str(uuid.uuid4())
+        
+        # Convert health goals from strings to enum values if needed
+        primary_goals = []
+        for goal in ai_result.get("primary_goals", []):
+            try:
+                if isinstance(goal, str):
+                    goal_enum = HealthGoal(goal.lower().replace(" ", "_"))
+                    primary_goals.append(goal_enum)
+            except ValueError:
+                continue
+        
+        # Create recommendation record
+        recommendation = AIRecommendation(
+            user_id=user_id,
+            questionnaire_session_id=session_id,
+            health_score=ai_result.get("health_score", 70),
+            primary_goals=primary_goals,
+            recommended_products=ai_result.get("recommended_products", []),
+            recommended_lab_tests=ai_result.get("recommended_lab_tests", []),
+            lifestyle_tips=ai_result.get("lifestyle_tips", []),
+            personalized_summary=ai_result.get("personalized_summary", ""),
+            ai_reasoning=ai_result.get("ai_reasoning", "")
+        )
+        
+        # Save to database
+        await db.ai_recommendations.insert_one(recommendation.dict())
+        
+        return recommendation
+        
+    except Exception as e:
+        logging.error(f"Questionnaire submission error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing questionnaire: {str(e)}")
+
+@api_router.get("/recommendations/my", response_model=List[AIRecommendation])
+async def get_my_recommendations(current_user: UserProfile = Depends(get_current_user)):
+    """Get user's AI recommendations history"""
+    recommendations = await db.ai_recommendations.find({"user_id": current_user.id}).sort("created_at", -1).to_list(50)
+    return [AIRecommendation(**rec) for rec in recommendations]
+
+@api_router.get("/recommendations/{recommendation_id}", response_model=AIRecommendation)
+async def get_recommendation(recommendation_id: str):
+    """Get a specific AI recommendation"""
+    rec = await db.ai_recommendations.find_one({"id": recommendation_id})
+    if not rec:
+        raise HTTPException(status_code=404, detail="Recommendation not found")
+    return AIRecommendation(**rec)
+
+# ============== LAB RESULTS API ROUTES ==============
+
+@api_router.post("/lab-results", response_model=LabResultUpload)
+async def upload_lab_results(lab_data: LabResultUploadRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Upload lab test results for tracking"""
+    try:
+        test_date = datetime.fromisoformat(lab_data.test_date.replace('Z', '+00:00'))
+    except:
+        test_date = datetime.utcnow()
+    
+    lab_result = LabResultUpload(
+        user_id=current_user.id,
+        provider=lab_data.provider,
+        test_date=test_date,
+        biomarkers=lab_data.biomarkers,
+        notes=lab_data.notes
+    )
+    
+    await db.lab_results.insert_one(lab_result.dict())
+    return lab_result
+
+@api_router.get("/lab-results", response_model=List[LabResultUpload])
+async def get_my_lab_results(current_user: UserProfile = Depends(get_current_user)):
+    """Get user's lab results history"""
+    results = await db.lab_results.find({"user_id": current_user.id}).sort("test_date", -1).to_list(100)
+    return [LabResultUpload(**result) for result in results]
+
+@api_router.get("/lab-results/{result_id}", response_model=LabResultUpload)
+async def get_lab_result(result_id: str, current_user: UserProfile = Depends(get_current_user)):
+    """Get a specific lab result"""
+    result = await db.lab_results.find_one({"id": result_id, "user_id": current_user.id})
+    if not result:
+        raise HTTPException(status_code=404, detail="Lab result not found")
+    return LabResultUpload(**result)
+
 # Health check endpoint for API route  
 @api_router.get("/health")
 async def api_health_check():
