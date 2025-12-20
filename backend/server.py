@@ -282,6 +282,186 @@ class HealthAssessment(BaseModel):
     score: Optional[int] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+# ============== MARKETPLACE MODELS ==============
+class Vendor(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    description: str
+    logo_url: Optional[str] = None
+    website: str
+    affiliate_url_pattern: Optional[str] = None  # e.g., "https://thorne.com/products/dp/{product_id}?aff=hackster"
+    commission_rate: float = 0.10  # 10% default
+    status: VendorStatus = VendorStatus.ACTIVE
+    contact_email: Optional[str] = None
+    shipping_info: str = "Ships within 2-5 business days"
+    return_policy: str = "30-day return policy"
+    categories: List[ProductCategory] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MarketplaceProduct(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    vendor_id: str
+    vendor_name: str
+    sku: Optional[str] = None
+    name: str
+    slug: str
+    description: str
+    short_description: Optional[str] = None
+    category: ProductCategory
+    subcategory: Optional[str] = None
+    price: float
+    sale_price: Optional[float] = None
+    currency: str = "USD"
+    image_url: Optional[str] = None
+    images: List[str] = []
+    affiliate_url: Optional[str] = None
+    benefits: List[str] = []
+    ingredients: Optional[str] = None
+    dosage_instructions: Optional[str] = None
+    warnings: Optional[str] = None
+    health_goals: List[HealthGoal] = []
+    demographic_targets: List[DemographicTarget] = []
+    rating: float = 0.0
+    review_count: int = 0
+    stock_status: str = "in_stock"
+    is_featured: bool = False
+    is_ai_recommended: bool = False
+    priority_score: int = 0  # For AI recommendations ranking
+    tags: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CartItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    product_name: str
+    vendor_id: str
+    vendor_name: str
+    quantity: int = 1
+    price: float
+    image_url: Optional[str] = None
+
+class ShoppingCart(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    items: List[CartItem] = []
+    subtotal: float = 0.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class OrderItem(BaseModel):
+    product_id: str
+    product_name: str
+    vendor_id: str
+    vendor_name: str
+    quantity: int
+    price: float
+    subtotal: float
+
+class Order(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    items: List[OrderItem]
+    subtotal: float
+    shipping_cost: float = 0.0
+    tax: float = 0.0
+    total: float
+    status: OrderStatus = OrderStatus.PENDING
+    shipping_address: Dict[str, str] = {}
+    billing_address: Dict[str, str] = {}
+    tracking_numbers: Dict[str, str] = {}  # vendor_id -> tracking_number
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+# ============== WISHLIST / STACK MODELS ==============
+class WishlistItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    product_name: str
+    vendor_name: str
+    price: float
+    image_url: Optional[str] = None
+    priority: int = 0  # 1=high, 2=medium, 3=low
+    notes: Optional[str] = None
+    is_purchased: bool = False
+    purchased_by: Optional[str] = None  # For gift registry functionality
+    added_at: datetime = Field(default_factory=datetime.utcnow)
+
+class HacksterStack(BaseModel):
+    """User's personalized biohacking product wishlist/stack"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    name: str = "My Hackster Stack"
+    description: Optional[str] = None
+    visibility: WishlistVisibility = WishlistVisibility.PRIVATE
+    health_goals: List[HealthGoal] = []
+    items: List[WishlistItem] = []
+    total_value: float = 0.0
+    is_ai_generated: bool = False
+    share_token: Optional[str] = None  # Unique token for sharing
+    likes_count: int = 0
+    comments_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class StackComment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    stack_id: str
+    user_id: str
+    username: str
+    content: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class StackLike(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    stack_id: str
+    user_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# ============== AI QUESTIONNAIRE MODELS ==============
+class QuestionnaireQuestion(BaseModel):
+    id: str
+    question: str
+    question_type: str  # "single_choice", "multiple_choice", "scale", "text"
+    options: Optional[List[str]] = None
+    scale_min: Optional[int] = None
+    scale_max: Optional[int] = None
+    category: str  # "demographics", "lifestyle", "health_goals", "current_health", "diet"
+
+class QuestionnaireResponse(BaseModel):
+    question_id: str
+    answer: Any
+
+class AIQuestionnaireSubmission(BaseModel):
+    responses: List[QuestionnaireResponse]
+
+class AIRecommendation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    questionnaire_session_id: str
+    health_score: int  # 0-100
+    primary_goals: List[HealthGoal]
+    recommended_products: List[Dict[str, Any]]  # List of product recommendations with reasons
+    recommended_lab_tests: List[Dict[str, Any]]
+    lifestyle_tips: List[str]
+    personalized_summary: str
+    ai_reasoning: str  # Detailed AI analysis
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LabResultUpload(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    provider: str  # "function_health", "superpower", "quest", "labcorp", "other"
+    test_date: datetime
+    biomarkers: Dict[str, Any]  # {"vitamin_d": {"value": 45, "unit": "ng/mL", "reference_range": "30-100"}}
+    file_url: Optional[str] = None
+    notes: Optional[str] = None
+    ai_analysis: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 class Coach(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: Optional[str] = None  # Link to user account
