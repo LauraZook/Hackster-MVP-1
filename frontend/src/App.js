@@ -210,13 +210,24 @@ const CoreFeatures = () => {
       link: "/my-stack"
     },
     {
-      id: "coaching",
-      title: "Find Expert Coaching",
-      subtitle: "AI Coach + Human Experts",
-      description: "Gain 1:1 guidance and support from the Hackster AI Coach 24/7, plus connect with certified wellness coaches for advanced results.",
-      icon: "🚀",
+      id: "ai-coach",
+      title: "Meet Raphael",
+      subtitle: "Your 24/7 AI Wellness Coach",
+      description: "Chat with Raphael, your personal AI wellness guide trained in the F.R.E.E.D.O.M. method. Get instant answers and personalized recommendations anytime.",
+      icon: "👼",
       highlights: [],
-      cta: "Find a Coach",
+      cta: "Chat with Raphael",
+      color: "purple",
+      link: "/chat"
+    },
+    {
+      id: "health-coaches",
+      title: "Find a Health Coach",
+      subtitle: "Certified Wellness Experts",
+      description: "Connect with certified wellness coaches for personalized 1:1 guidance, accountability, and expert support on your health journey.",
+      icon: "🧑‍⚕️",
+      highlights: [],
+      cta: "Browse Coaches",
       color: "blue",
       link: "/coaches"
     },
