@@ -2560,101 +2560,230 @@ const BlogPage = () => {
   );
 };
 
-// AI Coach Chat (Conner) - Placeholder
+// AI Coach Chat - Raphael (The Healer)
 const AICoachChat = () => {
+  const { isAuthenticated, user, token } = useAuth();
   const [messages, setMessages] = useState([
     {
       id: 1,
-      sender: 'conner',
-      text: "Hi! I'm Conner, your biohacking buddy. I'm currently in training to become your personal AI coach. Soon I'll be able to help you with personalized recommendations, answer questions about your health journey, and guide you through the F.R.E.E.D.O.M method!",
+      sender: 'raphael',
+      text: "🙏 Welcome, blessed soul! I am Raphael, your Hackster AI Wellness Coach, named after the Archangel of Healing. I'm here to guide you on your journey to optimal health using the F.R.E.E.D.O.M. healing method.\n\n✨ **F**aith • **R**ejuve • **E**motional Health • **E**nergy Medicine • **D**etox • **O**xygenate • **M**indset\n\nHow may I support your healing journey today?",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showFreedomInfo, setShowFreedomInfo] = useState(false);
+  const messagesEndRef = React.useRef(null);
 
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return;
+  const freedomPillars = [
+    { letter: 'F', name: 'Faith', icon: '🙏', description: 'God has designed our bodies to heal. Trust in natural healing and divine wisdom.' },
+    { letter: 'R', name: 'Rejuve', icon: '🔬', description: 'Understand your baseline health through tests and targeted interventions.' },
+    { letter: 'E', name: 'Emotional Health', icon: '💚', description: 'Build resilience and emotional intelligence for lasting wellness.' },
+    { letter: 'E', name: 'Energy Medicine', icon: '⚡', description: 'Harness frequencies, vibrations, and electrical energy for vitality.' },
+    { letter: 'D', name: 'Detox', icon: '🌿', description: 'Release toxins and cleanse your body for optimal function.' },
+    { letter: 'O', name: 'Oxygenate', icon: '💨', description: 'Increase cellular oxygenation through biohacking techniques.' },
+    { letter: 'M', name: 'Mindset', icon: '🧠', description: 'To think is to create. Envision your optimal health.' }
+  ];
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
     
-    const newMessage = {
+    const userMessage = {
       id: messages.length + 1,
       sender: 'user',
       text: inputMessage,
       timestamp: new Date().toLocaleTimeString()
     };
     
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    
-    // Auto-reply from Conner
-    setTimeout(() => {
-      const connerReply = {
+    setIsLoading(true);
+
+    try {
+      // Call backend AI endpoint
+      const response = await axios.post(`${API}/coach/chat`, {
+        message: inputMessage,
+        conversation_history: messages.slice(-10).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text
+        }))
+      }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      const raphaelReply = {
         id: messages.length + 2,
-        sender: 'conner',
-        text: "Thanks for your message! I'm still learning and will be ready to provide personalized biohacking guidance soon. In the meantime, check out our Get Started flow for immediate recommendations!",
+        sender: 'raphael',
+        text: response.data.response,
         timestamp: new Date().toLocaleTimeString()
       };
-      setMessages(prev => [...prev, connerReply]);
-    }, 1000);
+      setMessages(prev => [...prev, raphaelReply]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      // Fallback response if API fails
+      const fallbackReply = {
+        id: messages.length + 2,
+        sender: 'raphael',
+        text: "🙏 I sense your energy and desire to heal. While I'm connecting with divine wisdom, let me remind you of the F.R.E.E.D.O.M. principles:\n\n**Faith** - Trust that your body was designed to heal.\n**Rejuve** - Understand your baseline through testing.\n**Emotional Health** - Nurture your mental wellness.\n**Energy Medicine** - Embrace healing frequencies.\n**Detox** - Release what no longer serves you.\n**Oxygenate** - Breathe life into every cell.\n**Mindset** - Envision your optimal health.\n\nWhat aspect of your healing journey would you like to explore?",
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setMessages(prev => [...prev, fallbackReply]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const quickPrompts = [
+    "How can I increase my energy naturally?",
+    "What detox methods do you recommend?",
+    "Help me with stress and emotional health",
+    "Tell me about the F.R.E.E.D.O.M. method"
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       <Navigation />
       
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg h-96 flex flex-col">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* F.R.E.E.D.O.M. Info Toggle */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowFreedomInfo(!showFreedomInfo)}
+            className="w-full bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">✨</span>
+              <div className="text-left">
+                <h3 className="font-bold text-gray-900">The F.R.E.E.D.O.M. Healing Method</h3>
+                <p className="text-sm text-gray-600">Discover the 7 pillars of holistic wellness</p>
+              </div>
+            </div>
+            <span className="text-gray-400">{showFreedomInfo ? '▲' : '▼'}</span>
+          </button>
+          
+          {showFreedomInfo && (
+            <div className="mt-4 bg-white rounded-xl shadow-md p-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {freedomPillars.map((pillar, index) => (
+                  <div key={index} className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-3xl mb-2">{pillar.icon}</div>
+                    <div className="font-bold text-purple-600">{pillar.letter} - {pillar.name}</div>
+                    <p className="text-xs text-gray-600 mt-1">{pillar.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Chat Container */}
+        <div className="bg-white rounded-2xl shadow-xl flex flex-col" style={{ height: '600px' }}>
           {/* Chat Header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-xl">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">C</span>
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-2xl">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <span className="text-3xl">👼</span>
               </div>
               <div>
-                <h3 className="font-semibold">Conner - Your Hackster AI Coach</h3>
+                <h3 className="text-xl font-bold">Raphael - Your Wellness Guide</h3>
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  <span className="text-xs">Training Mode</span>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-purple-200">F.R.E.E.D.O.M. Healing Coach</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
             {messages.map(message => (
               <div key={message.id} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block max-w-xs p-3 rounded-lg ${
+                <div className={`inline-block max-w-md p-4 rounded-2xl ${
                   message.sender === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-blue-600 text-white rounded-br-md' 
+                    : 'bg-white text-gray-900 shadow-md rounded-bl-md'
                 }`}>
-                  <p className="text-sm">{message.text}</p>
-                  <p className="text-xs mt-1 opacity-70">{message.timestamp}</p>
+                  {message.sender === 'raphael' && (
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                      <span className="text-lg">👼</span>
+                      <span className="font-semibold text-purple-600">Raphael</span>
+                    </div>
+                  )}
+                  <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                  <p className="text-xs mt-2 opacity-60">{message.timestamp}</p>
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="text-left mb-4">
+                <div className="inline-block bg-white p-4 rounded-2xl shadow-md">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👼</span>
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-sm text-gray-500">Raphael is reflecting...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick Prompts */}
+          <div className="px-4 py-2 border-t bg-white">
+            <div className="flex flex-wrap gap-2">
+              {quickPrompts.map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => setInputMessage(prompt)}
+                  className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t">
-            <div className="flex space-x-2">
+          <div className="p-4 border-t bg-white rounded-b-2xl">
+            <div className="flex space-x-3">
               <input
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Message Conner (Training Mode)..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ask Raphael about your wellness journey..."
+                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={isLoading}
               />
               <button
                 onClick={sendMessage}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isLoading || !inputMessage.trim()}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                Send
+                {isLoading ? '...' : 'Send'}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Disclaimer */}
+        <p className="text-center text-xs text-gray-500 mt-4">
+          Raphael provides wellness guidance based on the F.R.E.E.D.O.M. method. 
+          Always consult healthcare professionals for medical advice.
+        </p>
       </div>
       <Footer />
     </div>
