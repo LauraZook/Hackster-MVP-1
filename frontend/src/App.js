@@ -1754,6 +1754,7 @@ const MemberSignUpPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
