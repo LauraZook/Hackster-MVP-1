@@ -3914,6 +3914,83 @@ const MyStackPage = () => {
         </div>
       )}
 
+      {/* Add to Stack Modal (from Questionnaire) */}
+      {showAddToStackModal && pendingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Add to Stack</h2>
+              <button 
+                onClick={() => {
+                  setShowAddToStackModal(false);
+                  setPendingProduct(null);
+                }} 
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Product Preview */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow">
+                  <span className="text-2xl">💊</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">{pendingProduct.name}</h3>
+                  <p className="text-sm text-purple-600">{pendingProduct.brand}</p>
+                </div>
+              </div>
+              {pendingProduct.reason && (
+                <p className="text-sm text-gray-600 mt-2">{pendingProduct.reason}</p>
+              )}
+            </div>
+
+            {stacks.length > 0 ? (
+              <>
+                <p className="text-gray-600 mb-4">Choose a stack to add this product:</p>
+                <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+                  {stacks.map(stack => (
+                    <button
+                      key={stack.id}
+                      onClick={() => addProductToStack(stack.id, pendingProduct)}
+                      className="w-full p-4 text-left rounded-xl border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{stack.name}</h4>
+                          <p className="text-sm text-gray-500">{stack.items?.length || 0} products</p>
+                        </div>
+                        <span className="text-purple-600">→</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t pt-4">
+                  <button
+                    onClick={createStackAndAddProduct}
+                    className="w-full py-3 border-2 border-dashed border-purple-300 text-purple-600 rounded-xl hover:bg-purple-50 font-medium"
+                  >
+                    + Create New Stack & Add Product
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-gray-600 mb-4">You don't have any stacks yet. Create one to save this product!</p>
+                <button
+                  onClick={createStackAndAddProduct}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700"
+                >
+                  Create My First Stack
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
