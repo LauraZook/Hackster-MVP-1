@@ -2479,6 +2479,7 @@ const CoachOnboardingPage = () => {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
