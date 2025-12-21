@@ -1536,14 +1536,13 @@ const SignInPage = () => {
 
       if (response.ok) {
         login(data.user, data.access_token);
-        window.location.href = '/'; // Redirect to home
+        window.location.href = '/dashboard'; // Redirect to dashboard
       } else {
         setError(data.detail || 'Login failed');
       }
     } catch (err) {
-      // Mock successful login for demo
-      login({ username: formData.email.split('@')[0], email: formData.email, role: 'member' }, 'mock-token');
-      window.location.href = '/';
+      console.error('Login error:', err);
+      setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
     }
