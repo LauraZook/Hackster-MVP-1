@@ -2571,6 +2571,133 @@ const BlogPage = () => {
   );
 };
 
+// Coaching Landing Page - Choose AI Coach or Human Coaches
+const CoachingLandingPage = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-16">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Your Wellness Support Team</h1>
+          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+            Whether you need instant guidance or personalized 1:1 coaching, we have the right support for your journey.
+          </p>
+        </div>
+      </div>
+
+      {/* Two Options */}
+      <div className="max-w-6xl mx-auto px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-8">
+          
+          {/* AI Coach - Raphael */}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-6 text-white">
+              <div className="text-5xl mb-4">👼</div>
+              <h2 className="text-2xl font-bold">Meet Raphael</h2>
+              <p className="text-purple-100">Your 24/7 AI Wellness Coach</p>
+            </div>
+            <div className="p-6">
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-3">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span className="text-gray-700">Available 24/7, instant responses anytime</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span className="text-gray-700">Trained in the F.R.E.E.D.O.M. Health & Wellness Method</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span className="text-gray-700">Personalized supplement & product recommendations</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span className="text-gray-700">Educational guidance on how your body works</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span className="text-gray-700">Free to start - 7 messages before sign-up</span>
+                </li>
+              </ul>
+              <p className="text-gray-600 text-sm mb-6">
+                Raphael is your always-available wellness guide, ready to answer questions, provide recommendations, 
+                and teach you about holistic health using the F.R.E.E.D.O.M. method.
+              </p>
+              <button
+                onClick={() => navigate('/chat')}
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all"
+              >
+                Chat with Raphael →
+              </button>
+            </div>
+          </div>
+
+          {/* Human Coaches */}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
+              <div className="text-5xl mb-4">🧑‍⚕️</div>
+              <h2 className="text-2xl font-bold">Find a Health Coach</h2>
+              <p className="text-blue-100">Certified Wellness Experts</p>
+            </div>
+            <div className="p-6">
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-500 mt-1">✓</span>
+                  <span className="text-gray-700">Personalized 1:1 coaching sessions</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-500 mt-1">✓</span>
+                  <span className="text-gray-700">Certified professionals in nutrition, fitness & wellness</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-500 mt-1">✓</span>
+                  <span className="text-gray-700">Accountability and ongoing support</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-500 mt-1">✓</span>
+                  <span className="text-gray-700">Customized health plans tailored to your goals</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-500 mt-1">✓</span>
+                  <span className="text-gray-700">Human connection and empathy</span>
+                </li>
+              </ul>
+              <p className="text-gray-600 text-sm mb-6">
+                Connect with certified wellness coaches who can provide personalized guidance, create custom plans, 
+                and hold you accountable on your health transformation journey.
+              </p>
+              <button
+                onClick={() => navigate('/coaches')}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
+              >
+                Browse Coaches →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="mt-16 text-center bg-white rounded-2xl p-8 shadow-lg">
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">Not sure where to start?</h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Try chatting with Raphael first! Our AI coach can help you understand your needs, 
+            answer initial questions, and even recommend the right human coach for your specific goals.
+          </p>
+          <button
+            onClick={() => navigate('/chat')}
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 px-8 rounded-xl font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all"
+          >
+            Start with Raphael →
+          </button>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
 // AI Coach Chat - Raphael (The Healer)
 const AICoachChat = () => {
   const { isAuthenticated, user, token } = useAuth();
