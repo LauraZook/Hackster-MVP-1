@@ -2653,6 +2653,7 @@ const AICoachChat = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
