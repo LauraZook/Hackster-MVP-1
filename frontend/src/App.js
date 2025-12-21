@@ -210,26 +210,15 @@ const CoreFeatures = () => {
       link: "/my-stack"
     },
     {
-      id: "ai-coach",
-      title: "Meet Raphael",
-      subtitle: "Your 24/7 AI Wellness Coach",
-      description: "Chat with Raphael, your personal AI wellness guide trained in the F.R.E.E.D.O.M. method. Get instant answers and personalized recommendations anytime.",
-      icon: "👼",
+      id: "coaching",
+      title: "Find Expert Coaching",
+      subtitle: "AI Coach + Human Experts",
+      description: "Get 24/7 guidance from Raphael, our AI Wellness Coach, or connect with certified human coaches for personalized 1:1 support.",
+      icon: "🚀",
       highlights: [],
-      cta: "Chat with Raphael",
+      cta: "Explore Coaching",
       color: "purple",
-      link: "/chat"
-    },
-    {
-      id: "health-coaches",
-      title: "Find a Health Coach",
-      subtitle: "Certified Wellness Experts",
-      description: "Connect with certified wellness coaches for personalized 1:1 guidance, accountability, and expert support on your health journey.",
-      icon: "🧑‍⚕️",
-      highlights: [],
-      cta: "Browse Coaches",
-      color: "blue",
-      link: "/coaches"
+      link: "/coaching"
     },
     {
       id: "tracking",
@@ -239,7 +228,7 @@ const CoreFeatures = () => {
       icon: "📊",
       highlights: [],
       cta: "View My Dashboard",
-      color: "purple",
+      color: "blue",
       link: "/dashboard"
     },
     {
@@ -250,7 +239,7 @@ const CoreFeatures = () => {
       icon: "🏆",
       highlights: [],
       cta: "Share Success",
-      color: "blue",
+      color: "purple",
       link: "/community"
     }
   ];
