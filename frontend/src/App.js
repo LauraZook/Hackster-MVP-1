@@ -128,17 +128,17 @@ const Navigation = () => {
 // Hero Section Component
 const HeroSection = () => {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50">
       <Navigation />
 
       {/* Hero Content */}
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-20">
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
             Optimize Your Health with
             <span className="text-blue-600 block">Biohacking Excellence</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed">
             Get AI-powered recommendations, shop premium supplements from trusted vendors, 
             and build your personalized Hackster stack for optimal health.
           </p>
