@@ -178,12 +178,12 @@ const CoreFeatures = () => {
   const features = [
     {
       id: "questionnaire",
-      title: "1. AI Health Assessment",
+      title: "1. Establish Your Vision",
       subtitle: "Personalized Recommendations",
-      description: "Take our AI-powered questionnaire for personalized supplement, lab test, and biohacking recommendations.",
+      description: "Take our AI-powered questionnaire for your personalized supplements, relevant lab tests, and biohacking tips.",
       icon: "🎯",
       highlights: [],
-      cta: "Start Assessment",
+      cta: "Start AI Assessment",
       color: "blue",
       link: "/questionnaire"
     },
@@ -191,10 +191,10 @@ const CoreFeatures = () => {
       id: "marketplace",
       title: "2. Shop Trusted Vendors",
       subtitle: "Premium Biohacking Products", 
-      description: "Browse products from Thorne, Apex Energetics, Standard Process, Oura, and more top brands.",
+      description: "Browse your recommended products from our carefully curated and top brand partners all in one place.",
       icon: "🛒",
       highlights: [],
-      cta: "Visit Marketplace",
+      cta: "Visit Hackster Store",
       color: "blue",
       link: "/marketplace"
     },
@@ -202,7 +202,7 @@ const CoreFeatures = () => {
       id: "stack",
       title: "3. Build Your Stack",
       subtitle: "Save & Share Your Favorites",
-      description: "Create your personalized Hackster Stack, save products, and share with the community.",
+      description: "Create your personalized Hackster Stack, save products and crowd source support to meet your health and fitness goals faster.",
       icon: "⚡",
       highlights: [],
       cta: "Create My Stack",
@@ -211,9 +211,9 @@ const CoreFeatures = () => {
     },
     {
       id: "coaching",
-      title: "4. Expert Coaching",
+      title: "4. Find Expert Coaching",
       subtitle: "AI Coach + Human Experts",
-      description: "Get personalized guidance from the Hackster AI coach 24/7, plus connect with certified coaches for advanced results.",
+      description: "Gain 1:1 guidance and support from the Hackster AI Coach 24/7, plus connect with certified wellness coaches for advanced results.",
       icon: "🚀",
       highlights: [],
       cta: "Find a Coach",
@@ -224,18 +224,18 @@ const CoreFeatures = () => {
       id: "tracking",
       title: "5. Track Your Progress",
       subtitle: "Monitor Results Over Time",
-      description: "Login to your dashboard to record results over time and stay motivated on your biohacking journey.",
+      description: "Login to your personal dashboard to record results over time and stay motivated during your biohacking journey.",
       icon: "📊",
       highlights: [],
-      cta: "View Dashboard",
+      cta: "View My Dashboard",
       color: "purple",
       link: "/dashboard"
     },
     {
       id: "celebrate",
-      title: "6. Celebrate Your Wins",
+      title: "6. Celebrate Your Wins!",
       subtitle: "Inspire the Community",
-      description: "Share your successes with the Hackster community to help other biohackers achieve great results.",
+      description: "Share your biohacking successes with the Hackster community and help others achieve great results, too.",
       icon: "🏆",
       highlights: [],
       cta: "Share Success",
@@ -252,8 +252,8 @@ const CoreFeatures = () => {
             Your Path to Optimal Health
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Follow our proven 6-step process to transform your health, increase energy, 
-            and extend your healthspan with precision biohacking.
+            Follow our dynamic, precision biohacking methods to transform your health, 
+            increase vitality, feel great, and living longer!
           </p>
         </div>
 
