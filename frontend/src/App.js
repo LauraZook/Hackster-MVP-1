@@ -2554,6 +2554,7 @@ const BlogPage = () => {
           <p className="text-gray-600">Full blog system with community experiments, detailed protocols, and data analysis</p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
