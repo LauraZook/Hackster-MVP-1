@@ -4542,10 +4542,10 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/get-started" className="hover:text-white">Get Started</Link></li>
-              <li><Link to="/marketplace" className="hover:text-white">Marketplace</Link></li>
-              <li><Link to="/questionnaire" className="hover:text-white">AI Questionnaire</Link></li>
+              <li><Link to="/questionnaire" className="hover:text-white">Get Started</Link></li>
+              <li><Link to="/marketplace" className="hover:text-white">Hackster Store</Link></li>
               <li><Link to="/my-stack" className="hover:text-white">My Stack</Link></li>
+              <li><Link to="/dashboard" className="hover:text-white">Dashboard</Link></li>
             </ul>
           </div>
           
@@ -4562,14 +4562,23 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><a href="#" className="hover:text-white">Help Center</a></li>
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+              <li><Link to="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; 2024 Hackster.ai. All rights reserved.</p>
+        {/* Medical Disclaimer */}
+        <div className="border-t border-gray-800 mt-8 pt-8">
+          <div className="bg-gray-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-300 leading-relaxed">
+              <strong className="text-yellow-500">Medical Disclaimer:</strong> The information provided by Hackster.ai, including AI recommendations, community discussions, and AI coach guidance, is for educational, research and informational purposes only. Always consult with qualified healthcare providers before making any changes to your health regimen, starting new supplements, or implementing biohacking protocols. Individual results may vary.
+            </p>
+            <p className="text-xs text-gray-400 mt-3">
+              * Any recommendations on Hackster.ai have not been reviewed or approved by the Federal Drug Administration or FDA and are not intended to diagnose, treat, cure or prevent disease.
+            </p>
+          </div>
+          <p className="text-center text-sm text-gray-400">&copy; 2024 Hackster.ai. All rights reserved.</p>
         </div>
       </div>
     </footer>
