@@ -5068,6 +5068,7 @@ function App() {
             <Route path="/signup/coach" element={<CoachSignUpPage />} />
             <Route path="/onboarding/coach" element={<CoachOnboardingPage />} />
             <Route path="/coaches" element={<CoachesPage />} />
+            <Route path="/coaching" element={<CoachingLandingPage />} />
             
             {/* AI Coach Chat - Raphael */}
             <Route path="/chat" element={<AICoachChat />} />
