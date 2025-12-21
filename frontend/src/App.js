@@ -3140,10 +3140,10 @@ const AIQuestionnairePage = () => {
               Save to My Stack
             </Link>
             <Link 
-              to="/community" 
+              to="/dashboard" 
               className="flex-1 border-2 border-blue-600 text-blue-600 px-6 py-4 rounded-xl font-semibold text-center hover:bg-blue-50"
             >
-              Share with Community
+              Go to Dashboard
             </Link>
           </div>
         </div>
