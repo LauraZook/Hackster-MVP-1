@@ -216,7 +216,7 @@ const CoreFeatures = () => {
     },
     {
       id: "celebrate",
-      title: "6. Celebrate Your Progress",
+      title: "6. Celebrate Your Wins",
       subtitle: "Inspire the Community",
       description: "Share your successes with the Hackster community to help other biohackers achieve great results.",
       icon: "🏆",
