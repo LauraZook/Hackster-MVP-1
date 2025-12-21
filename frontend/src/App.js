@@ -752,6 +752,7 @@ const CommunityPlatform = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
