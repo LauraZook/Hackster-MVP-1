@@ -2626,7 +2626,7 @@ const CoachingLandingPage = () => {
           {/* Human Coaches */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
-              <div className="text-5xl mb-4">🧑‍⚕️</div>
+              <div className="text-5xl mb-4">👱‍♀️</div>
               <h2 className="text-2xl font-bold">Find a Health Coach</h2>
               <p className="text-blue-100">Certified Wellness Experts</p>
             </div>
