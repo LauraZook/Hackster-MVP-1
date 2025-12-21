@@ -3835,6 +3835,212 @@ const MyStackPage = () => {
   );
 };
 
+// ============== SHARED STACK PAGE (Gift Registry View) ==============
+const SharedStackPage = () => {
+  const { shareToken } = useParams();
+  const [stack, setStack] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [purchasingItem, setPurchasingItem] = useState(null);
+
+  useEffect(() => {
+    fetchSharedStack();
+  }, [shareToken]);
+
+  const fetchSharedStack = async () => {
+    try {
+      const response = await axios.get(`${API}/stacks/share/${shareToken}`);
+      setStack(response.data);
+    } catch (error) {
+      console.error('Error fetching shared stack:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAsPurchased = async (itemId) => {
+    const purchaserName = prompt('Enter your name (so they know who bought this gift):');
+    if (!purchaserName) return;
+    
+    try {
+      await axios.put(`${API}/stacks/share/${shareToken}/items/${itemId}/purchase`, null, {
+        params: { purchaser_name: purchaserName }
+      });
+      // Refresh the stack
+      fetchSharedStack();
+      alert('Thank you! This item has been marked as purchased. 🎁');
+    } catch (error) {
+      console.error('Error marking item as purchased:', error);
+      alert('Error updating item. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (!stack) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <div className="text-6xl mb-6">🔍</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Stack not found</h1>
+          <p className="text-gray-600">This Hackster Stack may have been removed or the link is invalid.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const unpurchasedItems = stack.items?.filter(item => !item.is_purchased) || [];
+  const purchasedItems = stack.items?.filter(item => item.is_purchased) || [];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <Navigation />
+      
+      {/* Hero */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-12">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="text-5xl mb-4">🎁</div>
+          <h1 className="text-4xl font-bold mb-2">{stack.username}'s Hackster Stack</h1>
+          <p className="text-purple-100 text-lg">{stack.name}</p>
+          {stack.description && (
+            <p className="text-purple-200 mt-2 max-w-xl mx-auto">{stack.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Gift Registry Info */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">💝</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Help {stack.username} Optimize Their Health!</h2>
+              <p className="text-gray-600">
+                {stack.username} is on a biohacking journey to improve their health and wellness. 
+                You can help by purchasing items from their wishlist below. Click "I'll Buy This" 
+                to mark an item as purchased and prevent duplicates.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Health Goals */}
+        {stack.health_goals?.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-600 mb-2">Health Goals:</h3>
+            <div className="flex flex-wrap gap-2">
+              {stack.health_goals.map(goal => (
+                <span key={goal} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                  {goal.replace('_', ' ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Items Still Needed */}
+        {unpurchasedItems.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              🛒 Items Still Needed ({unpurchasedItems.length})
+            </h2>
+            <div className="space-y-4">
+              {unpurchasedItems.map(item => (
+                <div key={item.id} className="bg-white rounded-xl shadow-md p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.product_name} className="w-full h-full object-contain rounded-lg" />
+                        ) : (
+                          <span className="text-2xl">💊</span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{item.product_name}</h3>
+                        <p className="text-sm text-gray-500">{item.vendor_name}</p>
+                        {item.notes && (
+                          <p className="text-sm text-gray-600 mt-1 italic">"{item.notes}"</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-purple-600">${item.price?.toFixed(2)}</p>
+                      {item.priority === 1 && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">High Priority</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => markAsPurchased(item.id)}
+                      className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 flex items-center justify-center gap-2"
+                    >
+                      <span>🎁</span> I'll Buy This Gift
+                    </button>
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(item.product_name + ' ' + item.vendor_name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50"
+                    >
+                      Find Product
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Already Purchased */}
+        {purchasedItems.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              ✅ Already Purchased ({purchasedItems.length})
+            </h2>
+            <div className="space-y-3">
+              {purchasedItems.map(item => (
+                <div key={item.id} className="bg-gray-100 rounded-xl p-4 opacity-75">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-green-500 text-xl">✓</span>
+                      <div>
+                        <h3 className="font-medium text-gray-700 line-through">{item.product_name}</h3>
+                        <p className="text-sm text-gray-500">Purchased by {item.purchased_by || 'Someone special'}</p>
+                      </div>
+                    </div>
+                    <span className="text-gray-500">${item.price?.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Summary */}
+        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 text-center">
+          <p className="text-gray-700">
+            <strong>{unpurchasedItems.length}</strong> items still needed • 
+            <strong> ${unpurchasedItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)}</strong> total remaining
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Thank you for supporting {stack.username}'s health journey! 💜
+          </p>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
 // Placeholder Pages
 const PrivacyPolicy = () => (
   <div className="min-h-screen bg-gray-50">
