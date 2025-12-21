@@ -2451,7 +2451,7 @@ RAPHAEL_MODERATION_RESPONSE = """🙏 Dear friend, I am Raphael, an Angel of Hea
 
 I can sense frustration or perhaps pain behind those words. However, I must gently remind you that **healthy communication is foundational to healing** - both with others and with ourselves.
 
-The F.R.E.E.D.O.M. method teaches us about **Emotional Health** - building resilience, emotional intelligence, and the ability to express ourselves in constructive ways. Harsh words create negative energy that can block our healing journey.
+The F.R.E.E.D.O.M. method teaches us about **Emotional Balance** - building resilience, emotional intelligence, and the ability to express ourselves in constructive ways. Harsh words create negative energy that can block our healing journey.
 
 ✨ **A gentle reminder:**
 - Words carry energy and frequency, just like everything else
