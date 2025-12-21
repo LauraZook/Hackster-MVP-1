@@ -3530,6 +3530,9 @@ const MyStackPage = () => {
   const [publicStacks, setPublicStacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAddToStackModal, setShowAddToStackModal] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState(null);
+  const [selectedStack, setSelectedStack] = useState(null);
   const [newStack, setNewStack] = useState({ name: '', description: '', visibility: 'private', health_goals: [] });
 
   useEffect(() => {
@@ -3537,6 +3540,20 @@ const MyStackPage = () => {
       fetchMyStacks();
     }
     fetchPublicStacks();
+    
+    // Check for pending product to add from questionnaire
+    const pendingItem = localStorage.getItem('pendingStackItem');
+    if (pendingItem) {
+      try {
+        const product = JSON.parse(pendingItem);
+        setPendingProduct(product);
+        setShowAddToStackModal(true);
+        localStorage.removeItem('pendingStackItem');
+      } catch (e) {
+        console.error('Error parsing pending item:', e);
+        localStorage.removeItem('pendingStackItem');
+      }
+    }
   }, [isAuthenticated]);
 
   const fetchMyStacks = async () => {
@@ -3558,6 +3575,61 @@ const MyStackPage = () => {
       console.error('Error fetching public stacks:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addProductToStack = async (stackId, product) => {
+    try {
+      // First, we need to find or create a product in marketplace
+      // For now, we'll add it as a custom item
+      const response = await axios.post(`${API}/stacks/${stackId}/items`, 
+        { 
+          product_id: product.product_id || product.name.toLowerCase().replace(/\s+/g, '-'),
+          priority: product.priority || 1,
+          notes: product.reason || ''
+        },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      // Refresh stacks
+      await fetchMyStacks();
+      setShowAddToStackModal(false);
+      setPendingProduct(null);
+      alert(`"${product.name}" has been added to your stack! 🎉`);
+    } catch (error) {
+      console.error('Error adding to stack:', error);
+      // If product not found in marketplace, show message
+      if (error.response?.status === 404) {
+        alert(`Product "${product.name}" will be available in the marketplace soon. For now, you can find it at ${product.brand}'s website.`);
+      } else {
+        alert('Error adding product to stack. Please try again.');
+      }
+      setShowAddToStackModal(false);
+    }
+  };
+
+  const createStackAndAddProduct = async () => {
+    try {
+      // Create a new stack first
+      const stackData = {
+        name: `My ${pendingProduct?.name || 'Health'} Stack`,
+        description: `Stack created from AI recommendations`,
+        visibility: 'private',
+        health_goals: []
+      };
+      
+      const response = await axios.post(`${API}/stacks`, stackData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const newStackData = response.data;
+      setStacks([newStackData, ...stacks]);
+      
+      // Now add the product to this new stack
+      await addProductToStack(newStackData.id, pendingProduct);
+    } catch (error) {
+      console.error('Error creating stack:', error);
+      alert('Error creating stack. Please try again.');
     }
   };
 
