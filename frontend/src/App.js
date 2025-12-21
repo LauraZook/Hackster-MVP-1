@@ -1422,6 +1422,7 @@ const GetStartedFlow = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
