@@ -156,7 +156,7 @@ const HeroSection = () => {
   );
 };
 
-// Three Core Features Section
+// Core Features Section
 const CoreFeatures = () => {
   const features = [
     {
@@ -202,6 +202,28 @@ const CoreFeatures = () => {
       cta: "Find a Coach",
       color: "blue",
       link: "/coaches"
+    },
+    {
+      id: "tracking",
+      title: "5. Track Your Progress",
+      subtitle: "Monitor Results Over Time",
+      description: "Login to your dashboard to record results over time and stay motivated on your biohacking journey.",
+      icon: "📊",
+      highlights: [],
+      cta: "View Dashboard",
+      color: "purple",
+      link: "/signin"
+    },
+    {
+      id: "celebrate",
+      title: "6. Celebrate Your Progress",
+      subtitle: "Inspire the Community",
+      description: "Share your successes with the Hackster community to help other biohackers achieve great results.",
+      icon: "🏆",
+      highlights: [],
+      cta: "Share Success",
+      color: "blue",
+      link: "/community"
     }
   ];
 
@@ -213,7 +235,7 @@ const CoreFeatures = () => {
             Your Path to Optimal Health
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Follow our proven 3-step process to transform your health, increase energy, 
+            Follow our proven 6-step process to transform your health, increase energy, 
             and extend your healthspan with precision biohacking.
           </p>
         </div>
