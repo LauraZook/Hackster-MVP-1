@@ -2567,7 +2567,7 @@ const AICoachChat = () => {
     {
       id: 1,
       sender: 'raphael',
-      text: "✨ Welcome! I'm Raphael, your Hackster AI Wellness Coach. I'm here to support you on your journey to better health and vitality.\n\nI use the F.R.E.E.D.O.M. method - a holistic approach covering **F**aith • **R**ejuvenation • **E**motional Health • **E**nergy • **D**etox • **O**xygenation • **M**indset.\n\nWhat brings you here today? I'd love to learn about your health goals and how I can help. 💚",
+      text: "✨ Welcome! I'm Raphael, your Hackster AI Wellness Coach. I'm here to support you on your journey to better health and vitality.\n\nI use the F.R.E.E.D.O.M. method - a holistic approach covering **F**aith • **R**ejuvenation • **E**motional Balance • **E**lectric Health • **D**etoxification • **O**xygenation • **M**indfulness.\n\nWhat brings you here today? I'd love to learn about your health goals and how I can help. 💚",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
