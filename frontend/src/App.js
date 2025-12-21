@@ -1895,6 +1895,7 @@ const CoachSignUpPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
