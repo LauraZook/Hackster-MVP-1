@@ -7,8 +7,8 @@ WORKDIR /app/backend
 # Copy requirements file
 COPY backend/requirements.txt ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (including emergentintegrations from Emergent's private index)
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/
 
 # Copy the entire project
 COPY . /app/
