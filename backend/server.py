@@ -2585,7 +2585,7 @@ async def coach_chat(request: CoachChatRequest):
     if not EMERGENT_LLM_KEY:
         # Return a meaningful response even without API key
         return {
-            "response": "🙏 Blessings on your wellness journey! I sense your desire for healing and guidance.\n\nLet me share the F.R.E.E.D.O.M. principles with you:\n\n• **Faith** - Trust in your body's divine design to heal\n• **Rejuve** - Understand your baseline through testing\n• **Emotional Health** - Nurture your mental wellness\n• **Energy Medicine** - Embrace healing frequencies\n• **Detox** - Release what no longer serves you\n• **Oxygenate** - Breathe life into every cell\n• **Mindset** - Envision your optimal health\n\nTo receive personalized AI guidance, please ensure the system is fully configured. In the meantime, take our AI Health Assessment for tailored recommendations! ✨"
+            "response": "🙏 Blessings on your wellness journey! I sense your desire for healing and guidance.\n\nLet me share the F.R.E.E.D.O.M. principles with you:\n\n• **Faith** - Trust in your body's ability to heal\n• **Rejuvenation** - Understand your baseline through testing\n• **Emotional Balance** - Nurture your mental wellness\n• **Electric Health** - Embrace healing frequencies\n• **Detoxification** - Release what no longer serves you\n• **Oxygenation** - Breathe life into every cell\n• **Mindfulness** - Present-moment awareness on your journey\n\nTo receive personalized AI guidance, please ensure the system is fully configured. In the meantime, take our AI Health Assessment for tailored recommendations! ✨"
         }
     
     try:
