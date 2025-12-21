@@ -1639,18 +1639,13 @@ const MemberSignUpPage = () => {
 
       if (response.ok) {
         login(data.user, data.access_token);
-        window.location.href = '/community'; // Redirect to community
+        window.location.href = '/dashboard'; // Redirect to dashboard
       } else {
         setError(data.detail || 'Registration failed');
       }
     } catch (err) {
-      // Mock successful registration for demo
-      login({ 
-        username: formData.username, 
-        email: formData.email, 
-        role: 'member' 
-      }, 'mock-token');
-      window.location.href = '/community';
+      console.error('Registration error:', err);
+      setError('Unable to connect to server. Please try again.');
     } finally {
       setLoading(false);
     }
