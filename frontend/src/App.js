@@ -188,17 +188,6 @@ const CoreFeatures = () => {
       link: "/questionnaire"
     },
     {
-      id: "marketplace",
-      title: "Shop Trusted Vendors",
-      subtitle: "Premium Biohacking Products", 
-      description: "Browse your recommended products from our carefully curated and top brand partners all in one place.",
-      icon: "🛒",
-      highlights: [],
-      cta: "Visit Hackster Store",
-      color: "blue",
-      link: "/marketplace"
-    },
-    {
       id: "stack",
       title: "Build Your Stack",
       subtitle: "Save & Share Your Favorites",
@@ -208,6 +197,17 @@ const CoreFeatures = () => {
       cta: "Create My Stack",
       color: "purple",
       link: "/my-stack"
+    },
+    {
+      id: "marketplace",
+      title: "Shop Trusted Vendors",
+      subtitle: "Premium Biohacking Products", 
+      description: "Browse your recommended products from our carefully curated and top brand partners all in one place.",
+      icon: "🛒",
+      highlights: [],
+      cta: "Visit Hackster Store",
+      color: "blue",
+      link: "/marketplace"
     },
     {
       id: "coaching",
