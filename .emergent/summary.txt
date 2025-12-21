@@ -1,0 +1,163 @@
+<analysis>**original_problem_statement:**
+The user wants to enhance their  project by incorporating concepts from , , , and .
+
+**PRODUCT REQUIREMENTS:**
+1.  **AI-Powered Questionnaire**: Implement an AI-driven questionnaire to provide personalized product recommendations.
+2.  **Product Marketplace**: Create a marketplace for biohacking products (e.g., from Thorne.com). The initial version should use an affiliate link model for checkout, where users are redirected to vendor sites.
+3.  **Wishlist/Stack Builder**: Allow users to save recommended products to a personal Hackster Stack (wishlist). This stack should be shareable with friends and family for community discussion and gifting (similar to a gift registry).
+4.  **Lab Testing Integration**: Allow users to upload lab work results to track deficiencies and progress.
+5.  **AI Coach Raphael**: Transform the existing AI coach (Conner) into Raphael, an AI wellness guide based on the F.R.E.E.D.O.M. healing methodology. Raphael should be encouraging, educational, and refer users to Hackster's human coaches or their own doctors when appropriate.
+6.  **User Experience**: Create a unified member dashboard and a seamless login/navigation experience. The UI should have a blue/purple gradient theme.
+
+The user specified the implementation order: 1) AI Questionnaire, 2) Product Marketplace, 3) Wishlist/Stack Builder.
+
+**User's preferred language**: English
+
+**what currently exists?**
+The application is a full-stack project with a React frontend, FastAPI backend, and MongoDB database. Before this session, it had a basic structure including user authentication (member/coach roles), a community forum, a simple coach directory, and a placeholder for health assessments. The entire frontend codebase is contained within a single file: .
+
+**Last working item**:
+*   **Last item agent was working**: Implementing a session limit for the AI Coach (Raphael) for non-logged-in (guest) users. After a few free messages, guest users should be prompted to log in or sign up to continue the conversation and save recommendations to their dashboard.
+*   **Status**: NOT STARTED
+*   **Agent Testing Done**: N
+*   **Which testing method agent to use?**: both
+*   **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+*   **Issue 1**: Login functionality is not working on the user's production environment (Railway + Vercel). (Priority: P0)
+*   **Issue 2**: The entire frontend application is in a single monolithic file (), making it difficult to maintain. (Priority: P2)
+
+**Issues Detail:**
+*   **Issue 1: Production Login Failure**
+    *   **Description**: The user reported that they were unable to log in or create an account on their live site hosted on Railway/Vercel. While the agent verified that the authentication flow works correctly in the local development environment, the production issue persists. This is likely due to an environment configuration mismatch.
+    *   **Attempted fixes**: The agent fixed a local authentication persistence issue by ensuring  was used correctly and navigation was handled by React Router instead of full page reloads. However, this did not address the production environment problem.
+    *   **Next debug checklist**:
+        1.  **Vercel (Frontend)**: Verify the  environment variable is correctly set to the public URL of the Railway backend service.
+        2.  **Railway (Backend)**: Check the FastAPI CORS configuration in  to ensure it explicitly allows the Vercel frontend domain ( and any preview URLs).
+        3.  **Live Site Debugging**: Use browser developer tools on the live site to inspect the network tab during a login attempt and check for failed API calls (e.g., 404 Not Found, 403 Forbidden, CORS errors).
+    *   **Why fix this issue?**: Core user functionality is broken, preventing any user from signing up or logging in, which blocks access to all personalized features.
+    *   **Status**: BLOCKED (Agent cannot access production environment)
+    *   **Is recurring issue?**: N
+    *   **Should Test frontend/backend/both after fix?**: both
+
+*   **Issue 2: Monolithic Frontend File**
+    *   **Description**: The file  is over 4,500 lines long and contains all React components, pages, routes, and logic for the entire application.
+    *   **Attempted fixes**: None. The agent continued adding more code to this file.
+    *   **Next debug checklist**:
+        1.  Create a new directory structure within : e.g., , , , .
+        2.  Systematically extract each component (e.g., , , , ) into its own file within the new structure.
+        3.  Update  to import these components and manage routing.
+    *   **Why fix this issue?**: To improve code maintainability, readability, and scalability. It will make future development and debugging significantly easier.
+    *   **Status**: NOT STARTED
+    *   **Is recurring issue?**: Y
+    *   **Should Test frontend/backend/both after fix?**: frontend
+
+**In progress Task List**:
+There are no tasks currently in progress.
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+*   **Task 1 (P0)**: Implement session limit for the AI Coach. Guest users get a few free messages, then are prompted to log in/sign up. For logged-in users, add functionality to save Raphael's recommendations to their dashboard.
+    *   **Files to modify**:  (for session logic and saving recommendations),  (for UI prompts and handling saved items).
+*   **Task 2 (P1)**: Complete Stripe Connect integration to enable a full multi-vendor checkout experience directly on the website, replacing the current affiliate link model.
+*   **Task 3 (P2)**: Integrate with lab testing service APIs (e.g., Function Health) to automate the import of lab results, replacing the current manual upload system.
+*   **Task 4 (P2)**: Integrate coach notes into the user's progress dashboard.
+
+**Completed work in this session**
+- **AI-Powered Questionnaire (DONE)**: Implemented a multi-step questionnaire using OpenAI (via Emergent LLM Key) to generate personalized health recommendations.
+- **Product Marketplace (DONE)**: Created a marketplace page displaying products from various vendors. The cart currently works on an affiliate model, redirecting users to vendor sites.
+- **My Stack Wishlist (DONE)**: Built a feature for users to create and manage personal stacks (wishlists) of products. Implemented the flow to add items to a stack from the questionnaire results.
+- **Member Dashboard (DONE)**: Created a new  page for logged-in users, showing profile info, stats, and quick actions.
+- **AI Coach Raphael (DONE)**: Replaced the old chatbot with Raphael, an advanced AI coach trained on the F.R.E.E.D.O.M. healing method. Raphael provides educational content and refers users to the platform's coaches.
+- **UX/UI Overhaul (DONE)**:
+    - Updated the site's color scheme from green to a blue/purple gradient.
+    - Redesigned and updated copy for the homepage feature tiles.
+    - Improved user navigation by making the username in the header a link to the dashboard.
+    - Added a comprehensive footer with an updated medical disclaimer to all pages of the site.
+- **Authentication Flow (PARTIALLY FIXED)**: Fixed auth state persistence for the local development environment using  to prevent logouts on page navigation. The production login issue remains.
+
+**Earlier issues found/mentioned but not fixed**
+None not already listed in the All Pending/In progress Issue list section.
+
+**Known issue recurrence from previous fork**
+None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Backend**: FastAPI, Python, MongoDB (via  async driver)
+-   **Frontend**: React.js, Tailwind CSS
+-   **Authentication**: JWT (JSON Web Tokens)
+-   **AI Integration**: OpenAI GPT models accessed via the  library and the Emergent LLM Key. The AI system prompt engineering is a key concept for the coach.
+-   **E-commerce Model**: Affiliate marketing links (current) with plans for a multi-vendor marketplace (future).
+
+**key DB schema**
+-   **users**: {, , , , }
+-   **products**: {uid=0(root) gid=0(root) groups=0(root), , , , , , , , }
+-   **vendors**: {uid=0(root) gid=0(root) groups=0(root), , , }
+-   **stacks**: {uid=0(root) gid=0(root) groups=0(root), , , , , : [{, }], }
+-   **questionnaire_sessions**: {uid=0(root) gid=0(root) groups=0(root), , , , }
+-   **lab_results**: {, , , , }
+
+**changes in tech stack**
+-   Added  and  to  to facilitate integration with OpenAI.
+
+**All files of reference**
+-   **/app/backend/server.py**: Main backend file. Contains all data models, API endpoints, sample data initialization, and business logic for all new features.
+-   **/app/frontend/src/App.js**: Main (and only) frontend file. Contains all React components, pages, routing, state management, and API-calling logic.
+-   **/app/backend/requirements.txt**: Python dependencies file, updated for AI integration.
+
+**Areas that need refactoring**:
+-   ****: This file is extremely large and contains the entire frontend application. It desperately needs to be broken down into a standard React project structure with separate files for components, pages, hooks, and contexts. This is a high-priority technical debt item.
+
+**key api endpoints**
+-   : Chat with the AI Coach.
+-   : Submit questionnaire answers and get AI recommendations.
+-   : Fetch marketplace products.
+-   : Create a new user stack (wishlist).
+-   : Add a product to an existing stack.
+-   : User registration.
+-   : User login.
+
+**Critical Info for New Agent**
+-   The user deploys the application manually to **Railway (backend) and Vercel (frontend)** using GitHub. Do not use the platform's built-in deployer. Your primary goal is to provide working code that can be pushed to a Git repository.
+-   The **login functionality is broken in the user's production environment**. This is the most critical bug. The issue is likely related to the  environment variable on Vercel or CORS settings on Railway. Guide the user on how to check these settings.
+-   The next feature request is to **implement a session limit for the AI Coach** for guest users, prompting them to log in to continue and save recommendations. This is your highest priority task.
+-   Be aware that the entire frontend is in a single file (). While you should prioritize the user's request, any new frontend code should ideally be structured for an eventual refactor.
+
+**documents and test_reports created in this job**
+- /app/test_result.md
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  Allow users a few minutes of session without login. If they want to continue discussion, they should login so that they can save any recommendations on products and services that support their Hackster goals. Like if you make a product recommendation or a service provider or coach recommendation, you can store that in their personal user dashboard.
+2.  For medical concerns, please recommend our healthcare professional listings once they are populated. At first, ask the user to check with their general practitioner or doctor for advanced medical concerns. Teach the user about their bodies and how it works, and encourage collaboration with a healthcare and wellness team.
+3.  When the AI Coach Raphael always encourages professional consultation, he can refer users to our Coach profiles for more 1:1 health support and guidance.
+4.  Please teach our AI Coach these elements of Wellness and incorporate this style of communication to ask questions, make recommendations and encourage the users of Hackster.ai. Please let me know how we can best train this AI Coach to communicate with users using the F.R.E.E.D.O.M. healing method.
+5.  Update medical disclaimer to below copy and make sure footer appears on every page of the site...
+6.  This looks great. Can you please remove the numbering of 1 - 6 on the tiles and just have the headline, subtext and description and action button for each tile.
+7.  Update copy: Your Path to Optimal Health...
+8.  So, I'm logged in and did a questionnaire, got my results and then wanted to add to Stack and it navigates to a Stack I created previously, but it didn't add that product to my stack. Please check this flow again.
+9.  This member experience is really great! So I need a way to get back to the dashboard after I filled out my questionnaire and added a comment to the community... How do I get back to my User Profile... I would also expect to see a list of all of my recommendations after the questionnaire that allow me to add to my wishlist or cart...
+10. I'll keep it Railway + Vercel. I noticed that the login experience isn't working... Can you please test that functionality and optimize the Login experience for Members...
+
+**Project Health Check:**
+*   **Broken**: User login on the production environment (Railway/Vercel).
+*   **Mocked**: No mocked APIs, but sample data for products, vendors, coaches, etc., is created in the database on backend startup.
+
+**3rd Party Integrations**
+*   **OpenAI (GPT Models)**: Used for the AI Questionnaire and AI Coach Raphael. This integration uses the Emergent LLM Key.
+
+**Testing status**
+-   **Testing agent used after significant changes**: YES (Screenshot tool was used extensively).
+-   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Test files created**: None.
+-   **Known regressions**: User reported login functionality is broken on their live production site, although it was working before and works locally.
+
+**Credentials to test flow:**
+*   Username: , Password: 
+*   Username: , Password: 
+*   Username: , Password: 
+
+**What agent forgot to execute**
+The agent acknowledged the final user request to implement a session limit and save-to-dashboard functionality for the AI Coach but did not begin the implementation. This is the primary pending task for the next agent.</analysis>
