@@ -4204,15 +4204,11 @@ function App() {
             <Route path="/questionnaire" element={<AIQuestionnairePage />} />
             <Route path="/my-stack" element={<MyStackPage />} />
             <Route path="/stack/:stackId" element={<MyStackPage />} />
+            <Route path="/dashboard" element={<MemberDashboard />} />
             
             {/* Blog System (Phase 2) */}
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/experiments" element={<BlogPage />} />
-            
-            {/* New Features */}
-            <Route path="/marketplace" element={<MarketplacePage />} />
-            <Route path="/questionnaire" element={<AIQuestionnairePage />} />
-            <Route path="/my-stack" element={<MyStackPage />} />
             
             {/* Legal Pages */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
