@@ -2178,7 +2178,7 @@ const Home = () => {
               <ul className="space-y-3">
                 <li>
                   <Link to="/chat" className="text-gray-400 hover:text-green-400 transition-colors text-sm">
-                    Chat with Conner AI
+                    Chat with Raphael AI
                   </Link>
                 </li>
                 <li>
