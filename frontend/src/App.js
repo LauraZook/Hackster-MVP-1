@@ -2567,7 +2567,7 @@ const AICoachChat = () => {
     {
       id: 1,
       sender: 'raphael',
-      text: "🙏 Welcome, blessed soul! I am Raphael, your Hackster AI Wellness Coach, named after the Archangel of Healing. I'm here to guide you on your journey to optimal health using the F.R.E.E.D.O.M. healing method.\n\n✨ **F**aith • **R**ejuve • **E**motional Health • **E**nergy Medicine • **D**etox • **O**xygenate • **M**indset\n\nHow may I support your healing journey today?",
+      text: "✨ Welcome! I'm Raphael, your Hackster AI Wellness Coach. I'm here to support you on your journey to better health and vitality.\n\nI use the F.R.E.E.D.O.M. method - a holistic approach covering **F**aith • **R**ejuvenation • **E**motional Health • **E**nergy • **D**etox • **O**xygenation • **M**indset.\n\nWhat brings you here today? I'd love to learn about your health goals and how I can help. 💚",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -2582,13 +2582,13 @@ const AICoachChat = () => {
   const FREE_MESSAGE_LIMIT = 7; // Allow 7 free messages before requiring login
 
   const freedomPillars = [
-    { letter: 'F', name: 'Faith', icon: '🙏', description: 'God has designed our bodies to heal. Trust in natural healing and divine wisdom.' },
-    { letter: 'R', name: 'Rejuve', icon: '🔬', description: 'Understand your baseline health through tests and targeted interventions.' },
+    { letter: 'F', name: 'Faith', icon: '✨', description: 'Trust in your body\'s innate ability to heal - however that resonates with you.' },
+    { letter: 'R', name: 'Rejuve', icon: '🔬', description: 'Understand your baseline health through testing and intentional interventions.' },
     { letter: 'E', name: 'Emotional Health', icon: '💚', description: 'Build resilience and emotional intelligence for lasting wellness.' },
-    { letter: 'E', name: 'Energy Medicine', icon: '⚡', description: 'Harness frequencies, vibrations, and electrical energy for vitality.' },
-    { letter: 'D', name: 'Detox', icon: '🌿', description: 'Release toxins and cleanse your body for optimal function.' },
-    { letter: 'O', name: 'Oxygenate', icon: '💨', description: 'Increase cellular oxygenation through biohacking techniques.' },
-    { letter: 'M', name: 'Mindset', icon: '🧠', description: 'To think is to create. Envision your optimal health.' }
+    { letter: 'E', name: 'Energy Medicine', icon: '⚡', description: 'Work with your body\'s bioelectrical nature through frequencies and vibrations.' },
+    { letter: 'D', name: 'Detox', icon: '🌿', description: 'Release what no longer serves you for optimal function.' },
+    { letter: 'O', name: 'Oxygenate', icon: '💨', description: 'Increase cellular oxygenation through intentional practices.' },
+    { letter: 'M', name: 'Mindset', icon: '🧠', description: 'To think is to create. Visualize your best health.' }
   ];
 
   const scrollToBottom = () => {
