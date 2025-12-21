@@ -10,7 +10,11 @@ const API = `${BACKEND_URL}/api`;
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Initialize user from localStorage on first render
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [token, setToken] = useState(localStorage.getItem('token'));
 
   const logout = () => {
@@ -18,19 +22,27 @@ const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    window.location.href = '/';
   };
 
   useEffect(() => {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.exp * 1000 > Date.now()) {
-          const userData = JSON.parse(localStorage.getItem('user') || '{}');
-          setUser(userData);
-        } else {
+        if (payload.exp * 1000 < Date.now()) {
+          // Token expired
           logout();
+        } else {
+          // Token valid - load user from localStorage if not already set
+          if (!user) {
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            if (userData.email) {
+              setUser(userData);
+            }
+          }
         }
       } catch {
+        // Invalid token
         logout();
       }
     }
