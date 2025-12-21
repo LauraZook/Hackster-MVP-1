@@ -100,17 +100,22 @@ const Navigation = () => {
         
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
-            <span className="text-gray-700 text-sm">
-              Welcome, {user.username}!
-              {user.role === 'coach' && (
-                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                  Coach
-                </span>
-              )}
-            </span>
+            <Link to="/dashboard" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">{user?.username?.[0]?.toUpperCase() || 'H'}</span>
+              </div>
+              <span className="text-sm font-medium">
+                {user?.username}
+                {user?.role === 'coach' && (
+                  <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    Coach
+                  </span>
+                )}
+              </span>
+            </Link>
             <button
               onClick={logout}
-              className="text-gray-700 hover:text-red-600 transition-colors text-sm"
+              className="text-gray-500 hover:text-red-600 transition-colors text-sm"
             >
               Logout
             </button>
