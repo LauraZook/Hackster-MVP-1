@@ -4442,6 +4442,7 @@ function App() {
             <Route path="/questionnaire" element={<AIQuestionnairePage />} />
             <Route path="/my-stack" element={<MyStackPage />} />
             <Route path="/stack/:stackId" element={<MyStackPage />} />
+            <Route path="/stack/share/:shareToken" element={<SharedStackPage />} />
             <Route path="/dashboard" element={<MemberDashboard />} />
             
             {/* Blog System (Phase 2) */}
