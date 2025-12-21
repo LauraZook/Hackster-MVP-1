@@ -2718,7 +2718,7 @@ async def health_check():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', 'http://localhost:3000,https://localhost:3000').split(','),
+    allow_origins=os.environ.get('CORS_ORIGINS', 'http://localhost:3000,https://localhost:3000,https://hackster.ai,https://www.hackster.ai').split(','),
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
