@@ -3049,30 +3049,51 @@ const AIQuestionnairePage = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-4">💊 Recommended Products</h3>
             <div className="space-y-4">
               {recommendations.recommended_products?.map((product, index) => (
-                <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-gray-900">{product.name}</h4>
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">{product.brand}</span>
+                <div key={index} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-gray-900">{product.name}</h4>
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{product.brand}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          product.priority === 1 ? 'bg-blue-100 text-blue-700' :
+                          product.priority === 2 ? 'bg-purple-100 text-purple-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          Priority {product.priority}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{product.reason}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{product.reason}</p>
-                  <div className="mt-2">
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      product.priority === 1 ? 'bg-blue-100 text-blue-700' :
-                      product.priority === 2 ? 'bg-purple-100 text-purple-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      Priority {product.priority}
-                    </span>
+                  <div className="mt-3 flex gap-2">
+                    <button 
+                      onClick={() => {
+                        // Store recommendation to add to stack later
+                        localStorage.setItem('pendingStackItem', JSON.stringify(product));
+                        window.location.href = '/my-stack';
+                      }}
+                      className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center justify-center gap-2"
+                    >
+                      <span>⚡</span> Add to My Stack
+                    </button>
+                    <Link 
+                      to="/marketplace" 
+                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center justify-center gap-2"
+                    >
+                      <span>🛒</span> Shop Now
+                    </Link>
                   </div>
                 </div>
               ))}
             </div>
-            <Link 
-              to="/marketplace" 
-              className="mt-6 inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
-            >
-              Shop Recommended Products →
-            </Link>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-blue-800 text-sm">
+                💡 <strong>Tip:</strong> Add products to your Hackster Stack to save them for later, 
+                then share your stack with friends and family who can help you purchase items as gifts!
+              </p>
+            </div>
           </div>
 
           {/* Recommended Lab Tests */}
