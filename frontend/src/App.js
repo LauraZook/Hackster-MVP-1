@@ -212,7 +212,7 @@ const CoreFeatures = () => {
       highlights: [],
       cta: "View Dashboard",
       color: "purple",
-      link: "/signin"
+      link: "/dashboard"
     },
     {
       id: "celebrate",
