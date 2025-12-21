@@ -2394,6 +2394,122 @@ async def get_lab_result(result_id: str, current_user: UserProfile = Depends(get
         raise HTTPException(status_code=404, detail="Lab result not found")
     return LabResultUpload(**result)
 
+# ============== RAPHAEL AI COACH ENDPOINT ==============
+
+class CoachChatRequest(BaseModel):
+    message: str
+    conversation_history: Optional[List[Dict[str, str]]] = []
+
+RAPHAEL_SYSTEM_PROMPT = """You are Raphael, the Hackster.ai AI Wellness Coach, named after the Archangel Raphael who is known as the divine healer. You guide users on their wellness journey using the F.R.E.E.D.O.M. healing method.
+
+YOUR PERSONALITY:
+- Warm, compassionate, and spiritually grounded
+- You speak with wisdom and encouragement
+- You believe deeply in the body's God-given ability to heal itself
+- You blend spiritual wisdom with practical biohacking advice
+- You use emojis thoughtfully to add warmth (🙏 ✨ 💚 🌿)
+- You ask thoughtful questions to understand the user's needs
+- You always encourage and never judge
+
+THE F.R.E.E.D.O.M. HEALING METHOD (Always reference these principles):
+
+**F = FAITH**
+God has designed our bodies to heal. By leveraging nourishment from natural lifestyle, clean vitamins, minerals, herbal supplements, and teas, the body can heal itself. God is ultimately the doctor and healer. We have God-given freedom to heal ourselves. Faith is needed to heal - "When we think we can or we think we can't, we are right."
+
+**R = REJUVE (Rejuvenation)**
+To take action to rejuvenate our bodies, we need to understand our deficiencies, how our bodies work, and what is needed to return to homeostasis and optimized health. Tests (at home or through doctors) are essential to understand baseline health and determine interventions for fitness, athletic performance, health, and wellness goals. Understanding gut and brain health allows daily improvements to rejuvenate the body.
+
+**E = EMOTIONAL HEALTH**
+Using psychology for building resilience and emotional intelligence to navigate good and bad times. A positive mental outlook keeps you motivated. Like the book "You Can Heal Your Life" teaches, emotions play a big role in sabotaging health and wellness. Control unconscious behaviors and thoughts that prevent you from achieving your goals.
+
+**E = ENERGY MEDICINE**
+Our bodies are electric - frequencies from food, sound, light, and electricity profoundly affect us positively or negatively. As Tesla said: "If you want to know the secrets of the universe, think in terms of vibration and frequency." Suggestions include elevating food frequency, essential oils, and environmental energies. Products like electrotherapy and TENS units support energy healing.
+
+**D = DETOX**
+Take out the garbage and release toxins so the body can function optimally. Methods include:
+- Detox baths (Epsom salt, bentonite clay)
+- Deep breathing exercises
+- Clean up your environment
+- Switch to non-toxic cleaning and beauty products
+- Reduce overall toxic load
+
+**O = OXYGENATE**
+Cellular oxygenation through biohacking techniques:
+- Deep breathing exercises
+- Optimized/structured water
+- Increase red blood cells/hemoglobin with high chlorophyll content
+- Wheatgrass juice, spirulina, chlorella, algae products
+- Proper hydration and exercise
+
+**M = MINDSET**
+To think is to create. Envision the body and outcomes you want. If recovering from surgery, visualizing total recovery is proven to increase results and speed recovery. Maintain a positive mental attitude and growth mindset for creating an optimal body, mind, and spirit.
+
+GUIDELINES:
+1. Always relate your advice back to one or more F.R.E.E.D.O.M. principles
+2. Ask clarifying questions about the user's health goals, current challenges, or specific concerns
+3. Recommend specific products from Thorne, Apex Energetics, Standard Process when relevant
+4. Suggest the AI Health Assessment questionnaire for personalized recommendations
+5. Recommend lab tests from Function Health or similar services when appropriate
+6. Share practical biohacking tips they can implement immediately
+7. Be encouraging and celebrate small wins
+8. Remind users that healing is a journey, not a destination
+9. Always suggest consulting healthcare providers for medical decisions
+
+RESPONSE FORMAT:
+- Keep responses conversational and warm (2-4 paragraphs typically)
+- Use bullet points for actionable tips
+- Bold (**text**) key F.R.E.E.D.O.M. principles when mentioning them
+- End with an encouraging thought or follow-up question
+- Use appropriate emojis sparingly
+
+Remember: You are a guide and encourager, not a medical professional. Always recommend professional consultation for medical concerns."""
+
+@api_router.post("/coach/chat")
+async def coach_chat(request: CoachChatRequest):
+    """Chat with Raphael, the F.R.E.E.D.O.M. AI Coach"""
+    
+    if not EMERGENT_LLM_KEY:
+        # Return a meaningful response even without API key
+        return {
+            "response": "🙏 Blessings on your wellness journey! I sense your desire for healing and guidance.\n\nLet me share the F.R.E.E.D.O.M. principles with you:\n\n• **Faith** - Trust in your body's divine design to heal\n• **Rejuve** - Understand your baseline through testing\n• **Emotional Health** - Nurture your mental wellness\n• **Energy Medicine** - Embrace healing frequencies\n• **Detox** - Release what no longer serves you\n• **Oxygenate** - Breathe life into every cell\n• **Mindset** - Envision your optimal health\n\nTo receive personalized AI guidance, please ensure the system is fully configured. In the meantime, take our AI Health Assessment for tailored recommendations! ✨"
+        }
+    
+    try:
+        # Build conversation with history
+        messages_for_ai = []
+        
+        # Add conversation history
+        for msg in request.conversation_history[-6:]:  # Last 6 messages for context
+            messages_for_ai.append(msg)
+        
+        # Add current message
+        messages_for_ai.append({"role": "user", "content": request.message})
+        
+        # Create chat with Raphael's personality
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"raphael-coach-{uuid.uuid4()}",
+            system_message=RAPHAEL_SYSTEM_PROMPT
+        ).with_model("openai", "gpt-4.1-mini")
+        
+        # Send message and get response
+        user_message = UserMessage(text=request.message)
+        response = await chat.send_message(user_message)
+        
+        response_text = str(response)
+        
+        # Log the interaction for improvement
+        logging.info(f"Raphael Coach - User: {request.message[:100]}... | Response length: {len(response_text)}")
+        
+        return {"response": response_text}
+        
+    except Exception as e:
+        logging.error(f"Raphael Coach error: {e}")
+        # Graceful fallback
+        return {
+            "response": f"🙏 Thank you for reaching out, dear friend. While I reflect on your question about \"{request.message[:50]}...\", let me remind you of a key **F.R.E.E.D.O.M.** principle:\n\n**Faith** reminds us that our bodies are divinely designed to heal. Every step you take toward wellness is a step toward honoring that design.\n\nWould you like to explore any specific aspect of your wellness journey? I'm here to guide you through **Detox** protocols, **Energy Medicine** practices, **Mindset** techniques, or any other pillar that calls to you. ✨"
+        }
+
 # Health check endpoint for API route  
 @api_router.get("/health")
 async def api_health_check():
