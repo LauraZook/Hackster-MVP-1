@@ -2583,7 +2583,7 @@ const CoachingLandingPage = () => {
           {/* AI Coach - Raphael */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-6 text-white">
-              <div className="text-5xl mb-4">👼</div>
+              <div className="text-5xl mb-4">🌟</div>
               <h2 className="text-2xl font-bold">Meet Raphael</h2>
               <p className="text-purple-100">Your 24/7 AI Wellness Coach</p>
             </div>
