@@ -1623,6 +1623,7 @@ const SignInPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
