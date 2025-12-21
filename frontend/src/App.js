@@ -3278,6 +3278,213 @@ const AIQuestionnairePage = () => {
   );
 };
 
+// ============== MEMBER DASHBOARD ==============
+const MemberDashboard = () => {
+  const { isAuthenticated, user, token } = useAuth();
+  const [stacks, setStacks] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      fetchUserData();
+    }
+  }, [isAuthenticated, token]);
+
+  const fetchUserData = async () => {
+    try {
+      // Fetch user's stacks
+      const stacksRes = await axios.get(`${API}/stacks/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStacks(stacksRes.data);
+
+      // Fetch user's AI recommendations
+      const recsRes = await axios.get(`${API}/recommendations/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecommendations(recsRes.data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <div className="text-6xl mb-6">🔐</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Sign in to access your dashboard</h1>
+          <p className="text-gray-600 mb-8">Track your progress, view recommendations, and manage your Hackster Stack</p>
+          <Link to="/signin" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700">
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username}! 👋</h1>
+          <p className="text-blue-100 text-lg">Track your biohacking journey and optimize your health</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Quick Actions */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Stats Cards */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl shadow-md p-6 text-center">
+                  <div className="text-3xl font-bold text-blue-600">{stacks.length}</div>
+                  <div className="text-gray-600">My Stacks</div>
+                </div>
+                <div className="bg-white rounded-xl shadow-md p-6 text-center">
+                  <div className="text-3xl font-bold text-purple-600">{recommendations.length}</div>
+                  <div className="text-gray-600">AI Assessments</div>
+                </div>
+                <div className="bg-white rounded-xl shadow-md p-6 text-center">
+                  <div className="text-3xl font-bold text-green-600">{user?.posts_count || 0}</div>
+                  <div className="text-gray-600">Community Posts</div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Link to="/questionnaire" className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl hover:from-blue-100 hover:to-purple-100 transition-colors">
+                    <span className="text-3xl mr-4">🎯</span>
+                    <div>
+                      <div className="font-semibold text-gray-900">Get AI Recommendations</div>
+                      <div className="text-sm text-gray-600">Take the health assessment</div>
+                    </div>
+                  </Link>
+                  <Link to="/marketplace" className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl hover:from-blue-100 hover:to-purple-100 transition-colors">
+                    <span className="text-3xl mr-4">🛒</span>
+                    <div>
+                      <div className="font-semibold text-gray-900">Shop Marketplace</div>
+                      <div className="text-sm text-gray-600">Browse products</div>
+                    </div>
+                  </Link>
+                  <Link to="/my-stack" className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl hover:from-blue-100 hover:to-purple-100 transition-colors">
+                    <span className="text-3xl mr-4">⚡</span>
+                    <div>
+                      <div className="font-semibold text-gray-900">My Hackster Stack</div>
+                      <div className="text-sm text-gray-600">Manage saved products</div>
+                    </div>
+                  </Link>
+                  <Link to="/community" className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl hover:from-blue-100 hover:to-purple-100 transition-colors">
+                    <span className="text-3xl mr-4">💬</span>
+                    <div>
+                      <div className="font-semibold text-gray-900">Community</div>
+                      <div className="text-sm text-gray-600">Share & connect</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Recent Recommendations */}
+              {recommendations.length > 0 && (
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Your Latest AI Recommendations</h2>
+                  <div className="space-y-4">
+                    {recommendations.slice(0, 2).map((rec, index) => (
+                      <div key={rec.id || index} className="border-l-4 border-blue-500 pl-4 py-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-900">Health Score: {rec.health_score}/100</span>
+                          <span className="text-xs text-gray-500">{new Date(rec.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{rec.personalized_summary}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {rec.recommended_products?.slice(0, 3).map((product, idx) => (
+                            <span key={idx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                              {product.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Link to="/questionnaire" className="mt-4 inline-block text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    Take New Assessment →
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Profile Card */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-white text-3xl font-bold">{user?.username?.[0]?.toUpperCase() || 'H'}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">{user?.username}</h3>
+                  <p className="text-gray-600 text-sm">{user?.email}</p>
+                  <div className="mt-3">
+                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                      {user?.level || 'Member'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* My Stacks */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="font-bold text-gray-900 mb-4">My Stacks</h3>
+                {stacks.length > 0 ? (
+                  <div className="space-y-3">
+                    {stacks.slice(0, 3).map(stack => (
+                      <Link key={stack.id} to={`/my-stack`} className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <div className="font-medium text-gray-900">{stack.name}</div>
+                        <div className="text-sm text-gray-500">{stack.items?.length || 0} products</div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p>No stacks yet</p>
+                    <Link to="/my-stack" className="text-blue-600 hover:underline text-sm">Create your first stack</Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Find a Coach */}
+              <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
+                <h3 className="font-bold mb-2">Need Expert Guidance?</h3>
+                <p className="text-purple-100 text-sm mb-4">Connect with certified biohacking coaches for personalized support</p>
+                <Link to="/coaches" className="inline-block bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50">
+                  Find a Coach
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
 // ============== MY STACK (WISHLIST) PAGE ==============
 const MyStackPage = () => {
   const { isAuthenticated, token, user } = useAuth();
