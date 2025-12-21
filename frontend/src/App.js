@@ -1521,6 +1521,7 @@ const AuthSelectionPage = () => {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
