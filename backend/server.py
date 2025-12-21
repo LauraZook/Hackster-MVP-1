@@ -2621,7 +2621,7 @@ async def coach_chat(request: CoachChatRequest):
         logging.error(f"Raphael Coach error: {e}")
         # Graceful fallback
         return {
-            "response": f"🙏 Thank you for reaching out, dear friend. While I reflect on your question about \"{request.message[:50]}...\", let me remind you of a key **F.R.E.E.D.O.M.** principle:\n\n**Faith** reminds us that our bodies are divinely designed to heal. Every step you take toward wellness is a step toward honoring that design.\n\nWould you like to explore any specific aspect of your wellness journey? I'm here to guide you through **Detox** protocols, **Energy Medicine** practices, **Mindset** techniques, or any other pillar that calls to you. ✨"
+            "response": f"🙏 Thank you for reaching out, dear friend. While I reflect on your question about \"{request.message[:50]}...\", let me remind you of a key **F.R.E.E.D.O.M.** principle:\n\n**Faith** reminds us that our bodies have an incredible capacity to heal. Every step you take toward wellness is a step toward honoring that ability.\n\nWould you like to explore any specific aspect of your wellness journey? I'm here to guide you through **Detoxification** protocols, **Electric Health** practices, **Mindfulness** techniques, or any other pillar that calls to you. ✨"
         }
 
 @api_router.post("/coach/recommendations")
