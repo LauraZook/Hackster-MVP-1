@@ -2583,12 +2583,12 @@ const AICoachChat = () => {
 
   const freedomPillars = [
     { letter: 'F', name: 'Faith', icon: '✨', description: 'Trust in your body\'s innate ability to heal - however that resonates with you.' },
-    { letter: 'R', name: 'Rejuve', icon: '🔬', description: 'Understand your baseline health through testing and intentional interventions.' },
-    { letter: 'E', name: 'Emotional Health', icon: '💚', description: 'Build resilience and emotional intelligence for lasting wellness.' },
-    { letter: 'E', name: 'Energy Medicine', icon: '⚡', description: 'Work with your body\'s bioelectrical nature through frequencies and vibrations.' },
-    { letter: 'D', name: 'Detox', icon: '🌿', description: 'Release what no longer serves you for optimal function.' },
-    { letter: 'O', name: 'Oxygenate', icon: '💨', description: 'Increase cellular oxygenation through intentional practices.' },
-    { letter: 'M', name: 'Mindset', icon: '🧠', description: 'To think is to create. Visualize your best health.' }
+    { letter: 'R', name: 'Rejuvenation', icon: '🔬', description: 'Understand your baseline health through testing and intentional interventions.' },
+    { letter: 'E', name: 'Emotional Balance', icon: '💚', description: 'Build resilience and emotional intelligence for lasting wellness.' },
+    { letter: 'E', name: 'Electric Health', icon: '⚡', description: 'Work with your body\'s bioelectrical nature through frequencies and vibrations.' },
+    { letter: 'D', name: 'Detoxification', icon: '🌿', description: 'Release what no longer serves you for optimal function.' },
+    { letter: 'O', name: 'Oxygenation', icon: '💨', description: 'Increase cellular oxygenation through intentional practices.' },
+    { letter: 'M', name: 'Mindfulness', icon: '🧠', description: 'Present-moment awareness and intentional focus on your wellness journey.' }
   ];
 
   const scrollToBottom = () => {
