@@ -3647,9 +3647,6 @@ const MyStackPage = () => {
                         </button>
                       </div>
                     </div>
-                        View Stack →
-                      </Link>
-                    </div>
                   </div>
                 ))}
               </div>
