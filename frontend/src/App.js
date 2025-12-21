@@ -2574,7 +2574,7 @@ const AICoachChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showFreedomInfo, setShowFreedomInfo] = useState(false);
-  const messagesEndRef = React.useRef(null);
+  const messagesEndRef = useRef(null);
 
   const freedomPillars = [
     { letter: 'F', name: 'Faith', icon: '🙏', description: 'God has designed our bodies to heal. Trust in natural healing and divine wisdom.' },
