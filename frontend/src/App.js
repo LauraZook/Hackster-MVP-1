@@ -2726,7 +2726,7 @@ const AICoachChat = () => {
       const fallbackReply = {
         id: messages.length + 2,
         sender: 'raphael',
-        text: "🙏 Thank you for reaching out, dear friend. While I reflect on your question, let me remind you of the F.R.E.E.D.O.M. principles:\n\n**Faith** - Trust that your body was designed to heal.\n**Rejuve** - Understand your baseline through testing.\n**Emotional Health** - Nurture your mental wellness.\n**Energy Medicine** - Embrace healing frequencies.\n**Detox** - Release what no longer serves you.\n**Oxygenate** - Breathe life into every cell.\n**Mindset** - Envision your optimal health.\n\nWhat aspect of your healing journey would you like to explore?",
+        text: "🙏 Thank you for reaching out, dear friend. While I reflect on your question, let me remind you of the F.R.E.E.D.O.M. principles:\n\n**Faith** - Trust in your body's ability to heal.\n**Rejuvenation** - Understand your baseline through testing.\n**Emotional Balance** - Nurture your mental wellness.\n**Electric Health** - Embrace healing frequencies.\n**Detoxification** - Release what no longer serves you.\n**Oxygenation** - Breathe life into every cell.\n**Mindfulness** - Present-moment awareness on your journey.\n\nWhat aspect of your healing journey would you like to explore?",
         timestamp: new Date().toLocaleTimeString()
       };
       setMessages(prev => [...prev, fallbackReply]);
