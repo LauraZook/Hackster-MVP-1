@@ -178,7 +178,7 @@ const CoreFeatures = () => {
   const features = [
     {
       id: "questionnaire",
-      title: "1. Establish Your Vision",
+      title: "Establish Your Vision",
       subtitle: "Personalized Recommendations",
       description: "Take our AI-powered questionnaire for your personalized supplements, relevant lab tests, and biohacking tips.",
       icon: "🎯",
@@ -189,7 +189,7 @@ const CoreFeatures = () => {
     },
     {
       id: "marketplace",
-      title: "2. Shop Trusted Vendors",
+      title: "Shop Trusted Vendors",
       subtitle: "Premium Biohacking Products", 
       description: "Browse your recommended products from our carefully curated and top brand partners all in one place.",
       icon: "🛒",
@@ -200,7 +200,7 @@ const CoreFeatures = () => {
     },
     {
       id: "stack",
-      title: "3. Build Your Stack",
+      title: "Build Your Stack",
       subtitle: "Save & Share Your Favorites",
       description: "Create your personalized Hackster Stack, save products and crowd source support to meet your health and fitness goals faster.",
       icon: "⚡",
@@ -211,7 +211,7 @@ const CoreFeatures = () => {
     },
     {
       id: "coaching",
-      title: "4. Find Expert Coaching",
+      title: "Find Expert Coaching",
       subtitle: "AI Coach + Human Experts",
       description: "Gain 1:1 guidance and support from the Hackster AI Coach 24/7, plus connect with certified wellness coaches for advanced results.",
       icon: "🚀",
@@ -222,7 +222,7 @@ const CoreFeatures = () => {
     },
     {
       id: "tracking",
-      title: "5. Track Your Progress",
+      title: "Track Your Progress",
       subtitle: "Monitor Results Over Time",
       description: "Login to your personal dashboard to record results over time and stay motivated during your biohacking journey.",
       icon: "📊",
@@ -233,7 +233,7 @@ const CoreFeatures = () => {
     },
     {
       id: "celebrate",
-      title: "6. Celebrate Your Wins!",
+      title: "Celebrate Your Wins!",
       subtitle: "Inspire the Community",
       description: "Share your biohacking successes with the Hackster community and help others achieve great results, too.",
       icon: "🏆",
