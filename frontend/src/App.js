@@ -3607,7 +3607,7 @@ const MyStackPage = () => {
                       <span className={`text-xs px-2 py-1 rounded ${
                         stack.visibility === 'private' ? 'bg-gray-100 text-gray-600' :
                         stack.visibility === 'community' ? 'bg-blue-100 text-blue-600' :
-                        'bg-green-100 text-green-600'
+                        'bg-purple-100 text-purple-600'
                       }`}>
                         {stack.visibility}
                       </span>
@@ -3629,15 +3629,24 @@ const MyStackPage = () => {
                       </div>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
                       <div className="flex items-center space-x-3 text-sm text-gray-500">
                         <span>❤️ {stack.likes_count || 0}</span>
                         <span>💬 {stack.comments_count || 0}</span>
                       </div>
-                      <Link 
-                        to={`/stack/${stack.id}`}
-                        className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-                      >
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            const shareUrl = `${window.location.origin}/stack/share/${stack.share_token}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            alert('Share link copied! Send to friends & family so they can help you build your Hackster Stack 🎁');
+                          }}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                        >
+                          <span>🔗</span> Share
+                        </button>
+                      </div>
+                    </div>
                         View Stack →
                       </Link>
                     </div>
