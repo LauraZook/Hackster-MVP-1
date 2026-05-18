@@ -10,8 +10,8 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration - Railway Deployment URLs
-BASE_URL = "https://hackster-ai.preview.emergentagent.com/api"
-HEALTH_URL = "https://hackster-ai.preview.emergentagent.com"
+BASE_URL = "https://wellness-coach-match.preview.emergentagent.com/api"
+HEALTH_URL = "https://wellness-coach-match.preview.emergentagent.com"
 HEADERS = {"Content-Type": "application/json"}
 
 class RailwayDeploymentTester:

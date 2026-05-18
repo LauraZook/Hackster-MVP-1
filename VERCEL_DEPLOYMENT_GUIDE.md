@@ -27,7 +27,7 @@ Add these environment variables in Vercel dashboard:
 
 **Required Variables:**
 ```
-REACT_APP_BACKEND_URL=https://hackster-ai.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://wellness-coach-match.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 ```
 
@@ -38,7 +38,7 @@ WDS_SOCKET_PORT=443
 
 ## 🔗 Backend Connection
 - ✅ Frontend is configured to connect to Railway backend
-- ✅ Backend URL: `https://hackster-ai.preview.emergentagent.com`
+- ✅ Backend URL: `https://wellness-coach-match.preview.emergentagent.com`
 - ✅ All API endpoints tested and working
 - ✅ CORS configured properly for cross-origin requests
 
