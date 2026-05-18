@@ -446,9 +446,11 @@ class AIRecommendation(BaseModel):
     primary_goals: List[HealthGoal]
     recommended_products: List[Dict[str, Any]]  # List of product recommendations with reasons
     recommended_lab_tests: List[Dict[str, Any]]
+    recommended_coaches: List[Dict[str, Any]] = []  # Top matched health coaches
     lifestyle_tips: List[str]
     personalized_summary: str
     ai_reasoning: str  # Detailed AI analysis
+    coach_match_specialties: List[str] = []  # Goal/specialty keywords used to match coaches
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class LabResultUpload(BaseModel):
@@ -607,21 +609,23 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
         # Return mock recommendations if no API key
         return {
             "health_score": 75,
-            "primary_goals": ["energy", "sleep"],
+            "primary_goals": ["energy", "longevity"],
             "recommended_products": [
-                {"product_id": "vitamin_d3_k2", "name": "Vitamin D3 + K2", "reason": "Essential for immune and bone health", "priority": 1},
-                {"product_id": "magnesium", "name": "Magnesium Bisglycinate", "reason": "Supports sleep and recovery", "priority": 2}
+                {"product_id": "vitamin_d3_k2", "name": "Vitamin D-5,000", "brand": "Thorne", "reason": "Essential for immune and bone health", "priority": 1},
+                {"product_id": "magnesium", "name": "Magnesium Bisglycinate", "brand": "Thorne", "reason": "Supports sleep and recovery", "priority": 2},
+                {"product_id": "stemregen-mobilize", "name": "STEMREGEN® Mobilize", "brand": "StemRegen", "reason": "Supports endothelial health and stem cell delivery for longevity", "priority": 3}
             ],
             "recommended_lab_tests": [
-                {"test_id": "comprehensive_panel", "name": "Comprehensive Metabolic Panel", "reason": "Establish baseline health metrics"}
+                {"test_id": "biowell-scan", "name": "Bio-Well GDV Energy Scan", "provider": "bio-well", "reason": "Establish baseline bioenergy, stress and adaptation levels"}
             ],
             "lifestyle_tips": [
                 "Get 10-30 minutes of morning sunlight",
                 "Practice box breathing for stress management",
                 "End showers with 30-60 seconds of cold water"
             ],
-            "personalized_summary": "Based on your responses, we recommend focusing on foundational health with Vitamin D3+K2 and Magnesium.",
-            "ai_reasoning": "Mock response - API key not configured"
+            "personalized_summary": "Based on your responses, we recommend focusing on foundational health with Vitamin D3+K2 and Magnesium, plus a Bio-Well baseline scan.",
+            "ai_reasoning": "Mock response - API key not configured",
+            "coach_match_specialties": ["longevity", "energy", "weight management"]
         }
     
     # Format responses for AI
@@ -631,20 +635,63 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
     if user_profile:
         user_context = f"\nUser Info: Age: {user_profile.age or 'Unknown'}, Gender: {user_profile.gender or 'Unknown'}, Goals: {', '.join(user_profile.goals)}"
     
-    system_prompt = """You are an expert biohacking and health optimization AI assistant for Hackster.ai. 
-    Your role is to analyze user health questionnaire responses and provide personalized supplement, 
-    product, and lifestyle recommendations.
-    
-    You have deep knowledge of:
-    - Supplements (Thorne, Apex Energetics, Standard Process brands)
-    - Biohacking protocols (cold exposure, breathwork, light therapy)
-    - Lab testing (Function Health, Superpower, Thorne tests)
-    - Health optimization strategies
-    
-    IMPORTANT: Always respond with valid JSON in this exact format:
+    system_prompt = """You are an expert biohacking and health optimization AI assistant for Hackster.ai.
+    Your role is to analyze user health questionnaire responses and provide personalized supplement, device,
+    and lifestyle recommendations focused on FOUR PRIORITY GOALS:
+      1. INCREASE ENERGY
+      2. IMPROVE VITALITY / LONGEVITY
+      3. BOOST IMMUNE SYSTEM
+      4. WEIGHT LOSS / METABOLIC HEALTH
+
+    You have deep knowledge of these partner brands and their product lines:
+
+    🟣 THORNE (premium science-backed supplements):
+      - Vitamin D-5,000, Magnesium Bisglycinate, Super EPA (omega-3), Ashwagandha (Sensoril),
+        Basic Nutrients 2/Day (multivitamin), Berberine, NiaCel 400 (NAD+/NR), CoQ10,
+        B-Complex #12, Curcumin Phytosome, Whey Isolate, Mediclear-SGS (detox/weight)
+
+    🟢 APEX ENERGETICS (practitioner-grade clinical supplements):
+      - Adaptocrine (adrenal/stress support), Glutathione Recycler, Methyl-SP (methylation),
+        Resvero Active (resveratrol), Oxicell (topical glutathione), Strengtia (probiotic),
+        Turmero Active (curcumin), Glysen Synergy (blood sugar/weight)
+
+    🟠 STANDARD PROCESS (whole-food based supplements):
+      - Catalyn (foundational multivitamin), Cataplex A (vitamin A complex), Immuplex (immune),
+        Cataplex E, Cyruta Plus (vascular), Tuna Omega-3 Oil, Thymex (thymus), Cardio-Plus
+
+    🟡 BIO-WELL (bioenergy/biofield assessment, GDV technology):
+      - Bio-Well GDV Camera (at-home energy scanner) — establishes baseline vitality, stress
+        and adaptation. Recommend for ESTABLISHING BASELINE, especially for vitality/longevity goals.
+      - Bio-Well Pro Coaching Scan — done with a certified practitioner.
+
+    🔵 CURAWAVES (frequency-based device — Rife/square-wave electrotherapy; NOT a PEMF device):
+      - CuraWaves Wave Therapy Device — 400+ pre-programmed frequency sessions targeting
+        weight management, energy, sleep, pain/inflammation, circulation, detoxification.
+      - CuraWaves Premium Bundle — includes coaching + FREEDOM Wellness Program.
+      Recommend for users with weight-loss goals, low energy, or wanting frequency-based
+      non-invasive support.
+
+    🟤 STEMREGEN (plant-based stem cell mobilizers):
+      - STEMREGEN® Mobilize — supports blood flow, endothelial glycocalyx, stem cell circulation.
+      - STEMREGEN® Release — supports stem cell release from bone marrow.
+      - STEMREGEN® RegenerEnd (senolytic) — supports clearing senescent cells for longevity.
+      Recommend especially for VITALITY/LONGEVITY and recovery goals.
+
+    Other tools: Function Health labs, Oura Ring for sleep/recovery tracking.
+
+    IMPORTANT recommendation rules:
+    - Match products to the user's PRIMARY goal first, then secondary goals.
+    - Always include 4-7 recommended products with a mix of foundational supplements AND at least
+      one device/assessment (Bio-Well or CuraWaves) when relevant.
+    - For LONGEVITY/VITALITY goals: include StemRegen Mobilize and/or NiaCel.
+    - For WEIGHT LOSS goals: include Berberine, Mediclear-SGS, Glysen Synergy, or CuraWaves.
+    - For IMMUNE goals: include Vitamin D-5,000, Immuplex, Thymex, Curcumin Phytosome.
+    - For ENERGY: include CoQ10, B-Complex, Adaptocrine, Magnesium.
+
+    Always respond with valid JSON in this exact format:
     {
         "health_score": <number 0-100>,
-        "primary_goals": ["goal1", "goal2"],
+        "primary_goals": ["energy" | "longevity" | "immune_support" | "weight_management" | ...],
         "recommended_products": [
             {"product_id": "id", "name": "Product Name", "brand": "Brand", "reason": "Why recommended", "priority": 1}
         ],
@@ -653,9 +700,14 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
         ],
         "lifestyle_tips": ["tip1", "tip2", "tip3"],
         "personalized_summary": "2-3 sentence summary of recommendations",
-        "ai_reasoning": "Detailed analysis of user's responses and why these recommendations were made"
+        "ai_reasoning": "Detailed analysis of user's responses and why these recommendations were made",
+        "coach_match_specialties": ["longevity", "weight management", "energy", "immune"]
     }
-    
+
+    The "coach_match_specialties" field should list 2-4 keywords matching the user's main goals so we can
+    pair them with the right health coach (e.g. "longevity", "weight management", "energy", "immune",
+    "bioenergy", "frequency therapy", "stem cell", "stress").
+
     Base your recommendations on evidence-based health science and biohacking best practices."""
     
     user_prompt = f"""Please analyze the following health questionnaire responses and provide personalized recommendations:
@@ -663,10 +715,11 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
     {responses_text}
     {user_context}
     
-    Consider the user's health goals, current lifestyle, and any concerns mentioned. 
-    Provide specific product recommendations from Thorne, Apex Energetics, or Standard Process brands.
-    Include relevant lab tests they should consider.
-    Suggest practical biohacking tips they can implement immediately."""
+    Consider the user's PRIMARY health goal first (Energy, Vitality/Longevity, Immune, or Weight Loss),
+    then secondary goals, current lifestyle, and concerns. Provide 4-7 product recommendations spanning
+    Thorne, Apex Energetics, Standard Process, Bio-Well, CuraWaves, and/or StemRegen — choose what truly
+    matches their goals. Suggest practical lifestyle tips and list the coach specialties that best
+    match this person."""
     
     try:
         chat = LlmChat(
@@ -698,11 +751,13 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
         # Return default recommendations on error
         return {
             "health_score": 70,
-            "primary_goals": ["energy", "sleep"],
+            "primary_goals": ["energy", "longevity"],
             "recommended_products": [
-                {"product_id": "vitamin_d3_k2", "name": "Vitamin D3 + K2", "brand": "Thorne", "reason": "Essential for most people, supports immune function and bone health", "priority": 1},
-                {"product_id": "magnesium", "name": "Magnesium Bisglycinate", "brand": "Thorne", "reason": "Supports sleep, recovery, and over 300 enzymatic processes", "priority": 2},
-                {"product_id": "omega3", "name": "Super EPA", "brand": "Thorne", "reason": "Supports brain health and reduces inflammation", "priority": 3}
+                {"product_id": "vitamin-d-5000", "name": "Vitamin D-5,000", "brand": "Thorne", "reason": "Essential for most people, supports immune function and bone health", "priority": 1},
+                {"product_id": "magnesium-bisglycinate", "name": "Magnesium Bisglycinate", "brand": "Thorne", "reason": "Supports sleep, recovery, and over 300 enzymatic processes", "priority": 2},
+                {"product_id": "super-epa", "name": "Super EPA", "brand": "Thorne", "reason": "Supports brain health and reduces inflammation", "priority": 3},
+                {"product_id": "stemregen-mobilize", "name": "STEMREGEN® Mobilize", "brand": "StemRegen", "reason": "Supports stem cell circulation for vitality and longevity", "priority": 4},
+                {"product_id": "biowell-gdv-camera", "name": "Bio-Well GDV Camera", "brand": "Bio-Well", "reason": "Establish a bioenergy baseline to track your progress", "priority": 5}
             ],
             "recommended_lab_tests": [
                 {"test_id": "comprehensive_panel", "name": "Comprehensive Metabolic Panel", "provider": "function_health", "reason": "Establish baseline health metrics"}
@@ -712,8 +767,9 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
                 "Practice 5 minutes of box breathing daily for stress management",
                 "End showers with 30-60 seconds of cold water to boost energy"
             ],
-            "personalized_summary": "We recommend starting with foundational supplements (Vitamin D3+K2 and Magnesium) and establishing your baseline through comprehensive lab testing.",
-            "ai_reasoning": f"Error generating AI response: {str(e)}. Providing default evidence-based recommendations."
+            "personalized_summary": "We recommend starting with foundational supplements (Vitamin D3+K2 and Magnesium), a bioenergy baseline scan, and StemRegen Mobilize for vitality.",
+            "ai_reasoning": f"Error generating AI response: {str(e)}. Providing default evidence-based recommendations.",
+            "coach_match_specialties": ["longevity", "energy", "weight management"]
         }
 
 # Initialize sample data
@@ -879,20 +935,38 @@ async def initialize_sample_data():
         }
     ]
     
-    # Sample Coaches
+    # Sample Coaches — including Laura Zook (Hackster founder/lead coach)
     coaches = [
+        {
+            "name": "Laura Zook",
+            "credentials": ["Certified Health Coach", "Hackster Founder", "Bioenergy Practitioner", "FREEDOM Method Coach"],
+            "specialties": ["Longevity", "Vitality", "Bioenergy", "Frequency Therapy", "Weight Management", "Energy", "Immune Support", "Stem Cell Health"],
+            "location": "United States (Virtual)",
+            "bio": "Founder of Hackster.ai and a certified health coach focused on helping busy professionals optimize energy, vitality, and longevity. Laura works with partner technologies like Bio-Well bioenergy scans, CuraWaves frequency therapy, and StemRegen to design personalized stacks. She uses the proprietary F.R.E.E.D.O.M. Method to align mind, body, and spirit.",
+            "hourly_rate": "$175-250",
+            "availability": "Mon-Fri 9AM-5PM CT (Virtual sessions)",
+            "contact_info": {"email": "laura@hackster.ai", "phone": "(555) 010-0001"},
+            "rating": 5.0,
+            "total_reviews": 86,
+            "years_experience": 10,
+            "profile_image": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400",
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://hackster.ai/coaches/laura-zook"
+        },
         {
             "name": "Dr. Sarah Martinez",
             "credentials": ["PhD Nutrition Science", "Certified Functional Medicine Practitioner"],
-            "specialties": ["Hormone Optimization", "Gut Health", "Weight Management"],
+            "specialties": ["Hormone Optimization", "Gut Health", "Weight Management", "Weight Loss"],
             "location": "Los Angeles, CA",
-            "bio": "15+ years helping clients optimize health through personalized nutrition and lifestyle interventions.",
+            "bio": "15+ years helping clients optimize health through personalized nutrition and lifestyle interventions, with a special focus on sustainable weight loss and metabolic health.",
             "hourly_rate": "$150-200",
             "availability": "Mon-Fri 9AM-6PM PST",
             "contact_info": {"email": "sarah@hackstercoach.com", "phone": "(555) 123-4567"},
             "rating": 4.9,
             "total_reviews": 127,
             "years_experience": 15,
+            "profile_image": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400",
             "is_approved": True,
             "is_active": True,
             "website": "https://sarahmartinez-wellness.com"
@@ -900,15 +974,16 @@ async def initialize_sample_data():
         {
             "name": "Mike Chen",
             "credentials": ["NASM-CPT", "Precision Nutrition Level 2", "Wim Hof Method Instructor"],
-            "specialties": ["Athletic Performance", "Cold Therapy", "Breathwork"],
+            "specialties": ["Athletic Performance", "Cold Therapy", "Breathwork", "Energy", "Recovery"],
             "location": "Austin, TX",
-            "bio": "Former professional athlete turned biohacking coach specializing in performance optimization.",
+            "bio": "Former professional athlete turned biohacking coach specializing in performance, energy, and recovery optimization using cold therapy, breathwork, and frequency-based devices.",
             "hourly_rate": "$100-150",
             "availability": "Tue-Sat 6AM-8PM CST",
             "contact_info": {"email": "mike@hackstercoach.com", "phone": "(555) 987-6543"},
             "rating": 4.8,
             "total_reviews": 89,
             "years_experience": 8,
+            "profile_image": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400",
             "is_approved": True,
             "is_active": True,
             "website": "https://mikechen-performance.com"
@@ -916,18 +991,53 @@ async def initialize_sample_data():
         {
             "name": "Dr. Lisa Thompson",
             "credentials": ["MD", "Functional Medicine Certified", "Biohacking Institute Graduate"],
-            "specialties": ["Longevity", "Biohacking", "Sleep Optimization", "Stress Management"],
+            "specialties": ["Longevity", "Biohacking", "Sleep Optimization", "Stress Management", "Vitality", "Stem Cell Health"],
             "location": "New York, NY",
-            "bio": "Medical doctor specializing in longevity and biohacking protocols. Helping clients optimize their healthspan through cutting-edge interventions.",
+            "bio": "Medical doctor specializing in longevity and biohacking protocols. Integrates StemRegen, Bio-Well bioenergy scans, and advanced lab testing to help clients optimize their healthspan.",
             "hourly_rate": "$200-300",
             "availability": "Mon-Thu 10AM-4PM EST",
             "contact_info": {"email": "lisa@longevityhub.com", "phone": "(555) 234-5678"},
             "rating": 4.95,
             "total_reviews": 203,
             "years_experience": 12,
+            "profile_image": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400",
             "is_approved": True,
             "is_active": True,
             "website": "https://longevityhub.com"
+        },
+        {
+            "name": "Dr. James Okafor",
+            "credentials": ["MD", "Integrative Medicine", "Bio-Well Certified Practitioner"],
+            "specialties": ["Immune Support", "Bioenergy", "Longevity", "Vitality", "Stress Management"],
+            "location": "Atlanta, GA (Virtual available)",
+            "bio": "Integrative MD with deep experience in immune optimization and bioenergy assessment. Uses Bio-Well GDV scanning, targeted nutraceuticals, and lifestyle protocols for resilient immunity and healthspan.",
+            "hourly_rate": "$180-240",
+            "availability": "Mon-Fri 11AM-7PM EST",
+            "contact_info": {"email": "james@hackster.ai", "phone": "(555) 010-0002"},
+            "rating": 4.9,
+            "total_reviews": 71,
+            "years_experience": 14,
+            "profile_image": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400",
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://hackster.ai/coaches/james-okafor"
+        },
+        {
+            "name": "Maya Patel",
+            "credentials": ["RD", "CSSD", "Functional Nutrition Coach"],
+            "specialties": ["Weight Loss", "Weight Management", "Metabolic Health", "Gut Health", "Energy", "Nutrition"],
+            "location": "Denver, CO (Virtual)",
+            "bio": "Registered dietitian and metabolic-health specialist. Helps clients lose weight sustainably with personalized nutrition, blood-sugar balancing, and targeted supplementation including Berberine and CuraWaves protocols.",
+            "hourly_rate": "$120-170",
+            "availability": "Mon-Fri 8AM-6PM MT",
+            "contact_info": {"email": "maya@hackster.ai", "phone": "(555) 010-0003"},
+            "rating": 4.85,
+            "total_reviews": 102,
+            "years_experience": 9,
+            "profile_image": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400",
+            "is_approved": True,
+            "is_active": True,
+            "website": "https://hackster.ai/coaches/maya-patel"
         }
     ]
     
@@ -947,6 +1057,14 @@ async def initialize_sample_data():
     if await db.coaches.count_documents({}) == 0:
         coach_docs = [Coach(**coach).dict() for coach in coaches]
         await db.coaches.insert_many(coach_docs)
+    else:
+        # Upsert new coaches by name (e.g. Laura Zook, James Okafor, Maya Patel) without
+        # duplicating existing ones
+        for coach in coaches:
+            existing = await db.coaches.find_one({"name": coach["name"]})
+            if not existing:
+                doc = Coach(**coach).dict()
+                await db.coaches.insert_one(doc)
     
     # Sample Community Posts
     if await db.posts.count_documents({}) == 0:
@@ -1036,8 +1154,8 @@ async def initialize_sample_data():
             await db.users.insert_one(user.dict())
     
     # ============== MARKETPLACE SAMPLE DATA ==============
-    # Sample Vendors
-    if await db.vendors.count_documents({}) == 0:
+    # Sample Vendors (upsert by slug so new vendors get added on restart)
+    if True:
         sample_vendors = [
             {
                 "name": "Thorne",
@@ -1090,15 +1208,59 @@ async def initialize_sample_data():
                 "shipping_info": "Free shipping. Ships within 3-5 business days.",
                 "return_policy": "30-day return policy",
                 "categories": ["devices"]
+            },
+            {
+                "name": "Bio-Well",
+                "slug": "bio-well",
+                "description": "Non-invasive bioenergy assessment using Gas Discharge Visualization (GDV) technology. Scans fingertips to map your energy field, stress response, and overall vitality.",
+                "logo_url": "https://bio-well.com/logo.png",
+                "website": "https://bio-well.com",
+                "affiliate_url_pattern": "https://bio-well.com/products/{product_slug}?ref=hackster",
+                "commission_rate": 0.10,
+                "status": "active",
+                "shipping_info": "Ships within 5-7 business days.",
+                "return_policy": "30-day return policy",
+                "categories": ["devices", "lab_tests"]
+            },
+            {
+                "name": "CuraWaves",
+                "slug": "curawaves",
+                "description": "Frequency-based wellness device using square-wave (Rife-style) electrotherapy with 400+ pre-programmed sessions for energy, weight management, sleep, pain, and detoxification. NOT a PEMF device.",
+                "logo_url": "https://curawaves.com/logo.png",
+                "website": "https://curawaves.com",
+                "affiliate_url_pattern": "https://curawaves.com/products/{product_slug}?ref=hackster",
+                "commission_rate": 0.12,
+                "status": "active",
+                "shipping_info": "Free US shipping. Ships within 3-5 business days.",
+                "return_policy": "30-day return policy with coaching support",
+                "categories": ["devices", "recovery", "energy"]
+            },
+            {
+                "name": "StemRegen",
+                "slug": "stemregen",
+                "description": "Plant-based stem cell mobilizers and longevity supplements that support your body's natural stem cell release, migration, and circulation for recovery and healthspan.",
+                "logo_url": "https://stemregen.co/logo.png",
+                "website": "https://stemregen.co",
+                "affiliate_url_pattern": "https://stemregen.co/products/{product_slug}?ref=hackster",
+                "commission_rate": 0.15,
+                "status": "active",
+                "shipping_info": "Free shipping on orders $100+. Ships within 1-3 business days.",
+                "return_policy": "60-day satisfaction guarantee",
+                "categories": ["supplements", "recovery"]
             }
         ]
         
         for vendor_data in sample_vendors:
             vendor = Vendor(**vendor_data)
-            await db.vendors.insert_one(vendor.dict())
+            doc = vendor.dict()
+            await db.vendors.update_one(
+                {"slug": doc["slug"]},
+                {"$setOnInsert": doc},
+                upsert=True
+            )
     
-    # Sample Marketplace Products
-    if await db.marketplace_products.count_documents({}) == 0:
+    # Sample Marketplace Products (upsert by slug so new products get added on restart)
+    if True:
         sample_products = [
             {
                 "vendor_id": "thorne",
@@ -1283,110 +1445,689 @@ async def initialize_sample_data():
                 "is_featured": True,
                 "priority_score": 82,
                 "tags": ["NAD+", "NR", "longevity", "cellular health"]
+            },
+
+            # ===== Additional Thorne products =====
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF722",
+                "name": "CoQ10",
+                "slug": "coq10",
+                "description": "Ubiquinone CoQ10 supports cellular energy (ATP) production and cardiovascular health.",
+                "short_description": "CoQ10 for cellular energy and heart health",
+                "category": "supplements",
+                "price": 38.00,
+                "image_url": "https://www.thorne.com/images/coq10.png",
+                "affiliate_url": "https://thorne.com/products/dp/coq10?aff=hackster",
+                "benefits": ["Cellular energy", "Heart health", "Antioxidant"],
+                "dosage_instructions": "Take 1 capsule twice daily with food",
+                "health_goals": ["energy", "heart_health", "longevity"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.7, "review_count": 845, "is_featured": True, "priority_score": 86,
+                "tags": ["CoQ10", "energy", "heart", "longevity"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "B252",
+                "name": "B-Complex #12",
+                "slug": "b-complex-12",
+                "description": "Comprehensive B-vitamin complex with active methylated forms of B12 and folate for energy production.",
+                "short_description": "Methylated B-complex for energy & methylation",
+                "category": "vitamins",
+                "price": 26.00,
+                "image_url": "https://www.thorne.com/images/b-complex-12.png",
+                "affiliate_url": "https://thorne.com/products/dp/b-complex-12?aff=hackster",
+                "benefits": ["Energy production", "Nervous system support", "Methylation"],
+                "dosage_instructions": "Take 1 capsule daily with breakfast",
+                "health_goals": ["energy", "focus", "stress_management"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.8, "review_count": 1102, "is_featured": True, "priority_score": 87,
+                "tags": ["B-complex", "methylated", "energy"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF767",
+                "name": "Basic Nutrients 2/Day",
+                "slug": "basic-nutrients-2-day",
+                "description": "Comprehensive daily multivitamin with optimal levels of foundational vitamins & minerals — only two capsules per day.",
+                "short_description": "All-in-one foundational multivitamin",
+                "category": "vitamins",
+                "price": 32.00,
+                "image_url": "https://www.thorne.com/images/basic-nutrients.png",
+                "affiliate_url": "https://thorne.com/products/dp/basic-nutrients-2-day?aff=hackster",
+                "benefits": ["Foundational nutrition", "Energy", "Immune support"],
+                "dosage_instructions": "Take 2 capsules daily with food",
+                "health_goals": ["energy", "immune_support", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.8, "review_count": 1690, "is_featured": True, "priority_score": 90,
+                "tags": ["multivitamin", "foundational", "energy"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF811",
+                "name": "Berberine",
+                "slug": "berberine-thorne",
+                "description": "Berberine supports healthy blood sugar, cholesterol, and metabolic balance — a key tool for weight management.",
+                "short_description": "Metabolic + blood-sugar support for weight loss",
+                "category": "supplements",
+                "price": 42.00,
+                "image_url": "https://www.thorne.com/images/berberine.png",
+                "affiliate_url": "https://thorne.com/products/dp/berberine?aff=hackster",
+                "benefits": ["Blood sugar balance", "Metabolic support", "Weight management"],
+                "dosage_instructions": "Take 1 capsule twice daily with meals",
+                "health_goals": ["weight_management", "heart_health", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.7, "review_count": 723, "is_featured": True, "priority_score": 84,
+                "tags": ["berberine", "weight loss", "metabolic"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF918",
+                "name": "Curcumin Phytosome",
+                "slug": "curcumin-phytosome",
+                "description": "Highly bioavailable curcumin (Meriva®) for systemic inflammation, joint, and immune support.",
+                "short_description": "Bioavailable curcumin for inflammation & immune",
+                "category": "supplements",
+                "price": 56.00,
+                "image_url": "https://www.thorne.com/images/curcumin-phytosome.png",
+                "affiliate_url": "https://thorne.com/products/dp/curcumin-phytosome?aff=hackster",
+                "benefits": ["Anti-inflammatory", "Immune support", "Joint health"],
+                "dosage_instructions": "Take 2 capsules twice daily",
+                "health_goals": ["immune_support", "longevity", "heart_health"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.8, "review_count": 612, "is_featured": False, "priority_score": 80,
+                "tags": ["curcumin", "anti-inflammatory", "immune"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "WP010",
+                "name": "Whey Protein Isolate",
+                "slug": "whey-protein-isolate",
+                "description": "Grass-fed whey isolate for lean muscle maintenance and weight-management support.",
+                "short_description": "Clean whey for body composition & energy",
+                "category": "supplements",
+                "price": 48.00,
+                "image_url": "https://www.thorne.com/images/whey-isolate.png",
+                "affiliate_url": "https://thorne.com/products/dp/whey-protein-isolate?aff=hackster",
+                "benefits": ["Lean muscle", "Satiety", "Recovery"],
+                "dosage_instructions": "1 scoop with water or milk, 1-2 times daily",
+                "health_goals": ["weight_management", "athletic_performance", "energy"],
+                "demographic_targets": ["men", "women", "athletes"],
+                "rating": 4.7, "review_count": 998, "is_featured": False, "priority_score": 78,
+                "tags": ["protein", "whey", "weight loss"]
+            },
+            {
+                "vendor_id": "thorne",
+                "vendor_name": "Thorne",
+                "sku": "SF802",
+                "name": "MediClear-SGS",
+                "slug": "mediclear-sgs",
+                "description": "Functional medicine detox & weight-management shake with rice/pea protein, fiber, and broccoli-seed extract.",
+                "short_description": "Detox + weight-management daily shake",
+                "category": "supplements",
+                "price": 79.00,
+                "image_url": "https://www.thorne.com/images/mediclear-sgs.png",
+                "affiliate_url": "https://thorne.com/products/dp/mediclear-sgs?aff=hackster",
+                "benefits": ["Detox support", "Weight management", "Gut health"],
+                "dosage_instructions": "Mix 2 scoops with 8-10 oz water once daily",
+                "health_goals": ["weight_management", "gut_health", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.6, "review_count": 412, "is_featured": False, "priority_score": 76,
+                "tags": ["detox", "weight loss", "shake"]
+            },
+
+            # ===== Apex Energetics extra products =====
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-K12",
+                "name": "Adaptocrine",
+                "slug": "adaptocrine",
+                "description": "Adaptogen blend (rhodiola, ashwagandha, eleuthero) for adrenal resilience, stress, and sustained energy.",
+                "short_description": "Adaptogen blend for stress & energy",
+                "category": "adaptogens",
+                "price": 46.00,
+                "image_url": "https://apexenergetics.com/images/adaptocrine.png",
+                "affiliate_url": "https://apexenergetics.com/products/adaptocrine?ref=hackster",
+                "benefits": ["Adrenal support", "Sustained energy", "Stress resilience"],
+                "dosage_instructions": "Take 2 capsules with breakfast",
+                "health_goals": ["energy", "stress_management"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.7, "review_count": 256, "is_featured": True, "priority_score": 82,
+                "tags": ["adaptogens", "energy", "stress"]
+            },
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-K61",
+                "name": "Glutathione Recycler",
+                "slug": "glutathione-recycler",
+                "description": "Targeted nutrients (NAC, alpha-lipoic acid, milk thistle) to support glutathione recycling for detox and immune defense.",
+                "short_description": "Glutathione + antioxidant for detox & immune",
+                "category": "supplements",
+                "price": 39.00,
+                "image_url": "https://apexenergetics.com/images/glutathione-recycler.png",
+                "affiliate_url": "https://apexenergetics.com/products/glutathione-recycler?ref=hackster",
+                "benefits": ["Detox support", "Antioxidant", "Immune support"],
+                "dosage_instructions": "Take 2 capsules twice daily",
+                "health_goals": ["immune_support", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.6, "review_count": 188, "is_featured": False, "priority_score": 78,
+                "tags": ["glutathione", "antioxidant", "immune"]
+            },
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-K15",
+                "name": "Resvero Active",
+                "slug": "resvero-active",
+                "description": "High-potency liquid trans-resveratrol with quercetin for longevity, vascular, and metabolic support.",
+                "short_description": "Resveratrol liquid for longevity",
+                "category": "supplements",
+                "price": 64.00,
+                "image_url": "https://apexenergetics.com/images/resvero-active.png",
+                "affiliate_url": "https://apexenergetics.com/products/resvero-active?ref=hackster",
+                "benefits": ["Longevity support", "Vascular health", "Antioxidant"],
+                "dosage_instructions": "1 teaspoon daily",
+                "health_goals": ["longevity", "heart_health"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.7, "review_count": 211, "is_featured": True, "priority_score": 85,
+                "tags": ["resveratrol", "longevity", "antiaging"]
+            },
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-K23",
+                "name": "Glysen Synergy",
+                "slug": "glysen-synergy",
+                "description": "Botanical blend supporting healthy blood-sugar regulation, insulin sensitivity, and metabolic balance.",
+                "short_description": "Blood sugar & insulin support for weight loss",
+                "category": "supplements",
+                "price": 52.00,
+                "image_url": "https://apexenergetics.com/images/glysen-synergy.png",
+                "affiliate_url": "https://apexenergetics.com/products/glysen-synergy?ref=hackster",
+                "benefits": ["Blood sugar balance", "Insulin sensitivity", "Weight management"],
+                "dosage_instructions": "Take 2 capsules with each meal",
+                "health_goals": ["weight_management", "heart_health"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.6, "review_count": 174, "is_featured": False, "priority_score": 77,
+                "tags": ["blood sugar", "weight loss", "metabolic"]
+            },
+            {
+                "vendor_id": "apex-energetics",
+                "vendor_name": "Apex Energetics",
+                "sku": "AE-K38",
+                "name": "Strengtia (Probiotic)",
+                "slug": "strengtia-probiotic",
+                "description": "Multi-strain probiotic supporting GI and immune health.",
+                "short_description": "Probiotic for gut & immune support",
+                "category": "probiotics",
+                "price": 42.00,
+                "image_url": "https://apexenergetics.com/images/strengtia.png",
+                "affiliate_url": "https://apexenergetics.com/products/strengtia?ref=hackster",
+                "benefits": ["Gut health", "Immune support", "Digestion"],
+                "dosage_instructions": "Take 1 capsule daily",
+                "health_goals": ["gut_health", "immune_support"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.7, "review_count": 220, "is_featured": False, "priority_score": 76,
+                "tags": ["probiotic", "gut", "immune"]
+            },
+
+            # ===== Standard Process extra products =====
+            {
+                "vendor_id": "standard-process",
+                "vendor_name": "Standard Process",
+                "sku": "SP-CAT",
+                "name": "Catalyn",
+                "slug": "catalyn",
+                "description": "Whole-food foundational multivitamin from organically grown ingredients.",
+                "short_description": "Whole-food daily multivitamin",
+                "category": "vitamins",
+                "price": 26.00,
+                "image_url": "https://standardprocess.com/images/catalyn.png",
+                "affiliate_url": "https://standardprocess.com/products/catalyn?partner=hackster",
+                "benefits": ["Foundational nutrition", "Energy", "Immune support"],
+                "dosage_instructions": "Take 3 tablets per meal",
+                "health_goals": ["energy", "immune_support", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.6, "review_count": 412, "is_featured": False, "priority_score": 78,
+                "tags": ["multivitamin", "whole food"]
+            },
+            {
+                "vendor_id": "standard-process",
+                "vendor_name": "Standard Process",
+                "sku": "SP-IMP",
+                "name": "Immuplex",
+                "slug": "immuplex",
+                "description": "Comprehensive whole-food immune-support formula with zinc, copper, and key vitamins.",
+                "short_description": "Whole-food immune support",
+                "category": "supplements",
+                "price": 34.00,
+                "image_url": "https://standardprocess.com/images/immuplex.png",
+                "affiliate_url": "https://standardprocess.com/products/immuplex?partner=hackster",
+                "benefits": ["Immune support", "Antioxidant", "Whole-food nutrients"],
+                "dosage_instructions": "Take 2 capsules per meal",
+                "health_goals": ["immune_support"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.7, "review_count": 521, "is_featured": True, "priority_score": 83,
+                "tags": ["immune", "whole food"]
+            },
+            {
+                "vendor_id": "standard-process",
+                "vendor_name": "Standard Process",
+                "sku": "SP-CE",
+                "name": "Cataplex E",
+                "slug": "cataplex-e",
+                "description": "Whole-food vitamin E complex supporting cardiovascular function and circulation.",
+                "short_description": "Vitamin E complex for circulation",
+                "category": "vitamins",
+                "price": 24.00,
+                "image_url": "https://standardprocess.com/images/cataplex-e.png",
+                "affiliate_url": "https://standardprocess.com/products/cataplex-e?partner=hackster",
+                "benefits": ["Cardiovascular support", "Antioxidant"],
+                "dosage_instructions": "Take 1 tablet 3 times daily",
+                "health_goals": ["heart_health", "longevity"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.5, "review_count": 198, "is_featured": False, "priority_score": 70,
+                "tags": ["vitamin e", "circulation"]
+            },
+            {
+                "vendor_id": "standard-process",
+                "vendor_name": "Standard Process",
+                "sku": "SP-THY",
+                "name": "Thymex",
+                "slug": "thymex",
+                "description": "Thymus protomorphogen and bovine thymus PMG for supporting immune cell function.",
+                "short_description": "Thymus support for immune function",
+                "category": "supplements",
+                "price": 36.00,
+                "image_url": "https://standardprocess.com/images/thymex.png",
+                "affiliate_url": "https://standardprocess.com/products/thymex?partner=hackster",
+                "benefits": ["Immune cell support", "Thymus support"],
+                "dosage_instructions": "Take 2 tablets per meal",
+                "health_goals": ["immune_support"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.5, "review_count": 142, "is_featured": False, "priority_score": 72,
+                "tags": ["thymus", "immune"]
+            },
+
+            # ===== Bio-Well products =====
+            {
+                "vendor_id": "bio-well",
+                "vendor_name": "Bio-Well",
+                "sku": "BW-GDV",
+                "name": "Bio-Well GDV Camera",
+                "slug": "biowell-gdv-camera",
+                "description": "At-home bioenergy scanner using Gas Discharge Visualization (GDV) technology. Place your fingertips on the sensor for a non-invasive scan that maps your energy field, stress response, organ-system balance, and overall vitality. Includes Bio-Well software subscription.",
+                "short_description": "GDV bioenergy scanner — map your energy field at home",
+                "category": "devices",
+                "price": 2495.00,
+                "image_url": "https://bio-well.com/images/gdv-camera.png",
+                "affiliate_url": "https://bio-well.com/products/gdv-camera?ref=hackster",
+                "benefits": ["Bioenergy baseline", "Stress tracking", "Vitality scoring", "Organ-system map"],
+                "dosage_instructions": "Take a 10-finger scan 1-3x per week to track changes",
+                "health_goals": ["longevity", "stress_management", "energy"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.6, "review_count": 187, "is_featured": True, "priority_score": 94,
+                "tags": ["bioenergy", "biofield", "GDV", "baseline", "device"]
+            },
+            {
+                "vendor_id": "bio-well",
+                "vendor_name": "Bio-Well",
+                "sku": "BW-SCAN",
+                "name": "Bio-Well Pro Coaching Scan",
+                "slug": "biowell-pro-scan",
+                "description": "One-on-one Bio-Well bioenergy scan and interpretation with a certified Hackster practitioner. Full body-energy report and personalized recommendations.",
+                "short_description": "Practitioner-led GDV scan + report",
+                "category": "lab_tests",
+                "price": 199.00,
+                "image_url": "https://bio-well.com/images/pro-scan.png",
+                "affiliate_url": "https://bio-well.com/services/pro-scan?ref=hackster",
+                "benefits": ["Expert interpretation", "Bioenergy baseline", "Personalized protocol"],
+                "dosage_instructions": "Recommended every 3-6 months",
+                "health_goals": ["longevity", "stress_management", "energy"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.8, "review_count": 64, "is_featured": False, "priority_score": 80,
+                "tags": ["bioenergy", "scan", "service", "baseline"]
+            },
+
+            # ===== CuraWaves products =====
+            {
+                "vendor_id": "curawaves",
+                "vendor_name": "CuraWaves",
+                "sku": "CW-DEVICE",
+                "name": "CuraWaves Wave Therapy Device",
+                "slug": "curawaves-device",
+                "description": "Frequency-based wellness device (square-wave / Rife-style electrotherapy) with 400+ pre-programmed sessions for weight management, energy, sleep, pain & inflammation, circulation, and detoxification. Sessions of 15, 30, 45, or 60 minutes. Includes the FREEDOM Wellness Program. NOTE: This is NOT a PEMF device — it uses square-wave frequency currents.",
+                "short_description": "Frequency device — 400+ Rife-style protocols",
+                "category": "devices",
+                "price": 4995.00,
+                "image_url": "https://curawaves.com/images/wave-device.png",
+                "affiliate_url": "https://curawaves.com/products/wave-device?ref=hackster",
+                "benefits": ["Weight management programs", "Energy & vitality", "Pain & inflammation", "Detoxification", "Sleep support"],
+                "dosage_instructions": "Use 15-60 min sessions, 3-5x per week per chosen protocol",
+                "health_goals": ["weight_management", "energy", "longevity", "stress_management"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.7, "review_count": 96, "is_featured": True, "priority_score": 91,
+                "tags": ["frequency", "rife", "electrotherapy", "weight loss", "device"]
+            },
+            {
+                "vendor_id": "curawaves",
+                "vendor_name": "CuraWaves",
+                "sku": "CW-PREMIUM",
+                "name": "CuraWaves Premium Bundle + Coaching",
+                "slug": "curawaves-premium-bundle",
+                "description": "The Wave Therapy device plus 1:1 health-coach onboarding, live & virtual training, and the FREEDOM Wellness Program for mind-body-spirit balance.",
+                "short_description": "Wave Therapy + 1:1 coaching bundle",
+                "category": "devices",
+                "price": 6495.00,
+                "image_url": "https://curawaves.com/images/premium-bundle.png",
+                "affiliate_url": "https://curawaves.com/products/premium-bundle?ref=hackster",
+                "benefits": ["Personalized protocols", "Health-coach support", "FREEDOM program", "Lifetime updates"],
+                "dosage_instructions": "Personalized with coach",
+                "health_goals": ["weight_management", "energy", "longevity"],
+                "demographic_targets": ["men", "women"],
+                "rating": 4.8, "review_count": 41, "is_featured": True, "priority_score": 88,
+                "tags": ["frequency", "bundle", "coaching", "weight loss"]
+            },
+
+            # ===== StemRegen products =====
+            {
+                "vendor_id": "stemregen",
+                "vendor_name": "StemRegen",
+                "sku": "SR-MOB",
+                "name": "STEMREGEN® Mobilize",
+                "slug": "stemregen-mobilize",
+                "description": "Patented blend (AFA, fucoidan, olive extract, NAC, sumac) that supports blood flow, endothelial glycocalyx, and the circulation of your body's own stem cells.",
+                "short_description": "Stem cell circulation for recovery & longevity",
+                "category": "supplements",
+                "price": 79.00,
+                "image_url": "https://stemregen.co/images/mobilize.png",
+                "affiliate_url": "https://stemregen.co/products/mobilize?ref=hackster",
+                "benefits": ["Stem cell circulation", "Endothelial health", "Recovery", "Longevity"],
+                "dosage_instructions": "Take 1 stick pack or 2 capsules daily on an empty stomach",
+                "health_goals": ["longevity", "athletic_performance", "heart_health"],
+                "demographic_targets": ["men", "women", "athletes", "seniors"],
+                "rating": 4.8, "review_count": 312, "is_featured": True, "priority_score": 93,
+                "tags": ["stem cells", "longevity", "recovery", "AFA"]
+            },
+            {
+                "vendor_id": "stemregen",
+                "vendor_name": "StemRegen",
+                "sku": "SR-REL",
+                "name": "STEMREGEN® Release",
+                "slug": "stemregen-release",
+                "description": "Supports the release of stem cells from bone marrow with AFA, fucoidan, sea buckthorn, panax notoginseng, beta-glucan, and fractionated colostrum.",
+                "short_description": "Bone-marrow stem-cell release support",
+                "category": "supplements",
+                "price": 89.00,
+                "image_url": "https://stemregen.co/images/release.png",
+                "affiliate_url": "https://stemregen.co/products/release?ref=hackster",
+                "benefits": ["Stem cell release", "Immune support", "Longevity", "Recovery"],
+                "dosage_instructions": "Take 2 capsules daily on an empty stomach",
+                "health_goals": ["longevity", "immune_support", "athletic_performance"],
+                "demographic_targets": ["men", "women", "athletes", "seniors"],
+                "rating": 4.7, "review_count": 224, "is_featured": True, "priority_score": 88,
+                "tags": ["stem cells", "AFA", "longevity"]
+            },
+            {
+                "vendor_id": "stemregen",
+                "vendor_name": "StemRegen",
+                "sku": "SR-REGEN",
+                "name": "STEMREGEN® RegenerEnd (Senolytic)",
+                "slug": "stemregen-regenerend",
+                "description": "Senolytic blend to support the natural clearance of senescent ('zombie') cells for healthy aging and tissue rejuvenation.",
+                "short_description": "Senolytic support for healthy aging",
+                "category": "supplements",
+                "price": 95.00,
+                "image_url": "https://stemregen.co/images/regenerend.png",
+                "affiliate_url": "https://stemregen.co/products/regenerend?ref=hackster",
+                "benefits": ["Senescent cell clearance", "Healthy aging", "Longevity"],
+                "dosage_instructions": "Take 2 capsules monthly on a fasting day",
+                "health_goals": ["longevity"],
+                "demographic_targets": ["men", "women", "seniors"],
+                "rating": 4.6, "review_count": 138, "is_featured": False, "priority_score": 82,
+                "tags": ["senolytic", "longevity", "anti-aging"]
             }
         ]
         
         for product_data in sample_products:
             product = MarketplaceProduct(**product_data)
-            await db.marketplace_products.insert_one(product.dict())
+            doc = product.dict()
+            await db.marketplace_products.update_one(
+                {"slug": doc["slug"]},
+                {"$setOnInsert": doc},
+                upsert=True
+            )
     
-    # Sample Questionnaire
-    if await db.questionnaire_templates.count_documents({}) == 0:
-        questionnaire = {
-            "id": "biohacking-assessment-v1",
-            "name": "Biohacking Health Assessment",
-            "description": "Comprehensive questionnaire to determine your personalized Hackster Stack",
-            "questions": [
-                {
-                    "id": "age_range",
-                    "question": "What is your age range?",
-                    "question_type": "single_choice",
-                    "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "65+"],
-                    "category": "demographics"
-                },
-                {
-                    "id": "gender",
-                    "question": "What is your biological sex?",
-                    "question_type": "single_choice",
-                    "options": ["Male", "Female", "Other/Prefer not to say"],
-                    "category": "demographics"
-                },
-                {
-                    "id": "primary_goal",
-                    "question": "What is your PRIMARY health goal?",
-                    "question_type": "single_choice",
-                    "options": ["More Energy", "Better Sleep", "Mental Focus", "Athletic Performance", "Longevity", "Stress Management", "Weight Management", "Immune Support"],
-                    "category": "health_goals"
-                },
-                {
-                    "id": "secondary_goals",
-                    "question": "Select any SECONDARY health goals:",
-                    "question_type": "multiple_choice",
-                    "options": ["More Energy", "Better Sleep", "Mental Focus", "Athletic Performance", "Longevity", "Stress Management", "Weight Management", "Immune Support", "Gut Health", "Hormone Balance", "Heart Health"],
-                    "category": "health_goals"
-                },
-                {
-                    "id": "energy_level",
-                    "question": "How would you rate your current energy levels?",
-                    "question_type": "scale",
-                    "scale_min": 1,
-                    "scale_max": 10,
-                    "category": "current_health"
-                },
-                {
-                    "id": "sleep_quality",
-                    "question": "How would you rate your sleep quality?",
-                    "question_type": "scale",
-                    "scale_min": 1,
-                    "scale_max": 10,
-                    "category": "current_health"
-                },
-                {
-                    "id": "stress_level",
-                    "question": "How would you rate your stress levels?",
-                    "question_type": "scale",
-                    "scale_min": 1,
-                    "scale_max": 10,
-                    "category": "current_health"
-                },
-                {
-                    "id": "exercise_frequency",
-                    "question": "How often do you exercise?",
-                    "question_type": "single_choice",
-                    "options": ["Never", "1-2 times/week", "3-4 times/week", "5+ times/week", "Daily"],
-                    "category": "lifestyle"
-                },
-                {
-                    "id": "diet_type",
-                    "question": "How would you describe your diet?",
-                    "question_type": "single_choice",
-                    "options": ["Standard American Diet", "Mostly Healthy", "Clean Eating", "Keto/Low Carb", "Mediterranean", "Vegan/Vegetarian", "Carnivore", "Other"],
-                    "category": "diet"
-                },
-                {
-                    "id": "current_supplements",
-                    "question": "Which supplements do you currently take?",
-                    "question_type": "multiple_choice",
-                    "options": ["None", "Multivitamin", "Vitamin D", "Magnesium", "Omega-3/Fish Oil", "Probiotics", "Protein Powder", "Creatine", "Pre-workout", "Other"],
-                    "category": "current_health"
-                },
-                {
-                    "id": "health_concerns",
-                    "question": "Do you have any specific health concerns?",
-                    "question_type": "multiple_choice",
-                    "options": ["None", "Fatigue", "Poor Sleep", "Brain Fog", "Digestive Issues", "Joint Pain", "Mood/Anxiety", "Blood Sugar", "Thyroid", "Hormonal Imbalance"],
-                    "category": "current_health"
-                },
-                {
-                    "id": "budget",
-                    "question": "What's your monthly supplement budget?",
-                    "question_type": "single_choice",
-                    "options": ["Under $50", "$50-100", "$100-200", "$200-300", "$300+"],
-                    "category": "preferences"
-                }
-            ]
-        }
-        await db.questionnaire_templates.insert_one(questionnaire)
+    # Hackster Health Goals Assessment — v2 (force update on restart)
+    questionnaire_v2 = {
+        "id": "biohacking-assessment-v2",
+        "name": "Hackster Health Goals Assessment",
+        "description": "A short, science-based assessment that maps you to the right Hackster Stack — supplements, devices, and a coach matched to your goals.",
+        "questions": [
+            # === Section 1 — About You ===
+            {
+                "id": "age_range",
+                "question": "What is your age range?",
+                "question_type": "single_choice",
+                "options": ["18-29", "30-39", "40-49", "50-59", "60-69", "70+"],
+                "category": "About You"
+            },
+            {
+                "id": "gender",
+                "question": "What is your biological sex?",
+                "question_type": "single_choice",
+                "options": ["Female", "Male", "Other / Prefer not to say"],
+                "category": "About You"
+            },
+            {
+                "id": "height_weight_goal",
+                "question": "How would you describe your current body composition?",
+                "question_type": "single_choice",
+                "options": [
+                    "I'm at a healthy weight and want to maintain",
+                    "I want to lose 5-15 lbs",
+                    "I want to lose 15-30 lbs",
+                    "I want to lose 30+ lbs",
+                    "I want to gain lean muscle"
+                ],
+                "category": "About You"
+            },
+
+            # === Section 2 — Your Primary Goal ===
+            {
+                "id": "primary_goal",
+                "question": "What is your #1 health priority right now?",
+                "question_type": "single_choice",
+                "options": [
+                    "Increase Energy",
+                    "Improve Vitality / Longevity",
+                    "Boost Immune System",
+                    "Weight Loss / Metabolic Health"
+                ],
+                "category": "Primary Goal"
+            },
+            {
+                "id": "primary_goal_why",
+                "question": "Why is this your top priority? (one sentence)",
+                "question_type": "text",
+                "category": "Primary Goal"
+            },
+            {
+                "id": "secondary_goals",
+                "question": "Which of these matter to you as SECONDARY goals? (select all that apply)",
+                "question_type": "multiple_choice",
+                "options": [
+                    "More Energy",
+                    "Better Sleep",
+                    "Longevity / Anti-aging",
+                    "Stronger Immune System",
+                    "Weight Loss",
+                    "Mental Focus / Brain Health",
+                    "Stress Resilience",
+                    "Gut Health",
+                    "Hormone Balance",
+                    "Athletic Performance / Recovery",
+                    "Healthier Skin",
+                    "Heart Health"
+                ],
+                "category": "Primary Goal"
+            },
+
+            # === Section 3 — Current Baseline ===
+            {
+                "id": "energy_level",
+                "question": "How would you rate your typical daily energy? (1 = exhausted, 10 = abundant)",
+                "question_type": "scale",
+                "scale_min": 1,
+                "scale_max": 10,
+                "category": "Current Baseline"
+            },
+            {
+                "id": "sleep_quality",
+                "question": "How would you rate your sleep quality? (1 = poor, 10 = excellent)",
+                "question_type": "scale",
+                "scale_min": 1,
+                "scale_max": 10,
+                "category": "Current Baseline"
+            },
+            {
+                "id": "stress_level",
+                "question": "How would you rate your daily stress? (1 = very low, 10 = overwhelming)",
+                "question_type": "scale",
+                "scale_min": 1,
+                "scale_max": 10,
+                "category": "Current Baseline"
+            },
+            {
+                "id": "immune_resilience",
+                "question": "How often do you get colds or feel run-down?",
+                "question_type": "single_choice",
+                "options": [
+                    "Rarely (1x a year or less)",
+                    "Occasionally (2-3x a year)",
+                    "Often (4-6x a year)",
+                    "Very often (monthly or more)"
+                ],
+                "category": "Current Baseline"
+            },
+            {
+                "id": "metabolic_signals",
+                "question": "Do you experience any of these? (select all that apply)",
+                "question_type": "multiple_choice",
+                "options": [
+                    "Cravings for sugar / carbs",
+                    "Energy crashes after meals",
+                    "Belly fat hard to lose",
+                    "Brain fog",
+                    "Trouble losing weight despite effort",
+                    "None of these"
+                ],
+                "category": "Current Baseline"
+            },
+            {
+                "id": "health_concerns",
+                "question": "Any specific health concerns? (select all that apply)",
+                "question_type": "multiple_choice",
+                "options": [
+                    "None",
+                    "Fatigue / low energy",
+                    "Poor sleep",
+                    "Frequent illness",
+                    "Inflammation / joint pain",
+                    "Mood / anxiety",
+                    "Blood sugar",
+                    "Thyroid",
+                    "Hormonal imbalance",
+                    "Gut / digestion",
+                    "Heart / cholesterol"
+                ],
+                "category": "Current Baseline"
+            },
+
+            # === Section 4 — Lifestyle ===
+            {
+                "id": "exercise_frequency",
+                "question": "How often do you exercise?",
+                "question_type": "single_choice",
+                "options": ["Never", "1-2 times/week", "3-4 times/week", "5+ times/week", "Daily"],
+                "category": "Lifestyle"
+            },
+            {
+                "id": "diet_type",
+                "question": "Which best describes your diet?",
+                "question_type": "single_choice",
+                "options": [
+                    "Standard American Diet",
+                    "Mostly Healthy / Whole Foods",
+                    "Mediterranean",
+                    "Keto / Low Carb",
+                    "Vegan / Vegetarian",
+                    "Carnivore",
+                    "Intermittent Fasting",
+                    "Other"
+                ],
+                "category": "Lifestyle"
+            },
+            {
+                "id": "current_supplements",
+                "question": "Which supplements do you currently take? (select all that apply)",
+                "question_type": "multiple_choice",
+                "options": ["None", "Multivitamin", "Vitamin D", "Magnesium", "Omega-3 / Fish Oil", "Probiotics", "Protein Powder", "Adaptogens (Ashwagandha, Rhodiola)", "NAD+ / NR", "Berberine", "Other"],
+                "category": "Lifestyle"
+            },
+
+            # === Section 5 — Preferences ===
+            {
+                "id": "openness_to_devices",
+                "question": "How open are you to using wellness devices (e.g., bioenergy scanners, frequency therapy)?",
+                "question_type": "single_choice",
+                "options": [
+                    "Very open — I love biohacking tools",
+                    "Curious — open to learning",
+                    "Maybe later — supplements first",
+                    "Not interested"
+                ],
+                "category": "Preferences"
+            },
+            {
+                "id": "wants_baseline_scan",
+                "question": "Would you like a Bio-Well bioenergy scan to establish a baseline before optimizing?",
+                "question_type": "single_choice",
+                "options": ["Yes, definitely", "Maybe", "No"],
+                "category": "Preferences"
+            },
+            {
+                "id": "wants_coach",
+                "question": "Are you interested in working with a Hackster health coach?",
+                "question_type": "single_choice",
+                "options": [
+                    "Yes — I want a coach to guide me",
+                    "Maybe — show me coach options",
+                    "No — I'll self-direct for now"
+                ],
+                "category": "Preferences"
+            },
+            {
+                "id": "budget",
+                "question": "Monthly budget for supplements & wellness products?",
+                "question_type": "single_choice",
+                "options": ["Under $50", "$50-100", "$100-200", "$200-500", "$500+"],
+                "category": "Preferences"
+            }
+        ]
+    }
+
+    # Force-replace the active questionnaire so users always see the latest version
+    await db.questionnaire_templates.delete_many({"id": {"$in": ["biohacking-assessment-v1", "biohacking-assessment-v2"]}})
+    await db.questionnaire_templates.insert_one(questionnaire_v2)
 
 # Authentication API Routes
 @api_router.post("/auth/register", response_model=dict)
@@ -2293,8 +3034,11 @@ async def mark_item_purchased(share_token: str, item_id: str, purchaser_name: Op
 
 @api_router.get("/questionnaire")
 async def get_questionnaire():
-    """Get the biohacking health assessment questionnaire"""
-    questionnaire = await db.questionnaire_templates.find_one({"id": "biohacking-assessment-v1"})
+    """Get the biohacking health assessment questionnaire (latest version)"""
+    questionnaire = await db.questionnaire_templates.find_one({"id": "biohacking-assessment-v2"})
+    if not questionnaire:
+        # Fallback to v1 for backwards compatibility
+        questionnaire = await db.questionnaire_templates.find_one({"id": "biohacking-assessment-v1"})
     if not questionnaire:
         raise HTTPException(status_code=404, detail="Questionnaire not found")
     # Remove MongoDB ObjectId before returning
@@ -2304,7 +3048,7 @@ async def get_questionnaire():
 
 @api_router.post("/questionnaire/submit", response_model=AIRecommendation)
 async def submit_questionnaire(submission: AIQuestionnaireSubmission):
-    """Submit questionnaire and get AI-powered recommendations"""
+    """Submit questionnaire and get AI-powered recommendations + top 3 matched coaches"""
     try:
         # Generate AI recommendations (works for both authenticated and anonymous users)
         ai_result = await generate_ai_recommendations(submission.responses, None)
@@ -2322,7 +3066,67 @@ async def submit_questionnaire(submission: AIQuestionnaireSubmission):
                     primary_goals.append(goal_enum)
             except ValueError:
                 continue
-        
+
+        # ===== Match Top 3 Coaches =====
+        coach_specialties_keywords = [s.lower() for s in ai_result.get("coach_match_specialties", [])]
+        # Also derive keywords from primary goals
+        for g in primary_goals:
+            coach_specialties_keywords.append(g.value.replace("_", " "))
+
+        # Map common goal keywords -> coach specialty keywords
+        keyword_aliases = {
+            "weight management": ["weight loss", "weight management", "metabolic"],
+            "weight_management": ["weight loss", "weight management", "metabolic"],
+            "energy": ["energy", "vitality"],
+            "longevity": ["longevity", "vitality", "biohacking", "stem cell"],
+            "immune_support": ["immune", "bioenergy"],
+            "immune": ["immune", "bioenergy"],
+            "stress_management": ["stress", "bioenergy"],
+        }
+        expanded_keywords = set()
+        for kw in coach_specialties_keywords:
+            expanded_keywords.add(kw)
+            for alias_key, aliases in keyword_aliases.items():
+                if alias_key in kw or kw in alias_key:
+                    for a in aliases:
+                        expanded_keywords.add(a)
+        if not expanded_keywords:
+            expanded_keywords = {"longevity", "energy"}
+
+        # Query active+approved coaches and score them by specialty overlap
+        cursor = db.coaches.find({"is_approved": True, "is_active": True})
+        all_coaches = await cursor.to_list(length=200)
+        scored = []
+        for coach in all_coaches:
+            coach_specs = [s.lower() for s in coach.get("specialties", [])]
+            score = 0
+            for kw in expanded_keywords:
+                for spec in coach_specs:
+                    if kw in spec or spec in kw:
+                        score += 2
+            # Boost Laura Zook slightly so she's surfaced for our beta members
+            if coach.get("name") == "Laura Zook":
+                score += 1
+            score += coach.get("rating", 0)  # tiebreak by rating
+            scored.append((score, coach))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        top_coaches = []
+        for score, coach in scored[:3]:
+            top_coaches.append({
+                "id": coach.get("id"),
+                "name": coach.get("name"),
+                "credentials": coach.get("credentials", []),
+                "specialties": coach.get("specialties", []),
+                "location": coach.get("location", ""),
+                "bio": coach.get("bio", ""),
+                "hourly_rate": coach.get("hourly_rate", ""),
+                "rating": coach.get("rating", 0),
+                "total_reviews": coach.get("total_reviews", 0),
+                "profile_image": coach.get("profile_image"),
+                "website": coach.get("website"),
+                "match_score": int(score)
+            })
+
         # Create recommendation record
         recommendation = AIRecommendation(
             user_id=user_id,
@@ -2331,9 +3135,11 @@ async def submit_questionnaire(submission: AIQuestionnaireSubmission):
             primary_goals=primary_goals,
             recommended_products=ai_result.get("recommended_products", []),
             recommended_lab_tests=ai_result.get("recommended_lab_tests", []),
+            recommended_coaches=top_coaches,
             lifestyle_tips=ai_result.get("lifestyle_tips", []),
             personalized_summary=ai_result.get("personalized_summary", ""),
-            ai_reasoning=ai_result.get("ai_reasoning", "")
+            ai_reasoning=ai_result.get("ai_reasoning", ""),
+            coach_match_specialties=list(expanded_keywords)
         )
         
         # Save to database

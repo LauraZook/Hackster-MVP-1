@@ -155,18 +155,27 @@ const HeroSection = () => {
             Optimize Your Health with
             <span className="text-blue-600 block">Biohacking Excellence</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed">
-            Get AI-powered recommendations, shop premium supplements from trusted vendors, 
-            and build your personalized Hackster stack for optimal health.
+          <p className="text-xl md:text-2xl text-gray-600 mb-6 leading-relaxed">
+            Take a 2-minute assessment and get an AI-personalized Hackster Stack —
+            supplements, devices, and a matched health coach for your top goals.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8 text-sm text-gray-700">
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">⚡ Increase Energy</span>
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">🧬 Vitality & Longevity</span>
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">🛡️ Immune Support</span>
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm border border-gray-200">⚖️ Weight Loss</span>
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-xl text-center">
-              Get AI Recommendations
+              Take the Free Assessment →
             </Link>
             <Link to="/marketplace" className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-600 hover:text-white transition-all text-center">
               Shop Marketplace
             </Link>
           </div>
+          <p className="text-xs text-gray-500 mt-6">
+            Featuring products from <span className="font-semibold">Thorne</span>, <span className="font-semibold">Apex Energetics</span>, <span className="font-semibold">Standard Process</span>, <span className="font-semibold">Bio-Well</span>, <span className="font-semibold">CuraWaves</span> & <span className="font-semibold">StemRegen</span>
+          </p>
         </div>
       </div>
     </div>
@@ -3572,6 +3581,55 @@ const AIQuestionnairePage = () => {
             </div>
           </div>
 
+          {/* Recommended Health Coaches */}
+          {recommendations.recommended_coaches && recommendations.recommended_coaches.length > 0 && (
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="flex items-baseline justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">👩‍⚕️ Top Health Coaches For You</h3>
+                <Link to="/coaches" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
+              </div>
+              <p className="text-sm text-gray-600 mb-5">Hand-picked Hackster coaches matched to your goals.</p>
+              <div className="grid sm:grid-cols-3 gap-4">
+                {recommendations.recommended_coaches.map((coach, idx) => (
+                  <div key={coach.id || idx} className="border border-gray-200 rounded-xl p-4 bg-gradient-to-b from-white to-blue-50/30 hover:shadow-lg transition-shadow flex flex-col">
+                    <div className="flex items-center gap-3 mb-3">
+                      {coach.profile_image ? (
+                        <img src={coach.profile_image} alt={coach.name} className="w-14 h-14 rounded-full object-cover border-2 border-blue-100" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                          {coach.name?.split(' ').map(n => n[0]).join('').slice(0,2)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">{coach.name}</h4>
+                        <p className="text-xs text-gray-500 truncate">{coach.location}</p>
+                        <div className="flex items-center gap-1 text-xs text-yellow-600 mt-0.5">
+                          <span>★</span><span className="font-medium">{coach.rating?.toFixed?.(1) || coach.rating}</span>
+                          <span className="text-gray-400">({coach.total_reviews})</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {(coach.specialties || []).slice(0, 3).map(s => (
+                        <span key={s} className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-3 flex-1">{coach.bio}</p>
+                    <div className="text-xs text-gray-700 font-medium mb-3">{coach.hourly_rate}</div>
+                    <Link
+                      to="/coaches"
+                      className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-lg"
+                    >
+                      View Profile
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Lifestyle Tips */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">🌟 Biohacking Tips</h3>
@@ -3696,13 +3754,14 @@ const AIQuestionnairePage = () => {
                   type="range"
                   min={currentQ.scale_min || 1}
                   max={currentQ.scale_max || 10}
-                  value={responses[currentQ.id] || 5}
+                  value={responses[currentQ.id] ?? 5}
                   onChange={(e) => handleResponse(currentQ.id, parseInt(e.target.value))}
+                  onInput={(e) => handleResponse(currentQ.id, parseInt(e.target.value))}
                   className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between mt-2 text-sm text-gray-600">
                   <span>{currentQ.scale_min || 1} (Low)</span>
-                  <span className="text-2xl font-bold text-blue-600">{responses[currentQ.id] || 5}</span>
+                  <span className="text-2xl font-bold text-blue-600">{responses[currentQ.id] ?? 5}</span>
                   <span>{currentQ.scale_max || 10} (High)</span>
                 </div>
               </div>
@@ -3732,7 +3791,7 @@ const AIQuestionnairePage = () => {
             {currentQuestion < questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQuestion(prev => prev + 1)}
-                disabled={!responses[currentQ?.id]}
+                disabled={currentQ?.question_type !== 'text' && currentQ?.question_type !== 'scale' && !responses[currentQ?.id]}
                 className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next →
@@ -3740,7 +3799,7 @@ const AIQuestionnairePage = () => {
             ) : (
               <button
                 onClick={submitQuestionnaire}
-                disabled={submitting || !responses[currentQ?.id]}
+                disabled={submitting || (currentQ?.question_type !== 'text' && currentQ?.question_type !== 'scale' && !responses[currentQ?.id])}
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {submitting ? (

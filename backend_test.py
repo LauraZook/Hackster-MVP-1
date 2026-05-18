@@ -1,1445 +1,513 @@
-#!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Hackster.ai Platform on Railway
-Tests Railway deployment, MongoDB connectivity, and all API endpoints
+Backend Testing for Hackster Health Goals Assessment V2
+Tests the redesigned questionnaire and recommendations flow
 """
 
 import requests
 import json
-import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List
 
-# Configuration - Railway Deployment URLs
+# Backend URL from frontend/.env
 BASE_URL = "https://wellness-coach-match.preview.emergentagent.com/api"
-HEALTH_URL = "https://wellness-coach-match.preview.emergentagent.com"
-HEADERS = {"Content-Type": "application/json"}
 
-class RailwayDeploymentTester:
-    def __init__(self):
-        self.base_url = BASE_URL
-        self.health_url = HEALTH_URL
-        self.headers = HEADERS
-        self.test_results = []
-        self.member_token = None
-        self.coach_token = None
-        self.member_email = None
-        self.coach_email = None
-        self.test_post_id = None
-        self.test_comment_id = None
-        self.database_connected = False
-        
-    def log_test(self, test_name: str, passed: bool, details: str = ""):
-        """Log test results"""
-        status = "✅ PASS" if passed else "❌ FAIL"
-        result = {
-            "test": test_name,
-            "status": status,
-            "passed": passed,
-            "details": details
-        }
-        self.test_results.append(result)
-        print(f"{status}: {test_name}")
-        if details:
-            print(f"   Details: {details}")
-        print()
-    
-    # ========== RAILWAY DEPLOYMENT & HEALTH CHECK TESTS ==========
-    
-    def test_railway_health_endpoint(self):
-        """Test /health endpoint for Railway deployment"""
-        try:
-            response = requests.get(f"{self.health_url}/health", timeout=30)
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Check required health check fields
-                required_fields = ["status", "service"]
-                missing_fields = [field for field in required_fields if field not in data]
-                
-                if missing_fields:
-                    self.log_test("Railway Health Check", False, f"Missing fields: {missing_fields}")
-                    return
-                
-                if data["status"] == "healthy":
-                    self.log_test("Railway Health Check", True, f"Service healthy: {data.get('service', 'Unknown')}")
-                    
-                    # Check database connectivity
-                    if data.get("database") == "connected":
-                        self.database_connected = True
-                        self.log_test("MongoDB Connection via Health Check", True, "Database connected successfully")
-                    else:
-                        self.log_test("MongoDB Connection via Health Check", False, f"Database status: {data.get('database', 'unknown')}")
-                else:
-                    self.log_test("Railway Health Check", False, f"Service unhealthy: {data.get('status', 'unknown')}")
-            else:
-                self.log_test("Railway Health Check", False, f"HTTP {response.status_code}: {response.text}")
-                
-        except requests.exceptions.RequestException as e:
-            self.log_test("Railway Health Check", False, f"Connection error: {str(e)}")
-    
-    def test_api_health_endpoint(self):
-        """Test /api/health endpoint"""
-        response = self.make_request("GET", "/health")
-        
-        if response["success"] and response["status_code"] == 200:
-            data = response["data"]
-            
-            # Check API health response structure
-            required_fields = ["status", "service", "version"]
-            missing_fields = [field for field in required_fields if field not in data]
-            
-            if missing_fields:
-                self.log_test("API Health Check", False, f"Missing fields: {missing_fields}")
-                return
-            
-            if data["status"] == "healthy":
-                self.log_test("API Health Check", True, f"API healthy - Version: {data.get('version', 'unknown')}")
-                
-                # Verify database connection through API
-                if data.get("database") == "connected":
-                    self.database_connected = True
-                    self.log_test("MongoDB Connection via API", True, "Database accessible through API")
-                else:
-                    self.log_test("MongoDB Connection via API", False, f"Database status: {data.get('database', 'unknown')}")
-            else:
-                self.log_test("API Health Check", False, f"API unhealthy: {data.get('status', 'unknown')}")
-        else:
-            self.log_test("API Health Check", False, f"Status: {response['status_code']}, Error: {response['data']}")
-    
-    def test_ping_endpoint(self):
-        """Test /ping endpoint"""
-        try:
-            response = requests.get(f"{self.health_url}/ping", timeout=30)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("message") == "pong":
-                    self.log_test("Ping Endpoint", True, "Ping/pong successful")
-                else:
-                    self.log_test("Ping Endpoint", False, f"Unexpected response: {data}")
-            else:
-                self.log_test("Ping Endpoint", False, f"HTTP {response.status_code}: {response.text}")
-                
-        except requests.exceptions.RequestException as e:
-            self.log_test("Ping Endpoint", False, f"Connection error: {str(e)}")
-    
-    def test_sample_data_initialization(self):
-        """Test that sample data was properly initialized in MongoDB"""
-        if not self.database_connected:
-            self.log_test("Sample Data Initialization", False, "Database not connected - cannot test sample data")
-            return
-        
-        # Test health tests data
-        health_tests_response = self.make_request("GET", "/health-tests")
-        if not health_tests_response["success"]:
-            self.log_test("Sample Data - Health Tests", False, f"Failed to retrieve health tests: {health_tests_response['data']}")
-            return
-        
-        health_tests = health_tests_response["data"]
-        if len(health_tests) < 2:
-            self.log_test("Sample Data - Health Tests", False, f"Expected at least 2 health tests, found {len(health_tests)}")
-            return
-        
-        # Check for expected providers
-        providers = [test.get("provider", "") for test in health_tests]
-        expected_providers = ["function_health", "thorne"]
-        found_providers = [p for p in expected_providers if p in providers]
-        
-        if len(found_providers) < 2:
-            self.log_test("Sample Data - Health Tests", False, f"Expected providers not found. Found: {found_providers}")
-            return
-        
-        self.log_test("Sample Data - Health Tests", True, f"Found {len(health_tests)} health tests with proper providers")
-        
-        # Test supplements data
-        supplements_response = self.make_request("GET", "/supplements")
-        if not supplements_response["success"]:
-            self.log_test("Sample Data - Supplements", False, f"Failed to retrieve supplements: {supplements_response['data']}")
-            return
-        
-        supplements = supplements_response["data"]
-        if len(supplements) < 5:
-            self.log_test("Sample Data - Supplements", False, f"Expected at least 5 supplements, found {len(supplements)}")
-            return
-        
-        # Check for expected brands
-        brands = [supp.get("brand", "") for supp in supplements]
-        expected_brands = ["Thorne", "Standard Process", "Apex Energetics"]
-        found_brands = [b for b in expected_brands if b in brands]
-        
-        if len(found_brands) < 2:
-            self.log_test("Sample Data - Supplements", False, f"Expected brands not found. Found: {found_brands}")
-            return
-        
-        self.log_test("Sample Data - Supplements", True, f"Found {len(supplements)} supplements with proper brands")
-        
-        # Test biohacks data
-        biohacks_response = self.make_request("GET", "/biohacks")
-        if not biohacks_response["success"]:
-            self.log_test("Sample Data - Biohacks", False, f"Failed to retrieve biohacks: {biohacks_response['data']}")
-            return
-        
-        biohacks = biohacks_response["data"]
-        if len(biohacks) < 3:
-            self.log_test("Sample Data - Biohacks", False, f"Expected at least 3 biohacks, found {len(biohacks)}")
-            return
-        
-        # Check for expected categories
-        categories = [tip.get("category", "") for tip in biohacks]
-        expected_categories = ["Recovery", "Circadian Rhythm", "Stress Management"]
-        found_categories = [c for c in expected_categories if c in categories]
-        
-        if len(found_categories) < 2:
-            self.log_test("Sample Data - Biohacks", False, f"Expected categories not found. Found: {found_categories}")
-            return
-        
-        self.log_test("Sample Data - Biohacks", True, f"Found {len(biohacks)} biohacks with proper categories")
-    
-    def test_database_dependent_endpoints(self):
-        """Test critical endpoints that depend on database connectivity"""
-        if not self.database_connected:
-            self.log_test("Database Dependent Endpoints", False, "Database not connected - cannot test dependent endpoints")
-            return
-        
-        # Test endpoints that require database
-        endpoints_to_test = [
-            ("/health-tests", "Health Tests API"),
-            ("/supplements", "Supplements API"),
-            ("/supplements/priority", "Priority Supplements API"),
-            ("/biohacks", "Biohacks API"),
-            ("/coaches", "Coaches API"),
-            ("/posts", "Community Posts API")
-        ]
-        
-        failed_endpoints = []
-        successful_endpoints = []
-        
-        for endpoint, name in endpoints_to_test:
-            response = self.make_request("GET", endpoint)
-            if response["success"] and response["status_code"] == 200:
-                data = response["data"]
-                if isinstance(data, list) and len(data) > 0:
-                    successful_endpoints.append(name)
-                else:
-                    failed_endpoints.append(f"{name} (empty data)")
-            else:
-                failed_endpoints.append(f"{name} (HTTP {response['status_code']})")
-        
-        if len(failed_endpoints) == 0:
-            self.log_test("Database Dependent Endpoints", True, f"All {len(successful_endpoints)} endpoints working with data")
-        else:
-            self.log_test("Database Dependent Endpoints", False, f"Failed endpoints: {failed_endpoints}")
-    
-    def run_railway_deployment_tests(self):
-        """Run all Railway deployment and database connectivity tests"""
-        print("🚀 RAILWAY DEPLOYMENT & DATABASE TESTS")
-        print("=" * 50)
-        
-        # Basic connectivity tests
-        self.test_railway_health_endpoint()
-        self.test_api_health_endpoint()
-        self.test_ping_endpoint()
-        
-        # Database and sample data tests
-        self.test_sample_data_initialization()
-        self.test_database_dependent_endpoints()
-        
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    END = '\033[0m'
+
+def print_test(name: str, passed: bool, details: str = ""):
+    status = f"{Colors.GREEN}✓ PASS{Colors.END}" if passed else f"{Colors.RED}✗ FAIL{Colors.END}"
+    print(f"{status} - {name}")
+    if details:
+        print(f"  {details}")
+    if not passed:
         print()
 
-    def make_request(self, method: str, endpoint: str, data: Dict = None, token: str = None) -> Dict[str, Any]:
-        """Make HTTP request with proper error handling"""
-        url = f"{self.base_url}{endpoint}"
-        headers = self.headers.copy()
+def test_health_endpoint():
+    """Test 1: GET /api/health - returns 200, status healthy"""
+    print(f"\n{Colors.BLUE}=== Test 1: Health Check ==={Colors.END}")
+    try:
+        response = requests.get(f"{BASE_URL}/health", timeout=10)
+        passed = response.status_code == 200
         
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        
-        try:
-            if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=30)
-            elif method.upper() == "POST":
-                response = requests.post(url, headers=headers, json=data, timeout=30)
-            elif method.upper() == "PUT":
-                response = requests.put(url, headers=headers, json=data, timeout=30)
-            elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=30)
-            else:
-                raise ValueError(f"Unsupported method: {method}")
-            
-            return {
-                "status_code": response.status_code,
-                "data": response.json() if response.content else {},
-                "success": response.status_code < 400
-            }
-        except requests.exceptions.RequestException as e:
-            return {
-                "status_code": 0,
-                "data": {"error": str(e)},
-                "success": False
-            }
-        except json.JSONDecodeError:
-            return {
-                "status_code": response.status_code,
-                "data": {"error": "Invalid JSON response"},
-                "success": False
-            }
-
-    def test_member_registration(self):
-        """Test member registration endpoint"""
-        import time
-        timestamp = str(int(time.time()))
-        
-        test_data = {
-            "email": f"testmember{timestamp}@hackster.ai",
-            "username": f"testmember{timestamp}",
-            "password": "SecurePass123!",
-            "role": "member",
-            "age": 28,
-            "gender": "male"
-        }
-        
-        response = self.make_request("POST", "/auth/register", test_data)
-        
-        if response["success"] and response["status_code"] == 200:
-            data = response["data"]
-            # Check response structure
-            required_fields = ["access_token", "token_type", "user", "message"]
-            missing_fields = [field for field in required_fields if field not in data]
-            
-            if missing_fields:
-                self.log_test("Member Registration", False, f"Missing fields: {missing_fields}")
-                return
-            
-            # Validate token format
-            if not data["access_token"] or data["token_type"] != "bearer":
-                self.log_test("Member Registration", False, "Invalid token format")
-                return
-            
-            # Validate user data
-            user = data["user"]
-            if user["email"] != test_data["email"] or user["role"] != "member":
-                self.log_test("Member Registration", False, "User data mismatch")
-                return
-            
-            # Check password is not in response
-            if "password" in str(data) or "hashed_password" in str(data):
-                self.log_test("Member Registration", False, "Password exposed in response")
-                return
-            
-            self.member_token = data["access_token"]
-            self.member_email = test_data["email"]  # Store for login test
-            self.log_test("Member Registration", True, "Member registered successfully with JWT token")
+        if passed:
+            data = response.json()
+            has_status = "status" in data
+            is_healthy = data.get("status") == "healthy" if has_status else False
+            passed = has_status and is_healthy
+            print_test("GET /api/health returns 200 with healthy status", passed, 
+                      f"Status: {data.get('status')}, Database: {data.get('database')}")
         else:
-            self.log_test("Member Registration", False, f"Status: {response['status_code']}, Error: {response['data']}")
+            print_test("GET /api/health returns 200", False, f"Status code: {response.status_code}")
+        
+        return passed
+    except Exception as e:
+        print_test("GET /api/health", False, f"Error: {str(e)}")
+        return False
 
-    def test_coach_registration(self):
-        """Test coach registration endpoint"""
-        import time
-        timestamp = str(int(time.time()))
-        
-        test_data = {
-            "email": f"testcoach{timestamp}@hackster.ai",
-            "username": f"testcoach{timestamp}",
-            "password": "CoachPass456!",
-            "role": "coach",
-            "age": 35,
-            "gender": "female"
-        }
-        
-        response = self.make_request("POST", "/auth/register", test_data)
-        
-        if response["success"] and response["status_code"] == 200:
-            data = response["data"]
-            # Validate coach role
-            if data["user"]["role"] != "coach":
-                self.log_test("Coach Registration", False, "Role not set to coach")
-                return
-            
-            self.coach_token = data["access_token"]
-            self.coach_email = test_data["email"]  # Store for login test
-            self.log_test("Coach Registration", True, "Coach registered successfully")
-        else:
-            self.log_test("Coach Registration", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_duplicate_email_validation(self):
-        """Test duplicate email validation"""
-        # Try to register with same email as member
-        test_data = {
-            "email": "testmember@hackster.ai",
-            "username": "anothermember",
-            "password": "AnotherPass123!",
-            "role": "member"
-        }
-        
-        response = self.make_request("POST", "/auth/register", test_data)
-        
-        if response["status_code"] == 400 and "already registered" in str(response["data"]).lower():
-            self.log_test("Duplicate Email Validation", True, "Correctly rejected duplicate email")
-        else:
-            self.log_test("Duplicate Email Validation", False, f"Should reject duplicate email. Status: {response['status_code']}")
-
-    def test_duplicate_username_validation(self):
-        """Test duplicate username validation"""
-        test_data = {
-            "email": "newemail@hackster.ai",
-            "username": "testmember123",  # Same username as member
-            "password": "NewPass123!",
-            "role": "member"
-        }
-        
-        response = self.make_request("POST", "/auth/register", test_data)
-        
-        if response["status_code"] == 400 and "username" in str(response["data"]).lower():
-            self.log_test("Duplicate Username Validation", True, "Correctly rejected duplicate username")
-        else:
-            self.log_test("Duplicate Username Validation", False, f"Should reject duplicate username. Status: {response['status_code']}")
-
-    def test_valid_login(self):
-        """Test login with valid credentials"""
-        if not hasattr(self, 'member_email'):
-            self.log_test("Valid Login", False, "No member email available from registration")
-            return
-            
-        test_data = {
-            "email": self.member_email,
-            "password": "SecurePass123!"
-        }
-        
-        response = self.make_request("POST", "/auth/login", test_data)
-        
-        if response["success"] and response["status_code"] == 200:
-            data = response["data"]
-            required_fields = ["access_token", "token_type", "user"]
-            missing_fields = [field for field in required_fields if field not in data]
-            
-            if missing_fields:
-                self.log_test("Valid Login", False, f"Missing fields: {missing_fields}")
-                return
-            
-            if data["token_type"] != "bearer":
-                self.log_test("Valid Login", False, "Invalid token type")
-                return
-            
-            self.log_test("Valid Login", True, "Login successful with valid credentials")
-        else:
-            self.log_test("Valid Login", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_invalid_login_credentials(self):
-        """Test login with invalid credentials"""
-        if not hasattr(self, 'member_email') or not self.member_email:
-            self.log_test("Invalid Login - Wrong Password", False, "No member email available")
-            self.log_test("Invalid Login - Non-existent Email", False, "No member email available")
-            return
-            
-        # Test wrong password
-        test_data = {
-            "email": self.member_email,
-            "password": "WrongPassword123!"
-        }
-        
-        response = self.make_request("POST", "/auth/login", test_data)
-        
-        if response["status_code"] == 401:
-            self.log_test("Invalid Login - Wrong Password", True, "Correctly rejected wrong password")
-        else:
-            self.log_test("Invalid Login - Wrong Password", False, f"Should reject wrong password. Status: {response['status_code']}")
-        
-        # Test non-existent email
-        test_data = {
-            "email": "nonexistent@hackster.ai",
-            "password": "AnyPassword123!"
-        }
-        
-        response = self.make_request("POST", "/auth/login", test_data)
-        
-        if response["status_code"] == 401:
-            self.log_test("Invalid Login - Non-existent Email", True, "Correctly rejected non-existent email")
-        else:
-            self.log_test("Invalid Login - Non-existent Email", False, f"Should reject non-existent email. Status: {response['status_code']}")
-
-    def test_auth_me_with_valid_token(self):
-        """Test /auth/me endpoint with valid JWT token"""
-        if not self.member_token:
-            self.log_test("Auth Me - Valid Token", False, "No member token available")
-            return
-        
-        response = self.make_request("GET", "/auth/me", token=self.member_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            user_data = response["data"]
-            required_fields = ["id", "email", "username", "role"]
-            missing_fields = [field for field in required_fields if field not in user_data]
-            
-            if missing_fields:
-                self.log_test("Auth Me - Valid Token", False, f"Missing user fields: {missing_fields}")
-                return
-            
-            if user_data["email"] != self.member_email:
-                self.log_test("Auth Me - Valid Token", False, "Wrong user data returned")
-                return
-            
-            self.log_test("Auth Me - Valid Token", True, "Successfully retrieved user profile")
-        else:
-            self.log_test("Auth Me - Valid Token", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_auth_me_with_invalid_token(self):
-        """Test /auth/me endpoint with invalid JWT token"""
-        # Test with invalid token
-        response = self.make_request("GET", "/auth/me", token="invalid.jwt.token")
-        
-        if response["status_code"] == 401:
-            self.log_test("Auth Me - Invalid Token", True, "Correctly rejected invalid token")
-        else:
-            self.log_test("Auth Me - Invalid Token", False, f"Should reject invalid token. Status: {response['status_code']}")
-        
-        # Test without token
-        response = self.make_request("GET", "/auth/me")
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Auth Me - No Token", True, "Correctly rejected missing token")
-        else:
-            self.log_test("Auth Me - No Token", False, f"Should reject missing token. Status: {response['status_code']}")
-
-    def test_protected_endpoint_with_auth(self):
-        """Test protected endpoint (POST /users) with authentication"""
-        if not self.member_token:
-            self.log_test("Protected Endpoint - With Auth", False, "No member token available")
-            return
-        
-        test_data = {
-            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
-            "age": 30,
-            "goals": ["weight_loss", "muscle_gain"]
-        }
-        
-        response = self.make_request("POST", "/users", test_data, token=self.member_token)
-        
-        if response["success"]:
-            self.log_test("Protected Endpoint - With Auth", True, "Successfully accessed protected endpoint")
-        else:
-            self.log_test("Protected Endpoint - With Auth", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_protected_endpoint_without_auth(self):
-        """Test protected endpoint (POST /users) without authentication"""
-        test_data = {
-            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
-            "age": 30,
-            "goals": ["weight_loss"]
-        }
-        
-        response = self.make_request("POST", "/users", test_data)
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Protected Endpoint - Without Auth", True, "Correctly rejected unauthenticated request")
-        else:
-            self.log_test("Protected Endpoint - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
-
-    def test_public_endpoints(self):
-        """Test that public endpoints work without authentication"""
-        public_endpoints = [
-            "/supplements",
-            "/health-tests",
-            "/coaches",
-            "/biohacks"
-        ]
-        
-        all_passed = True
-        failed_endpoints = []
-        
-        for endpoint in public_endpoints:
-            response = self.make_request("GET", endpoint)
-            if not response["success"]:
-                all_passed = False
-                failed_endpoints.append(f"{endpoint} (Status: {response['status_code']})")
-        
-        if all_passed:
-            self.log_test("Public Endpoints Access", True, "All public endpoints accessible without auth")
-        else:
-            self.log_test("Public Endpoints Access", False, f"Failed endpoints: {failed_endpoints}")
-
-    def test_password_hashing_security(self):
-        """Test that passwords are properly hashed and not stored in plain text"""
-        # This test checks that password is not returned in any response
-        # We already checked this in registration, but let's verify in login too
-        
-        test_data = {
-            "email": self.member_email if hasattr(self, 'member_email') and self.member_email else "fallback@hackster.ai",
-            "password": "SecurePass123!"
-        }
-        
-        response = self.make_request("POST", "/auth/login", test_data)
-        
-        if response["success"]:
-            response_str = str(response["data"])
-            if "SecurePass123!" in response_str or "password" in response_str.lower():
-                self.log_test("Password Hashing Security", False, "Password exposed in login response")
-            else:
-                self.log_test("Password Hashing Security", True, "Password properly hashed and not exposed")
-        else:
-            self.log_test("Password Hashing Security", False, "Could not test - login failed")
-
-    def test_jwt_token_expiration_format(self):
-        """Test JWT token format and structure"""
-        if not self.member_token:
-            self.log_test("JWT Token Format", False, "No token available for testing")
-            return
-        
-        # JWT tokens should have 3 parts separated by dots
-        token_parts = self.member_token.split('.')
-        
-        if len(token_parts) == 3:
-            self.log_test("JWT Token Format", True, "JWT token has correct format (3 parts)")
-        else:
-            self.log_test("JWT Token Format", False, f"JWT token has {len(token_parts)} parts, expected 3")
-
-    # ========== COMMUNITY FUNCTIONALITY TESTS ==========
-    
-    def test_get_community_posts(self):
-        """Test GET /api/posts endpoint - should return sample posts"""
-        response = self.make_request("GET", "/posts")
-        
-        if response["success"] and response["status_code"] == 200:
-            posts = response["data"]
-            
-            if not isinstance(posts, list):
-                self.log_test("Get Community Posts", False, "Response should be a list of posts")
-                return
-            
-            if len(posts) == 0:
-                self.log_test("Get Community Posts", False, "No sample posts found")
-                return
-            
-            # Check post structure
-            sample_post = posts[0]
-            required_fields = ["id", "user_id", "username", "title", "content", "category", "upvotes", "downvotes", "comments_count", "created_at"]
-            missing_fields = [field for field in required_fields if field not in sample_post]
-            
-            if missing_fields:
-                self.log_test("Get Community Posts", False, f"Missing post fields: {missing_fields}")
-                return
-            
-            # Check for sample users
-            usernames = [post.get("username", "") for post in posts]
-            expected_users = ["BiohackerPro", "OptimizeDaily", "SleepOptimizer"]
-            found_users = [user for user in expected_users if user in usernames]
-            
-            if len(found_users) < 2:
-                self.log_test("Get Community Posts", False, f"Expected sample users not found. Found: {found_users}")
-                return
-            
-            self.log_test("Get Community Posts", True, f"Found {len(posts)} posts with proper structure and sample users")
-        else:
-            self.log_test("Get Community Posts", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_community_post_with_auth(self):
-        """Test POST /api/posts endpoint with authentication"""
-        if not self.member_token:
-            self.log_test("Create Community Post - With Auth", False, "No member token available")
-            return
-        
-        test_post = {
-            "title": "Testing New Biohacking Protocol",
-            "content": "I've been experimenting with a new morning routine combining cold exposure and breathwork. The results have been amazing! Here's what I've learned after 30 days of consistent practice...",
-            "category": "general",
-            "image_url": "https://example.com/test-image.jpg"
-        }
-        
-        response = self.make_request("POST", "/posts", test_post, token=self.member_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            post_data = response["data"]
-            
-            # Verify post structure
-            required_fields = ["id", "user_id", "username", "title", "content", "category"]
-            missing_fields = [field for field in required_fields if field not in post_data]
-            
-            if missing_fields:
-                self.log_test("Create Community Post - With Auth", False, f"Missing fields in response: {missing_fields}")
-                return
-            
-            # Verify post content matches
-            if post_data["title"] != test_post["title"] or post_data["content"] != test_post["content"]:
-                self.log_test("Create Community Post - With Auth", False, "Post content doesn't match input")
-                return
-            
-            # Store post ID for later tests
-            self.test_post_id = post_data["id"]
-            
-            self.log_test("Create Community Post - With Auth", True, "Post created successfully with proper structure")
-        else:
-            self.log_test("Create Community Post - With Auth", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_community_post_without_auth(self):
-        """Test POST /api/posts endpoint without authentication"""
-        test_post = {
-            "title": "Unauthorized Post Attempt",
-            "content": "This should fail without authentication",
-            "category": "general"
-        }
-        
-        response = self.make_request("POST", "/posts", test_post)
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Create Community Post - Without Auth", True, "Correctly rejected unauthenticated post creation")
-        else:
-            self.log_test("Create Community Post - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
-
-    def test_get_specific_post(self):
-        """Test GET /api/posts/{post_id} endpoint"""
-        if not self.test_post_id:
-            # Use a sample post ID from the database
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Get Specific Post", False, "No posts available for testing")
-                return
-        
-        response = self.make_request("GET", f"/posts/{self.test_post_id}")
-        
-        if response["success"] and response["status_code"] == 200:
-            post_data = response["data"]
-            
-            # Verify post structure
-            required_fields = ["id", "user_id", "username", "title", "content", "category"]
-            missing_fields = [field for field in required_fields if field not in post_data]
-            
-            if missing_fields:
-                self.log_test("Get Specific Post", False, f"Missing fields: {missing_fields}")
-                return
-            
-            if post_data["id"] != self.test_post_id:
-                self.log_test("Get Specific Post", False, "Returned post ID doesn't match requested ID")
-                return
-            
-            self.log_test("Get Specific Post", True, "Successfully retrieved specific post")
-        else:
-            self.log_test("Get Specific Post", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_get_post_comments(self):
-        """Test GET /api/posts/{post_id}/comments endpoint"""
-        if not self.test_post_id:
-            # Use a sample post ID
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Get Post Comments", False, "No posts available for testing")
-                return
-        
-        response = self.make_request("GET", f"/posts/{self.test_post_id}/comments")
-        
-        if response["success"] and response["status_code"] == 200:
-            comments = response["data"]
-            
-            if not isinstance(comments, list):
-                self.log_test("Get Post Comments", False, "Response should be a list of comments")
-                return
-            
-            # Comments list can be empty for new posts, that's okay
-            self.log_test("Get Post Comments", True, f"Successfully retrieved comments list ({len(comments)} comments)")
-        else:
-            self.log_test("Get Post Comments", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_comment_with_auth(self):
-        """Test POST /api/comments endpoint with authentication"""
-        if not self.member_token:
-            self.log_test("Create Comment - With Auth", False, "No member token available")
-            return
-        
-        if not self.test_post_id:
-            # Use a sample post ID
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Create Comment - With Auth", False, "No posts available for commenting")
-                return
-        
-        test_comment = {
-            "post_id": self.test_post_id,
-            "content": "Great post! I've been looking into similar biohacking techniques. Would love to hear more about your specific breathwork protocol."
-        }
-        
-        response = self.make_request("POST", "/comments", test_comment, token=self.member_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            comment_data = response["data"]
-            
-            # Verify comment structure
-            required_fields = ["id", "post_id", "user_id", "username", "content", "created_at"]
-            missing_fields = [field for field in required_fields if field not in comment_data]
-            
-            if missing_fields:
-                self.log_test("Create Comment - With Auth", False, f"Missing fields: {missing_fields}")
-                return
-            
-            # Verify comment content
-            if comment_data["content"] != test_comment["content"] or comment_data["post_id"] != test_comment["post_id"]:
-                self.log_test("Create Comment - With Auth", False, "Comment content doesn't match input")
-                return
-            
-            self.test_comment_id = comment_data["id"]
-            self.log_test("Create Comment - With Auth", True, "Comment created successfully")
-        else:
-            self.log_test("Create Comment - With Auth", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_comment_without_auth(self):
-        """Test POST /api/comments endpoint without authentication"""
-        if not self.test_post_id:
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Create Comment - Without Auth", False, "No posts available for testing")
-                return
-        
-        test_comment = {
-            "post_id": self.test_post_id,
-            "content": "This should fail without authentication"
-        }
-        
-        response = self.make_request("POST", "/comments", test_comment)
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Create Comment - Without Auth", True, "Correctly rejected unauthenticated comment creation")
-        else:
-            self.log_test("Create Comment - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
-
-    def test_community_reactions(self):
-        """Test POST /api/reactions endpoint with different reaction types"""
-        if not self.member_token:
-            self.log_test("Community Reactions", False, "No member token available")
-            return
-        
-        if not self.test_post_id:
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Community Reactions", False, "No posts available for reactions")
-                return
-        
-        # Test different reaction types
-        reaction_types = ["upvote", "downvote", "tried_this", "helpful", "results", "on_point"]
-        successful_reactions = 0
-        
-        for reaction_type in reaction_types:
-            test_reaction = {
-                "post_id": self.test_post_id,
-                "reaction_type": reaction_type
-            }
-            
-            response = self.make_request("POST", "/reactions", test_reaction, token=self.member_token)
-            
-            if response["success"] and response["status_code"] == 200:
-                successful_reactions += 1
-            else:
-                self.log_test("Community Reactions", False, f"Failed to create {reaction_type} reaction. Status: {response['status_code']}")
-                return
-        
-        if successful_reactions == len(reaction_types):
-            self.log_test("Community Reactions", True, f"Successfully created all {len(reaction_types)} reaction types")
-        else:
-            self.log_test("Community Reactions", False, f"Only {successful_reactions}/{len(reaction_types)} reactions successful")
-
-    def test_reaction_update_existing(self):
-        """Test that users can only have one reaction per post (update existing)"""
-        if not self.member_token or not self.test_post_id:
-            self.log_test("Reaction Update Existing", False, "Missing token or post ID")
-            return
-        
-        # Create initial reaction
-        initial_reaction = {
-            "post_id": self.test_post_id,
-            "reaction_type": "upvote"
-        }
-        
-        response1 = self.make_request("POST", "/reactions", initial_reaction, token=self.member_token)
-        
-        if not response1["success"]:
-            self.log_test("Reaction Update Existing", False, "Failed to create initial reaction")
-            return
-        
-        # Update to different reaction type
-        updated_reaction = {
-            "post_id": self.test_post_id,
-            "reaction_type": "helpful"
-        }
-        
-        response2 = self.make_request("POST", "/reactions", updated_reaction, token=self.member_token)
-        
-        if response2["success"] and response2["status_code"] == 200:
-            self.log_test("Reaction Update Existing", True, "Successfully updated existing reaction")
-        else:
-            self.log_test("Reaction Update Existing", False, f"Failed to update reaction. Status: {response2['status_code']}")
-
-    def test_user_levels_and_badges(self):
-        """Test that sample users have proper levels and stats"""
-        # Get posts to find sample users
-        posts_response = self.make_request("GET", "/posts")
-        
-        if not posts_response["success"]:
-            self.log_test("User Levels and Badges", False, "Could not retrieve posts to check user levels")
-            return
-        
-        posts = posts_response["data"]
-        sample_usernames = ["BiohackerPro", "OptimizeDaily", "SleepOptimizer"]
-        found_users = []
-        
-        for post in posts:
-            username = post.get("username", "")
-            if username in sample_usernames and username not in found_users:
-                found_users.append(username)
-        
-        if len(found_users) < 2:
-            self.log_test("User Levels and Badges", False, f"Expected sample users not found in posts. Found: {found_users}")
-            return
-        
-        # Check that posts have engagement metrics
-        engagement_found = False
-        for post in posts:
-            if (post.get("upvotes", 0) > 0 or 
-                post.get("downvotes", 0) > 0 or 
-                post.get("comments_count", 0) > 0 or 
-                post.get("reaction_counts", {})):
-                engagement_found = True
-                break
-        
-        if not engagement_found:
-            self.log_test("User Levels and Badges", False, "No engagement metrics found on posts")
-            return
-        
-        self.log_test("User Levels and Badges", True, f"Found sample users with engagement: {found_users}")
-
-    def test_reactions_without_auth(self):
-        """Test POST /api/reactions endpoint without authentication"""
-        if not self.test_post_id:
-            posts_response = self.make_request("GET", "/posts")
-            if posts_response["success"] and posts_response["data"]:
-                self.test_post_id = posts_response["data"][0]["id"]
-            else:
-                self.log_test("Reactions - Without Auth", False, "No posts available for testing")
-                return
-        
-        test_reaction = {
-            "post_id": self.test_post_id,
-            "reaction_type": "upvote"
-        }
-        
-        response = self.make_request("POST", "/reactions", test_reaction)
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Reactions - Without Auth", True, "Correctly rejected unauthenticated reaction")
-        else:
-            self.log_test("Reactions - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
-
-    def test_post_creation_updates_user_stats(self):
-        """Test that post creation updates user stats"""
-        if not self.member_token:
-            self.log_test("Post Creation Updates User Stats", False, "No member token available")
-            return
-        
-        # Get current user info
-        user_response = self.make_request("GET", "/auth/me", token=self.member_token)
-        if not user_response["success"]:
-            self.log_test("Post Creation Updates User Stats", False, "Could not get current user info")
-            return
-        
-        initial_posts_count = user_response["data"].get("posts_count", 0)
-        
-        # Create a new post
-        test_post = {
-            "title": "Stats Update Test Post",
-            "content": "Testing if user stats are updated when creating posts",
-            "category": "general"
-        }
-        
-        post_response = self.make_request("POST", "/posts", test_post, token=self.member_token)
-        if not post_response["success"]:
-            self.log_test("Post Creation Updates User Stats", False, "Could not create test post")
-            return
-        
-        # Check if user stats were updated (Note: This test assumes the backend updates stats immediately)
-        # In a real scenario, we might need to check the database directly or have an endpoint to verify stats
-        self.log_test("Post Creation Updates User Stats", True, "Post created successfully (stats update verification requires database access)")
-
-    # ========== COACH PROFILE MANAGEMENT TESTS ==========
-    
-    def test_get_public_coach_directory(self):
-        """Test GET /api/coaches endpoint - public coach directory"""
-        response = self.make_request("GET", "/coaches")
-        
-        if response["success"] and response["status_code"] == 200:
-            coaches = response["data"]
-            
-            if not isinstance(coaches, list):
-                self.log_test("Get Public Coach Directory", False, "Response should be a list of coaches")
-                return
-            
-            if len(coaches) == 0:
-                self.log_test("Get Public Coach Directory", False, "No coaches found in directory")
-                return
-            
-            # Check coach structure
-            sample_coach = coaches[0]
-            required_fields = ["id", "name", "credentials", "specialties", "location", "bio", "hourly_rate", "rating", "is_approved", "is_active"]
-            missing_fields = [field for field in required_fields if field not in sample_coach]
-            
-            if missing_fields:
-                self.log_test("Get Public Coach Directory", False, f"Missing coach fields: {missing_fields}")
-                return
-            
-            # Verify only approved and active coaches are shown
-            unapproved_coaches = [coach for coach in coaches if not coach.get("is_approved", False) or not coach.get("is_active", True)]
-            if unapproved_coaches:
-                self.log_test("Get Public Coach Directory", False, f"Found {len(unapproved_coaches)} unapproved/inactive coaches in public directory")
-                return
-            
-            # Check for sample coaches
-            coach_names = [coach.get("name", "") for coach in coaches]
-            expected_coaches = ["Dr. Sarah Martinez", "Mike Chen", "Dr. Lisa Thompson"]
-            found_coaches = [name for name in expected_coaches if name in coach_names]
-            
-            if len(found_coaches) < 2:
-                self.log_test("Get Public Coach Directory", False, f"Expected sample coaches not found. Found: {found_coaches}")
-                return
-            
-            self.log_test("Get Public Coach Directory", True, f"Found {len(coaches)} approved coaches with proper structure")
-        else:
-            self.log_test("Get Public Coach Directory", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_get_coach_directory_with_filters(self):
-        """Test GET /api/coaches with specialty and location filters"""
-        # Test specialty filter
-        response = self.make_request("GET", "/coaches?specialty=Hormone Optimization")
-        
-        if response["success"] and response["status_code"] == 200:
-            coaches = response["data"]
-            
-            # Check if filtered coaches have the specialty
-            specialty_found = False
-            for coach in coaches:
-                if "Hormone Optimization" in coach.get("specialties", []):
-                    specialty_found = True
-                    break
-            
-            if not specialty_found and len(coaches) > 0:
-                self.log_test("Coach Directory - Specialty Filter", False, "Specialty filter not working correctly")
-                return
-            
-            self.log_test("Coach Directory - Specialty Filter", True, f"Specialty filter working ({len(coaches)} coaches found)")
-        else:
-            self.log_test("Coach Directory - Specialty Filter", False, f"Status: {response['status_code']}")
-        
-        # Test location filter
-        response = self.make_request("GET", "/coaches?location=Los Angeles")
-        
-        if response["success"] and response["status_code"] == 200:
-            coaches = response["data"]
-            self.log_test("Coach Directory - Location Filter", True, f"Location filter working ({len(coaches)} coaches found)")
-        else:
-            self.log_test("Coach Directory - Location Filter", False, f"Status: {response['status_code']}")
-
-    def test_get_individual_coach_profile(self):
-        """Test GET /api/coaches/{coach_id} endpoint"""
-        # First get a coach ID from the directory
-        coaches_response = self.make_request("GET", "/coaches")
-        
-        if not coaches_response["success"] or not coaches_response["data"]:
-            self.log_test("Get Individual Coach Profile", False, "No coaches available for testing")
-            return
-        
-        coach_id = coaches_response["data"][0]["id"]
-        
-        response = self.make_request("GET", f"/coaches/{coach_id}")
-        
-        if response["success"] and response["status_code"] == 200:
-            coach_data = response["data"]
-            
-            # Verify coach structure
-            required_fields = ["id", "name", "credentials", "specialties", "location", "bio", "hourly_rate", "contact_info"]
-            missing_fields = [field for field in required_fields if field not in coach_data]
-            
-            if missing_fields:
-                self.log_test("Get Individual Coach Profile", False, f"Missing fields: {missing_fields}")
-                return
-            
-            if coach_data["id"] != coach_id:
-                self.log_test("Get Individual Coach Profile", False, "Returned coach ID doesn't match requested ID")
-                return
-            
-            self.log_test("Get Individual Coach Profile", True, "Successfully retrieved individual coach profile")
-        else:
-            self.log_test("Get Individual Coach Profile", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_coach_profile_as_coach(self):
-        """Test POST /api/coaches endpoint with coach authentication"""
-        if not self.coach_token:
-            self.log_test("Create Coach Profile - As Coach", False, "No coach token available")
-            return
-        
-        coach_profile_data = {
-            "name": "Dr. Test Coach",
-            "bio": "Experienced biohacking coach specializing in performance optimization and longevity protocols. 10+ years helping clients achieve peak health.",
-            "specialties": ["Performance Optimization", "Longevity", "Biohacking", "Nutrition"],
-            "location": "San Francisco, CA",
-            "hourly_rate": "$175-225",
-            "availability": "Mon-Fri 9AM-5PM PST",
-            "credentials": ["PhD Exercise Science", "Certified Functional Medicine Practitioner", "Precision Nutrition Level 2"],
-            "contact_info": {
-                "email": "testcoach@hackster.ai",
-                "phone": "(555) 123-9999"
-            },
-            "website": "https://testcoach-wellness.com",
-            "years_experience": 10
-        }
-        
-        response = self.make_request("POST", "/coaches", coach_profile_data, token=self.coach_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            coach_data = response["data"]
-            
-            # Verify coach profile structure
-            required_fields = ["id", "name", "bio", "specialties", "location", "hourly_rate", "is_approved", "is_active"]
-            missing_fields = [field for field in required_fields if field not in coach_data]
-            
-            if missing_fields:
-                self.log_test("Create Coach Profile - As Coach", False, f"Missing fields in response: {missing_fields}")
-                return
-            
-            # Verify profile content matches
-            if (coach_data["name"] != coach_profile_data["name"] or 
-                coach_data["bio"] != coach_profile_data["bio"] or
-                coach_data["location"] != coach_profile_data["location"]):
-                self.log_test("Create Coach Profile - As Coach", False, "Coach profile content doesn't match input")
-                return
-            
-            # New coach profiles should not be approved by default
-            if coach_data.get("is_approved", True):
-                self.log_test("Create Coach Profile - As Coach", False, "New coach profile should not be approved by default")
-                return
-            
-            # Store coach ID for later tests
-            self.test_coach_id = coach_data["id"]
-            
-            self.log_test("Create Coach Profile - As Coach", True, "Coach profile created successfully")
-        else:
-            self.log_test("Create Coach Profile - As Coach", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_create_coach_profile_as_member(self):
-        """Test POST /api/coaches endpoint with member authentication (should fail)"""
-        if not self.member_token:
-            self.log_test("Create Coach Profile - As Member", False, "No member token available")
-            return
-        
-        coach_profile_data = {
-            "name": "Unauthorized Coach",
-            "bio": "This should fail",
-            "specialties": ["Test"],
-            "location": "Test City",
-            "hourly_rate": "$100",
-            "availability": "Never"
-        }
-        
-        response = self.make_request("POST", "/coaches", coach_profile_data, token=self.member_token)
-        
-        if response["status_code"] == 403:
-            self.log_test("Create Coach Profile - As Member", True, "Correctly rejected member trying to create coach profile")
-        else:
-            self.log_test("Create Coach Profile - As Member", False, f"Should reject member role. Status: {response['status_code']}")
-
-    def test_create_coach_profile_without_auth(self):
-        """Test POST /api/coaches endpoint without authentication"""
-        coach_profile_data = {
-            "name": "Unauthenticated Coach",
-            "bio": "This should fail",
-            "specialties": ["Test"],
-            "location": "Test City",
-            "hourly_rate": "$100",
-            "availability": "Never"
-        }
-        
-        response = self.make_request("POST", "/coaches", coach_profile_data)
-        
-        if response["status_code"] == 401 or response["status_code"] == 403:
-            self.log_test("Create Coach Profile - Without Auth", True, "Correctly rejected unauthenticated coach profile creation")
-        else:
-            self.log_test("Create Coach Profile - Without Auth", False, f"Should reject unauthenticated request. Status: {response['status_code']}")
-
-    def test_update_coach_profile_as_owner(self):
-        """Test PUT /api/coaches/{coach_id} endpoint as profile owner"""
-        if not self.coach_token:
-            self.log_test("Update Coach Profile - As Owner", False, "No coach token available")
-            return
-        
-        if not hasattr(self, 'test_coach_id'):
-            self.log_test("Update Coach Profile - As Owner", False, "No test coach profile available")
-            return
-        
-        update_data = {
-            "bio": "Updated bio: Advanced biohacking coach with extensive experience in performance optimization and cutting-edge health protocols.",
-            "hourly_rate": "$200-250",
-            "specialties": ["Performance Optimization", "Longevity", "Advanced Biohacking", "Peptide Therapy"],
-            "years_experience": 12
-        }
-        
-        response = self.make_request("PUT", f"/coaches/{self.test_coach_id}", update_data, token=self.coach_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            coach_data = response["data"]
-            
-            # Verify updates were applied
-            if (coach_data["bio"] != update_data["bio"] or 
-                coach_data["hourly_rate"] != update_data["hourly_rate"] or
-                coach_data["years_experience"] != update_data["years_experience"]):
-                self.log_test("Update Coach Profile - As Owner", False, "Profile updates not applied correctly")
-                return
-            
-            self.log_test("Update Coach Profile - As Owner", True, "Coach profile updated successfully by owner")
-        else:
-            self.log_test("Update Coach Profile - As Owner", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_update_coach_profile_unauthorized(self):
-        """Test PUT /api/coaches/{coach_id} endpoint with unauthorized user"""
-        if not self.member_token:
-            self.log_test("Update Coach Profile - Unauthorized", False, "No member token available")
-            return
-        
-        if not hasattr(self, 'test_coach_id'):
-            self.log_test("Update Coach Profile - Unauthorized", False, "No test coach profile available")
-            return
-        
-        update_data = {
-            "bio": "Unauthorized update attempt"
-        }
-        
-        response = self.make_request("PUT", f"/coaches/{self.test_coach_id}", update_data, token=self.member_token)
-        
-        if response["status_code"] == 403:
-            self.log_test("Update Coach Profile - Unauthorized", True, "Correctly rejected unauthorized profile update")
-        else:
-            self.log_test("Update Coach Profile - Unauthorized", False, f"Should reject unauthorized update. Status: {response['status_code']}")
-
-    def test_delete_coach_profile_as_owner(self):
-        """Test DELETE /api/coaches/{coach_id} endpoint as profile owner"""
-        if not self.coach_token:
-            self.log_test("Delete Coach Profile - As Owner", False, "No coach token available")
-            return
-        
-        if not hasattr(self, 'test_coach_id'):
-            self.log_test("Delete Coach Profile - As Owner", False, "No test coach profile available")
-            return
-        
-        response = self.make_request("DELETE", f"/coaches/{self.test_coach_id}", token=self.coach_token)
-        
-        if response["success"] and response["status_code"] == 200:
-            # Verify coach profile was deleted
-            get_response = self.make_request("GET", f"/coaches/{self.test_coach_id}")
-            
-            if get_response["status_code"] == 404:
-                self.log_test("Delete Coach Profile - As Owner", True, "Coach profile deleted successfully")
-            else:
-                self.log_test("Delete Coach Profile - As Owner", False, "Profile still exists after deletion")
-        else:
-            self.log_test("Delete Coach Profile - As Owner", False, f"Status: {response['status_code']}, Error: {response['data']}")
-
-    def test_admin_get_all_coaches(self):
-        """Test GET /api/admin/coaches endpoint (requires admin role)"""
-        # Note: This test will likely fail unless we have an admin user
-        # For now, we'll test with member token to verify proper rejection
-        if not self.member_token:
-            self.log_test("Admin - Get All Coaches", False, "No token available for testing")
-            return
-        
-        response = self.make_request("GET", "/admin/coaches", token=self.member_token)
-        
-        if response["status_code"] == 403:
-            self.log_test("Admin - Get All Coaches", True, "Correctly rejected non-admin access to admin endpoint")
-        else:
-            self.log_test("Admin - Get All Coaches", False, f"Should reject non-admin access. Status: {response['status_code']}")
-
-    def test_admin_approve_coach(self):
-        """Test PUT /api/admin/coaches/{coach_id}/approve endpoint"""
-        # Test with non-admin user (should fail)
-        if not self.member_token:
-            self.log_test("Admin - Approve Coach", False, "No token available for testing")
-            return
-        
-        # Get a coach ID from directory
-        coaches_response = self.make_request("GET", "/coaches")
-        if not coaches_response["success"] or not coaches_response["data"]:
-            self.log_test("Admin - Approve Coach", False, "No coaches available for testing")
-            return
-        
-        coach_id = coaches_response["data"][0]["id"]
-        
-        response = self.make_request("PUT", f"/admin/coaches/{coach_id}/approve", token=self.member_token)
-        
-        if response["status_code"] == 403:
-            self.log_test("Admin - Approve Coach", True, "Correctly rejected non-admin access to approve endpoint")
-        else:
-            self.log_test("Admin - Approve Coach", False, f"Should reject non-admin access. Status: {response['status_code']}")
-
-    def test_admin_deactivate_coach(self):
-        """Test PUT /api/admin/coaches/{coach_id}/deactivate endpoint"""
-        # Test with non-admin user (should fail)
-        if not self.member_token:
-            self.log_test("Admin - Deactivate Coach", False, "No token available for testing")
-            return
-        
-        # Get a coach ID from directory
-        coaches_response = self.make_request("GET", "/coaches")
-        if not coaches_response["success"] or not coaches_response["data"]:
-            self.log_test("Admin - Deactivate Coach", False, "No coaches available for testing")
-            return
-        
-        coach_id = coaches_response["data"][0]["id"]
-        
-        response = self.make_request("PUT", f"/admin/coaches/{coach_id}/deactivate", token=self.member_token)
-        
-        if response["status_code"] == 403:
-            self.log_test("Admin - Deactivate Coach", True, "Correctly rejected non-admin access to deactivate endpoint")
-        else:
-            self.log_test("Admin - Deactivate Coach", False, f"Should reject non-admin access. Status: {response['status_code']}")
-
-    def run_coach_management_tests(self):
-        """Run all coach profile management tests"""
-        print("👨‍⚕️ COACH PROFILE MANAGEMENT TESTS")
-        print("-" * 40)
-        
-        # Public Coach Directory Tests
-        self.test_get_public_coach_directory()
-        self.test_get_coach_directory_with_filters()
-        self.test_get_individual_coach_profile()
-        
-        # Coach Profile Creation Tests
-        self.test_create_coach_profile_as_coach()
-        self.test_create_coach_profile_as_member()
-        self.test_create_coach_profile_without_auth()
-        
-        # Coach Profile Management Tests
-        self.test_update_coach_profile_as_owner()
-        self.test_update_coach_profile_unauthorized()
-        self.test_delete_coach_profile_as_owner()
-        
-        # Admin Management Tests
-        self.test_admin_get_all_coaches()
-        self.test_admin_approve_coach()
-        self.test_admin_deactivate_coach()
-
-    def run_community_tests(self):
-        """Run all community functionality tests"""
-        print("🏘️ COMMUNITY FUNCTIONALITY TESTS")
-        print("-" * 40)
-        
-        # Community Posts API Testing
-        self.test_get_community_posts()
-        self.test_create_community_post_with_auth()
-        self.test_create_community_post_without_auth()
-        self.test_get_specific_post()
-        
-        # Comments API Testing
-        self.test_get_post_comments()
-        self.test_create_comment_with_auth()
-        self.test_create_comment_without_auth()
-        
-        # Reactions API Testing
-        self.test_community_reactions()
-        self.test_reaction_update_existing()
-        self.test_reactions_without_auth()
-        
-        # User Level & Badge System
-        self.test_user_levels_and_badges()
-        
-        # User Stats Updates
-        self.test_post_creation_updates_user_stats()
-
-    def run_all_tests(self):
-        """Run all Railway deployment, authentication and community tests"""
-        print("🚀 Starting Hackster.ai Railway Deployment Testing")
-        print("=" * 60)
-        print()
-        
-        # First test Railway deployment and database connectivity
-        self.run_railway_deployment_tests()
-        
-        # Only continue with other tests if basic connectivity works
-        if not self.database_connected:
-            print("⚠️ Database connectivity issues detected. Skipping detailed API tests.")
-            print("Please check MongoDB deployment and connection settings.")
+def test_questionnaire_endpoint():
+    """Test 2: GET /api/questionnaire - returns new v2 questionnaire"""
+    print(f"\n{Colors.BLUE}=== Test 2: Questionnaire V2 ==={Colors.END}")
+    try:
+        response = requests.get(f"{BASE_URL}/questionnaire", timeout=10)
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("GET /api/questionnaire returns 200", False, f"Status code: {response.status_code}")
             return False
         
-        # Test registration
-        print("📝 REGISTRATION TESTS")
-        print("-" * 30)
-        self.test_member_registration()
-        self.test_coach_registration()
-        self.test_duplicate_email_validation()
-        self.test_duplicate_username_validation()
+        data = response.json()
         
-        # Test login
-        print("🔐 LOGIN TESTS")
-        print("-" * 30)
-        self.test_valid_login()
-        self.test_invalid_login_credentials()
+        # Check questionnaire ID
+        is_v2 = data.get("id") == "biohacking-assessment-v2"
+        print_test("Questionnaire ID is 'biohacking-assessment-v2'", is_v2, 
+                  f"ID: {data.get('id')}")
         
-        # Test authentication protection
-        print("🛡️ AUTHENTICATION PROTECTION TESTS")
-        print("-" * 30)
-        self.test_auth_me_with_valid_token()
-        self.test_auth_me_with_invalid_token()
+        # Check number of questions
+        questions = data.get("questions", [])
+        has_19_questions = len(questions) == 19
+        print_test("Has 19 questions", has_19_questions, f"Count: {len(questions)}")
         
-        # Test protected vs public endpoints
-        print("🔒 ENDPOINT ACCESS TESTS")
-        print("-" * 30)
-        self.test_protected_endpoint_with_auth()
-        self.test_protected_endpoint_without_auth()
-        self.test_public_endpoints()
+        # Check categories
+        categories = set(q.get("category") for q in questions)
+        expected_categories = {"About You", "Primary Goal", "Current Baseline", "Lifestyle", "Preferences"}
+        has_all_categories = expected_categories.issubset(categories)
+        print_test("Has all 5 categories", has_all_categories, 
+                  f"Categories: {', '.join(sorted(categories))}")
         
-        # Test security
-        print("🔐 SECURITY TESTS")
-        print("-" * 30)
-        self.test_password_hashing_security()
-        self.test_jwt_token_expiration_format()
+        # Check for primary goal question with 4 priority goals
+        primary_goal_q = next((q for q in questions if q.get("id") == "primary_goal"), None)
+        if primary_goal_q:
+            options = primary_goal_q.get("options", [])
+            expected_goals = [
+                "Increase Energy",
+                "Improve Vitality / Longevity",
+                "Boost Immune System",
+                "Weight Loss / Metabolic Health"
+            ]
+            has_priority_goals = all(goal in options for goal in expected_goals)
+            print_test("Primary goal has 4 priority goals", has_priority_goals,
+                      f"Options: {', '.join(options)}")
+        else:
+            print_test("Primary goal question exists", False, "Question not found")
         
-        # Run community tests
-        self.run_community_tests()
+        return is_v2 and has_19_questions and has_all_categories
         
-        # Run coach management tests
-        self.run_coach_management_tests()
+    except Exception as e:
+        print_test("GET /api/questionnaire", False, f"Error: {str(e)}")
+        return False
+
+def test_vendors_endpoint():
+    """Test 3: GET /api/vendors - returns at least 7 vendors including new ones"""
+    print(f"\n{Colors.BLUE}=== Test 3: Vendors ==={Colors.END}")
+    try:
+        response = requests.get(f"{BASE_URL}/vendors", timeout=10)
+        passed = response.status_code == 200
         
-        # Summary
-        print("📊 TEST SUMMARY")
-        print("=" * 60)
+        if not passed:
+            print_test("GET /api/vendors returns 200", False, f"Status code: {response.status_code}")
+            return False
         
-        passed_tests = [test for test in self.test_results if test["passed"]]
-        failed_tests = [test for test in self.test_results if not test["passed"]]
+        vendors = response.json()
+        vendor_count = len(vendors)
+        has_7_vendors = vendor_count >= 7
+        print_test("Has at least 7 vendors", has_7_vendors, f"Count: {vendor_count}")
         
-        print(f"Total Tests: {len(self.test_results)}")
-        print(f"Passed: {len(passed_tests)} ✅")
-        print(f"Failed: {len(failed_tests)} ❌")
-        print()
+        # Check for new vendors
+        vendor_slugs = [v.get("slug") for v in vendors]
+        new_vendors = ["bio-well", "curawaves", "stemregen"]
         
-        if failed_tests:
-            print("❌ FAILED TESTS:")
-            for test in failed_tests:
-                print(f"  - {test['test']}: {test['details']}")
-            print()
+        for slug in new_vendors:
+            has_vendor = slug in vendor_slugs
+            vendor_name = next((v.get("name") for v in vendors if v.get("slug") == slug), "Not found")
+            print_test(f"Has vendor '{slug}'", has_vendor, f"Name: {vendor_name}")
         
-        success_rate = (len(passed_tests) / len(self.test_results)) * 100
-        print(f"Success Rate: {success_rate:.1f}%")
+        all_new_vendors = all(slug in vendor_slugs for slug in new_vendors)
         
-        return len(failed_tests) == 0
+        return has_7_vendors and all_new_vendors
+        
+    except Exception as e:
+        print_test("GET /api/vendors", False, f"Error: {str(e)}")
+        return False
+
+def test_products_endpoint():
+    """Test 4: GET /api/products - returns 25+ products from all vendors"""
+    print(f"\n{Colors.BLUE}=== Test 4: Products ==={Colors.END}")
+    try:
+        response = requests.get(f"{BASE_URL}/products", timeout=10)
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("GET /api/products returns 200", False, f"Status code: {response.status_code}")
+            return False
+        
+        products = response.json()
+        product_count = len(products)
+        has_25_products = product_count >= 25
+        print_test("Has at least 25 products", has_25_products, f"Count: {product_count}")
+        
+        # Check vendor distribution
+        vendor_names = set(p.get("vendor_name") for p in products)
+        expected_vendors = ["Thorne", "Apex Energetics", "Standard Process", "Bio-Well", "CuraWaves", "StemRegen"]
+        
+        print(f"\n  Vendors represented: {', '.join(sorted(vendor_names))}")
+        
+        # Spot-check specific products
+        product_names = [p.get("name") for p in products]
+        spot_check_products = [
+            "STEMREGEN® Mobilize",
+            "Bio-Well GDV Camera",
+            "CuraWaves Wave Therapy Device",
+            "Berberine"
+        ]
+        
+        print(f"\n  Spot-checking key products:")
+        for product_name in spot_check_products:
+            found = any(product_name.lower() in name.lower() for name in product_names)
+            print_test(f"  Has '{product_name}'", found)
+        
+        all_spot_checks = all(
+            any(product_name.lower() in name.lower() for name in product_names)
+            for product_name in spot_check_products
+        )
+        
+        return has_25_products and all_spot_checks
+        
+    except Exception as e:
+        print_test("GET /api/products", False, f"Error: {str(e)}")
+        return False
+
+def test_coaches_endpoint():
+    """Test 5: GET /api/coaches - returns at least 6 coaches including Laura Zook"""
+    print(f"\n{Colors.BLUE}=== Test 5: Coaches ==={Colors.END}")
+    try:
+        response = requests.get(f"{BASE_URL}/coaches", timeout=10)
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("GET /api/coaches returns 200", False, f"Status code: {response.status_code}")
+            return False
+        
+        coaches = response.json()
+        coach_count = len(coaches)
+        has_6_coaches = coach_count >= 6
+        print_test("Has at least 6 approved+active coaches", has_6_coaches, f"Count: {coach_count}")
+        
+        # Check for Laura Zook
+        laura = next((c for c in coaches if c.get("name") == "Laura Zook"), None)
+        has_laura = laura is not None
+        
+        if has_laura:
+            rating = laura.get("rating", 0)
+            is_5_star = rating == 5.0
+            print_test("Has Laura Zook with 5.0 rating", is_5_star, 
+                      f"Rating: {rating}, Specialties: {', '.join(laura.get('specialties', [])[:3])}")
+        else:
+            print_test("Has Laura Zook", False, "Coach not found")
+        
+        # Check for other new coaches
+        new_coaches = ["Dr. James Okafor", "Maya Patel"]
+        for coach_name in new_coaches:
+            found = any(c.get("name") == coach_name for c in coaches)
+            print_test(f"Has '{coach_name}'", found)
+        
+        return has_6_coaches and has_laura
+        
+    except Exception as e:
+        print_test("GET /api/coaches", False, f"Error: {str(e)}")
+        return False
+
+def test_questionnaire_submit_weight_loss():
+    """Test 6: POST /api/questionnaire/submit - weight-loss persona"""
+    print(f"\n{Colors.BLUE}=== Test 6: Questionnaire Submit - Weight Loss Persona ==={Colors.END}")
+    
+    # Weight loss persona responses
+    responses = [
+        {"question_id": "age_range", "answer": "40-49"},
+        {"question_id": "gender", "answer": "Female"},
+        {"question_id": "height_weight_goal", "answer": "I want to lose 15-30 lbs"},
+        {"question_id": "primary_goal", "answer": "Weight Loss / Metabolic Health"},
+        {"question_id": "primary_goal_why", "answer": "I want to lose weight and improve my metabolic health for better energy and longevity"},
+        {"question_id": "secondary_goals", "answer": ["More Energy", "Better Sleep", "Gut Health"]},
+        {"question_id": "energy_level", "answer": 4},
+        {"question_id": "sleep_quality", "answer": 5},
+        {"question_id": "stress_level", "answer": 7},
+        {"question_id": "immune_resilience", "answer": "Occasionally (2-3x a year)"},
+        {"question_id": "metabolic_signals", "answer": ["Cravings for sugar / carbs", "Energy crashes after meals", "Belly fat hard to lose"]},
+        {"question_id": "health_concerns", "answer": ["Fatigue / low energy", "Blood sugar", "Gut / digestion"]},
+        {"question_id": "exercise_frequency", "answer": "3-4 times/week"},
+        {"question_id": "diet_type", "answer": "Mostly Healthy / Whole Foods"},
+        {"question_id": "current_supplements", "answer": ["Multivitamin", "Vitamin D"]},
+        {"question_id": "openness_to_devices", "answer": "Curious — open to learning"},
+        {"question_id": "wants_baseline_scan", "answer": "Maybe"},
+        {"question_id": "wants_coach", "answer": "Yes — I want a coach to guide me"},
+        {"question_id": "budget", "answer": "$100-200"}
+    ]
+    
+    try:
+        response = requests.post(
+            f"{BASE_URL}/questionnaire/submit",
+            json={"responses": responses},
+            timeout=30
+        )
+        
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("POST /api/questionnaire/submit returns 200", False, 
+                      f"Status code: {response.status_code}, Error: {response.text[:200]}")
+            return False
+        
+        data = response.json()
+        
+        # Check recommended_products
+        products = data.get("recommended_products", [])
+        has_products = 4 <= len(products) <= 7
+        print_test("Has 4-7 recommended products", has_products, f"Count: {len(products)}")
+        
+        if products:
+            print(f"\n  Recommended products:")
+            for i, p in enumerate(products[:5], 1):
+                print(f"    {i}. {p.get('name')} ({p.get('brand')})")
+        
+        # Check for at least one Thorne product
+        has_thorne = any(p.get("brand") == "Thorne" for p in products)
+        print_test("Has at least one Thorne product", has_thorne)
+        
+        # Check for device (CuraWaves or Bio-Well)
+        has_device = any(
+            p.get("brand") in ["CuraWaves", "Bio-Well"] or 
+            "device" in p.get("name", "").lower() or
+            "curawaves" in p.get("name", "").lower() or
+            "bio-well" in p.get("name", "").lower()
+            for p in products
+        )
+        print_test("Has at least one device (CuraWaves or Bio-Well)", has_device)
+        
+        # Check recommended_coaches
+        coaches = data.get("recommended_coaches", [])
+        has_3_coaches = len(coaches) == 3
+        print_test("Has exactly 3 recommended coaches", has_3_coaches, f"Count: {len(coaches)}")
+        
+        if coaches:
+            print(f"\n  Recommended coaches:")
+            for i, c in enumerate(coaches, 1):
+                print(f"    {i}. {c.get('name')} (Rating: {c.get('rating')}, Match Score: {c.get('match_score')})")
+                print(f"       Specialties: {', '.join(c.get('specialties', [])[:3])}")
+        
+        # Check coach fields
+        if coaches:
+            first_coach = coaches[0]
+            required_fields = ["id", "name", "specialties", "rating", "profile_image", "match_score"]
+            has_all_fields = all(field in first_coach for field in required_fields)
+            print_test("Coach has all required fields", has_all_fields,
+                      f"Fields: {', '.join(required_fields)}")
+        
+        # Check coach_match_specialties
+        coach_specialties = data.get("coach_match_specialties", [])
+        has_specialties = len(coach_specialties) > 0
+        print_test("Has coach_match_specialties", has_specialties,
+                  f"Keywords: {', '.join(coach_specialties[:5])}")
+        
+        # Check other fields
+        has_health_score = "health_score" in data
+        has_primary_goals = "primary_goals" in data and len(data.get("primary_goals", [])) > 0
+        has_lifestyle_tips = "lifestyle_tips" in data and len(data.get("lifestyle_tips", [])) > 0
+        has_summary = "personalized_summary" in data and len(data.get("personalized_summary", "")) > 0
+        
+        print_test("Has health_score", has_health_score, f"Score: {data.get('health_score')}")
+        print_test("Has primary_goals", has_primary_goals, f"Goals: {', '.join(data.get('primary_goals', []))}")
+        print_test("Has lifestyle_tips", has_lifestyle_tips, f"Count: {len(data.get('lifestyle_tips', []))}")
+        print_test("Has personalized_summary", has_summary)
+        
+        return (has_products and has_3_coaches and has_all_fields and 
+                has_health_score and has_primary_goals and has_lifestyle_tips and has_summary)
+        
+    except Exception as e:
+        print_test("POST /api/questionnaire/submit (weight-loss)", False, f"Error: {str(e)}")
+        return False
+
+def test_questionnaire_submit_longevity():
+    """Test 7: POST /api/questionnaire/submit - longevity persona"""
+    print(f"\n{Colors.BLUE}=== Test 7: Questionnaire Submit - Longevity Persona ==={Colors.END}")
+    
+    # Longevity persona responses
+    responses = [
+        {"question_id": "age_range", "answer": "50-59"},
+        {"question_id": "gender", "answer": "Male"},
+        {"question_id": "height_weight_goal", "answer": "I'm at a healthy weight and want to maintain"},
+        {"question_id": "primary_goal", "answer": "Improve Vitality / Longevity"},
+        {"question_id": "primary_goal_why", "answer": "I want to optimize my healthspan and live a long, vibrant life"},
+        {"question_id": "secondary_goals", "answer": ["More Energy", "Mental Focus / Brain Health", "Heart Health"]},
+        {"question_id": "energy_level", "answer": 7},
+        {"question_id": "sleep_quality", "answer": 7},
+        {"question_id": "stress_level", "answer": 5},
+        {"question_id": "immune_resilience", "answer": "Rarely (1x a year or less)"},
+        {"question_id": "metabolic_signals", "answer": ["None of these"]},
+        {"question_id": "health_concerns", "answer": ["None"]},
+        {"question_id": "exercise_frequency", "answer": "5+ times/week"},
+        {"question_id": "diet_type", "answer": "Mediterranean"},
+        {"question_id": "current_supplements", "answer": ["Vitamin D", "Omega-3 / Fish Oil", "NAD+ / NR"]},
+        {"question_id": "openness_to_devices", "answer": "Very open — I love biohacking tools"},
+        {"question_id": "wants_baseline_scan", "answer": "Yes, definitely"},
+        {"question_id": "wants_coach", "answer": "Maybe — show me coach options"},
+        {"question_id": "budget", "answer": "$200-500"}
+    ]
+    
+    try:
+        response = requests.post(
+            f"{BASE_URL}/questionnaire/submit",
+            json={"responses": responses},
+            timeout=30
+        )
+        
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("POST /api/questionnaire/submit returns 200", False, 
+                      f"Status code: {response.status_code}")
+            return False
+        
+        data = response.json()
+        products = data.get("recommended_products", [])
+        
+        print(f"\n  Recommended products for longevity:")
+        for i, p in enumerate(products[:7], 1):
+            print(f"    {i}. {p.get('name')} ({p.get('brand')})")
+        
+        # Check for StemRegen or NiaCel products
+        has_longevity_product = any(
+            "stemregen" in p.get("name", "").lower() or
+            "niacel" in p.get("name", "").lower() or
+            "nad" in p.get("name", "").lower() or
+            p.get("brand") == "StemRegen"
+            for p in products
+        )
+        print_test("Has longevity product (StemRegen or NiaCel)", has_longevity_product)
+        
+        # Check coaches
+        coaches = data.get("recommended_coaches", [])
+        print(f"\n  Recommended coaches for longevity:")
+        for i, c in enumerate(coaches, 1):
+            print(f"    {i}. {c.get('name')} - Specialties: {', '.join(c.get('specialties', [])[:3])}")
+        
+        return has_longevity_product and len(coaches) == 3
+        
+    except Exception as e:
+        print_test("POST /api/questionnaire/submit (longevity)", False, f"Error: {str(e)}")
+        return False
+
+def test_questionnaire_submit_immune():
+    """Test 8: POST /api/questionnaire/submit - immune persona"""
+    print(f"\n{Colors.BLUE}=== Test 8: Questionnaire Submit - Immune Support Persona ==={Colors.END}")
+    
+    # Immune support persona responses
+    responses = [
+        {"question_id": "age_range", "answer": "30-39"},
+        {"question_id": "gender", "answer": "Female"},
+        {"question_id": "height_weight_goal", "answer": "I'm at a healthy weight and want to maintain"},
+        {"question_id": "primary_goal", "answer": "Boost Immune System"},
+        {"question_id": "primary_goal_why", "answer": "I get sick frequently and want to strengthen my immune system"},
+        {"question_id": "secondary_goals", "answer": ["More Energy", "Better Sleep", "Stress Resilience"]},
+        {"question_id": "energy_level", "answer": 5},
+        {"question_id": "sleep_quality", "answer": 6},
+        {"question_id": "stress_level", "answer": 8},
+        {"question_id": "immune_resilience", "answer": "Often (4-6x a year)"},
+        {"question_id": "metabolic_signals", "answer": ["Brain fog"]},
+        {"question_id": "health_concerns", "answer": ["Frequent illness", "Fatigue / low energy", "Mood / anxiety"]},
+        {"question_id": "exercise_frequency", "answer": "1-2 times/week"},
+        {"question_id": "diet_type", "answer": "Standard American Diet"},
+        {"question_id": "current_supplements", "answer": ["None"]},
+        {"question_id": "openness_to_devices", "answer": "Maybe later — supplements first"},
+        {"question_id": "wants_baseline_scan", "answer": "No"},
+        {"question_id": "wants_coach", "answer": "Maybe — show me coach options"},
+        {"question_id": "budget", "answer": "$50-100"}
+    ]
+    
+    try:
+        response = requests.post(
+            f"{BASE_URL}/questionnaire/submit",
+            json={"responses": responses},
+            timeout=30
+        )
+        
+        passed = response.status_code == 200
+        
+        if not passed:
+            print_test("POST /api/questionnaire/submit returns 200", False, 
+                      f"Status code: {response.status_code}")
+            return False
+        
+        data = response.json()
+        products = data.get("recommended_products", [])
+        
+        print(f"\n  Recommended products for immune support:")
+        for i, p in enumerate(products[:7], 1):
+            print(f"    {i}. {p.get('name')} ({p.get('brand')})")
+        
+        # Check for immune-relevant products
+        immune_keywords = ["vitamin d", "immuplex", "thymex", "curcumin", "immune"]
+        has_immune_product = any(
+            any(keyword in p.get("name", "").lower() for keyword in immune_keywords)
+            for p in products
+        )
+        print_test("Has immune-relevant product (Vitamin D, Immuplex, Thymex, or Curcumin)", 
+                  has_immune_product)
+        
+        # Check coaches
+        coaches = data.get("recommended_coaches", [])
+        print(f"\n  Recommended coaches for immune support:")
+        for i, c in enumerate(coaches, 1):
+            print(f"    {i}. {c.get('name')} - Specialties: {', '.join(c.get('specialties', [])[:3])}")
+        
+        return has_immune_product and len(coaches) == 3
+        
+    except Exception as e:
+        print_test("POST /api/questionnaire/submit (immune)", False, f"Error: {str(e)}")
+        return False
+
+def run_all_tests():
+    """Run all backend tests"""
+    print(f"\n{Colors.YELLOW}{'='*80}{Colors.END}")
+    print(f"{Colors.YELLOW}HACKSTER HEALTH GOALS ASSESSMENT V2 - BACKEND TESTING{Colors.END}")
+    print(f"{Colors.YELLOW}{'='*80}{Colors.END}")
+    print(f"\nBackend URL: {BASE_URL}\n")
+    
+    results = []
+    
+    # Run all tests
+    results.append(("Health Check", test_health_endpoint()))
+    results.append(("Questionnaire V2", test_questionnaire_endpoint()))
+    results.append(("Vendors", test_vendors_endpoint()))
+    results.append(("Products", test_products_endpoint()))
+    results.append(("Coaches", test_coaches_endpoint()))
+    results.append(("Submit - Weight Loss", test_questionnaire_submit_weight_loss()))
+    results.append(("Submit - Longevity", test_questionnaire_submit_longevity()))
+    results.append(("Submit - Immune", test_questionnaire_submit_immune()))
+    
+    # Summary
+    print(f"\n{Colors.YELLOW}{'='*80}{Colors.END}")
+    print(f"{Colors.YELLOW}TEST SUMMARY{Colors.END}")
+    print(f"{Colors.YELLOW}{'='*80}{Colors.END}\n")
+    
+    passed_count = sum(1 for _, passed in results if passed)
+    total_count = len(results)
+    
+    for test_name, passed in results:
+        status = f"{Colors.GREEN}✓ PASS{Colors.END}" if passed else f"{Colors.RED}✗ FAIL{Colors.END}"
+        print(f"{status} - {test_name}")
+    
+    print(f"\n{Colors.YELLOW}Total: {passed_count}/{total_count} tests passed{Colors.END}")
+    
+    if passed_count == total_count:
+        print(f"\n{Colors.GREEN}🎉 ALL TESTS PASSED! 🎉{Colors.END}\n")
+    else:
+        print(f"\n{Colors.RED}❌ {total_count - passed_count} test(s) failed{Colors.END}\n")
+    
+    return passed_count == total_count
 
 if __name__ == "__main__":
-    tester = RailwayDeploymentTester()
-    all_passed = tester.run_all_tests()
-    
-    if all_passed:
-        print("\n🎉 All Railway deployment and backend tests passed!")
-        exit(0)
-    else:
-        print("\n⚠️ Some tests failed. Please check the issues above.")
-        exit(1)
+    success = run_all_tests()
+    exit(0 if success else 1)
