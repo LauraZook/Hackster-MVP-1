@@ -261,8 +261,8 @@ const CoreFeatures = () => {
             Your Path to Optimal Health
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Follow our dynamic, precision biohacking methods to transform your health, 
-            increase vitality, feel great, and living longer!
+            Follow our dynamic, precision biohacking methods to transform your life, 
+            increase vitality, and feel better, longer!
           </p>
         </div>
 
