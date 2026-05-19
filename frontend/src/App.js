@@ -1927,52 +1927,48 @@ const CoachSignUpPage = () => {
   );
 };
 
-// Coaches Page (adapted from LauraZook/Hackster)
+// Coaches Page — fetches live coach directory from API
 const CoachesPage = () => {
   const [coaches, setCoaches] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Mock coaches data
-  const mockCoaches = [
-    {
-      id: 1,
-      full_name: "Dr. Sarah Martinez",
-      email: "sarah@hackstercoach.com",
-      phone: "(555) 123-4567",
-      location: "Los Angeles, CA",
-      specialties: ["Hormone Optimization", "Gut Health", "Weight Management"],
-      bio: "15+ years helping clients optimize health through personalized nutrition and lifestyle interventions. Certified Functional Medicine Practitioner specializing in hormone balance and metabolic health.",
-      pricing: "$150-200/session",
-      website: "https://sarahmartinez.com",
-      profile_image: null,
-      years_experience: 15
-    },
-    {
-      id: 2,
-      full_name: "Mike Chen",
-      email: "mike@hackstercoach.com", 
-      phone: "(555) 987-6543",
-      location: "Austin, TX",
-      specialties: ["Athletic Performance", "Cold Therapy", "Breathwork"],
-      bio: "Former professional athlete turned biohacking coach specializing in performance optimization. Certified in Wim Hof Method and advanced breathwork techniques.",
-      pricing: "$100-150/session",
-      website: "https://mikechen.fitness",
-      profile_image: null,
-      years_experience: 8
-    }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState('');
 
   useEffect(() => {
-    setCoaches(mockCoaches);
+    setLoading(true);
+    axios.get(`${API}/coaches`)
+      .then(res => {
+        setCoaches(Array.isArray(res.data) ? res.data : []);
+        setError('');
+      })
+      .catch(err => {
+        console.error('Failed to load coaches:', err);
+        setError('Unable to load coach directory. Please try again later.');
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  // Derive list of all specialties for filter dropdown
+  const allSpecialties = Array.from(new Set(coaches.flatMap(c => c.specialties || []))).sort();
+
+  const filteredCoaches = coaches.filter(c => {
+    if (specialtyFilter && !(c.specialties || []).includes(specialtyFilter)) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const hay = `${c.name || ''} ${c.bio || ''} ${(c.specialties || []).join(' ')} ${c.location || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Find a Wellness Coach</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Connect with certified health & wellness pros with biohacking expertise to accelerate your Hackster journey today!
@@ -1980,115 +1976,186 @@ const CoachesPage = () => {
         </div>
 
         {/* Become a Coach Section */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-lg p-8 mb-12 text-center text-white">
-          <h2 className="text-xl font-semibold mb-4 leading-relaxed">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-lg p-8 mb-10 text-center text-white">
+          <h2 className="text-xl font-semibold mb-3 leading-relaxed">
             Are you a wellness practitioner who loves transforming lives? Add your professional listing to the Hackster.ai community!
           </h2>
-          <p className="mb-6">Share your expertise and help others. Join the Hackster.ai community for free.</p>
-          <Link to="/signup/coach" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          <p className="mb-5">Share your expertise and help others. Join the Hackster.ai community for free.</p>
+          <Link to="/signup/coach" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
             Join Now
           </Link>
         </div>
 
+        {/* Search & Filter */}
+        {!loading && coaches.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col md:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Search coaches by name, bio, location…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            <select
+              value={specialtyFilter}
+              onChange={(e) => setSpecialtyFilter(e.target.value)}
+              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All specialties</option>
+              {allSpecialties.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <span className="text-sm text-gray-500 self-center">{filteredCoaches.length} coach{filteredCoaches.length === 1 ? '' : 'es'}</span>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading coaches…</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!loading && error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">{error}</div>
+        )}
+
         {/* Coaches Grid */}
-        {coaches.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {coaches.map((coach) => (
-              <div key={coach.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div className="text-center mb-4">
-                  {coach.profile_image ? (
-                    <img
-                      src={coach.profile_image}
-                      alt={coach.full_name}
-                      className="w-20 h-20 object-cover rounded-full mx-auto mb-3 border-4 border-blue-100"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">
-                        {coach.full_name?.charAt(0)?.toUpperCase()}
-                      </span>
+        {!loading && !error && filteredCoaches.length > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCoaches.map((coach) => {
+              const email = coach.contact_info?.email;
+              const phone = coach.contact_info?.phone;
+              return (
+                <div key={coach.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow flex flex-col">
+                  <div className="text-center mb-3">
+                    {coach.profile_image ? (
+                      <img
+                        src={coach.profile_image}
+                        alt={`${coach.name} headshot`}
+                        className="w-20 h-20 object-cover rounded-full mx-auto mb-3 border-4 border-blue-100"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                        <span className="text-white text-xl font-bold">
+                          {(coach.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-0.5">{coach.name}</h3>
+                    {coach.location && (
+                      <p className="text-xs text-gray-500 mb-1">📍 {coach.location}{coach.years_experience ? ` · ${coach.years_experience} yrs exp` : ''}</p>
+                    )}
+                    {coach.rating > 0 && (
+                      <div className="flex items-center justify-center gap-1 text-xs text-yellow-600 mb-2">
+                        <span>★</span>
+                        <span className="font-medium">{coach.rating?.toFixed?.(1) || coach.rating}</span>
+                        <span className="text-gray-400">({coach.total_reviews || 0} reviews)</span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap justify-center gap-1 mb-2">
+                      {(coach.specialties || []).slice(0, 5).map((specialty) => (
+                        <span key={specialty} className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs">
+                          {specialty}
+                        </span>
+                      ))}
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {coach.full_name}
-                  </h3>
-                  {coach.location && (
-                    <p className="text-sm text-gray-500 mb-2">📍 {coach.location}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap justify-center gap-1 mb-3">
-                    {coach.specialties.map((specialty) => (
-                      <span
-                        key={specialty}
-                        className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs"
-                      >
-                        {specialty}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">About</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">{coach.bio}</p>
                   </div>
 
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-700">Services</h4>
-                    <p className="text-blue-600 font-semibold text-sm">{coach.pricing}</p>
-                  </div>
+                  <div className="space-y-3 flex-1">
+                    {coach.bio && (
+                      <div>
+                        <h4 className="font-semibold text-xs text-gray-500 uppercase mb-1">About</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-4">{coach.bio}</p>
+                      </div>
+                    )}
 
-                  {coach.website && (
-                    <div>
-                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Website</h4>
-                      <a 
-                        href={coach.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
-                      >
-                        🌐 {coach.website}
-                      </a>
-                    </div>
-                  )}
+                    {coach.credentials && coach.credentials.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-xs text-gray-500 uppercase mb-1">Credentials</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {coach.credentials.slice(0, 4).map(c => (
+                            <span key={c} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{c}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                  <div className="border-t pt-3">
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">Contact</h4>
-                    <div className="space-y-1">
-                      <a 
-                        href={`mailto:${coach.email}`}
-                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
-                      >
-                        📧 {coach.email}
-                      </a>
-                      {coach.phone && (
-                        <a 
-                          href={`tel:${coach.phone}`}
+                    {coach.hourly_rate && (
+                      <div>
+                        <h4 className="font-semibold text-xs text-gray-500 uppercase mb-0.5">Pricing</h4>
+                        <p className="text-blue-600 font-semibold text-sm">{coach.hourly_rate}</p>
+                      </div>
+                    )}
+
+                    {coach.availability && (
+                      <div>
+                        <h4 className="font-semibold text-xs text-gray-500 uppercase mb-0.5">Availability</h4>
+                        <p className="text-gray-700 text-sm">{coach.availability}</p>
+                      </div>
+                    )}
+
+                    {coach.website && (
+                      <div>
+                        <a
+                          href={coach.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
                         >
-                          📞 {coach.phone}
+                          🌐 Visit website
                         </a>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                    {email && (
+                      <a
+                        href={`mailto:${email}`}
+                        className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors text-sm"
+                      >
+                        📧 Contact Coach
+                      </a>
+                    )}
+                    {phone && (
+                      <a
+                        href={`tel:${phone}`}
+                        className="block w-full text-center border border-blue-200 text-blue-700 hover:bg-blue-50 py-2 px-4 rounded-lg font-medium transition-colors text-sm"
+                      >
+                        📞 {phone}
+                      </a>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-6">
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
-                    📞 Contact Coach
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        ) : (
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && filteredCoaches.length === 0 && (
           <div className="text-center py-16">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No coaches yet</h3>
-            <p className="text-gray-600 mb-6">Be among the first wellness coaches to join our community!</p>
-            <Link to="/community" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
-              Become the First Coach
-            </Link>
+            <div className="text-5xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {coaches.length === 0 ? 'No coaches yet' : 'No coaches match your filters'}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {coaches.length === 0
+                ? 'Be among the first wellness coaches to join our community!'
+                : 'Try clearing your search or selecting a different specialty.'}
+            </p>
+            {coaches.length === 0 ? (
+              <Link to="/signup/coach" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                Become the First Coach
+              </Link>
+            ) : (
+              <button onClick={() => { setSearch(''); setSpecialtyFilter(''); }} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium">
+                Clear filters
+              </button>
+            )}
           </div>
         )}
       </div>
