@@ -2429,22 +2429,51 @@ async def get_coaches(specialty: Optional[str] = None, location: Optional[str] =
 
 @api_router.post("/coaches", response_model=Coach)
 async def create_coach_profile(coach_data: CoachProfileCreate, current_user: UserProfile = Depends(get_current_user)):
-    """Create a coach profile (authenticated coaches only)"""
+    """Create a coach profile (authenticated coaches only). Auto-approved during beta.
+    Idempotent: if the user already has a coach profile, the existing one is returned."""
     if current_user.role != UserRole.COACH:
         raise HTTPException(status_code=403, detail="Only coaches can create coach profiles")
-    
-    # Check if user already has a coach profile
+
+    # Idempotent: return existing profile instead of erroring
     existing_coach = await db.coaches.find_one({"user_id": current_user.id})
     if existing_coach:
-        raise HTTPException(status_code=400, detail="Coach profile already exists")
-    
+        return Coach(**existing_coach)
+
     coach_profile = Coach(
         user_id=current_user.id,
+        is_approved=True,  # Beta: auto-approve. Toggle off when leaving beta.
+        is_active=True,
         **coach_data.dict()
     )
-    
+
     await db.coaches.insert_one(coach_profile.dict())
     return coach_profile
+
+
+@api_router.get("/coaches/me", response_model=Optional[Coach])
+async def get_my_coach_profile(current_user: UserProfile = Depends(get_current_user)):
+    """Get the current authenticated coach's own profile (returns null if not created yet)."""
+    if current_user.role != UserRole.COACH:
+        raise HTTPException(status_code=403, detail="Only coaches can access this endpoint")
+    coach = await db.coaches.find_one({"user_id": current_user.id})
+    if not coach:
+        return None
+    return Coach(**coach)
+
+
+@api_router.patch("/coaches/me", response_model=Coach)
+async def update_my_coach_profile(coach_update: CoachProfileUpdate, current_user: UserProfile = Depends(get_current_user)):
+    """Update the current authenticated coach's profile (their own only)."""
+    if current_user.role != UserRole.COACH:
+        raise HTTPException(status_code=403, detail="Only coaches can update coach profiles")
+    coach = await db.coaches.find_one({"user_id": current_user.id})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach profile not found. Create one first.")
+    update_data = {k: v for k, v in coach_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    await db.coaches.update_one({"id": coach["id"]}, {"$set": update_data})
+    updated = await db.coaches.find_one({"id": coach["id"]})
+    return Coach(**updated)
 
 @api_router.get("/coaches/{coach_id}", response_model=Coach)
 async def get_coach_profile(coach_id: str):

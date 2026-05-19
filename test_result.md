@@ -343,8 +343,7 @@
 
 ## test_plan:
   current_focus:
-    - "API Integration & Data Flow"
-    - "Frontend Community Integration"
+    - "Coach Onboarding Flow - Signup → Wizard → Dashboard → Edit"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -418,6 +417,20 @@
           agent: "testing"
           comment: "COMPREHENSIVE HEALTH GOALS ASSESSMENT V2 TESTING COMPLETE: All 8 backend tests passed (100% success rate). VERIFIED: 1) Health Check (GET /api/health) returns 200 with healthy status and database connected. 2) Questionnaire V2 (GET /api/questionnaire) returns biohacking-assessment-v2 with exactly 19 questions across 5 categories (About You, Primary Goal, Current Baseline, Lifestyle, Preferences) and 4 priority goals (Increase Energy, Improve Vitality/Longevity, Boost Immune System, Weight Loss/Metabolic Health). 3) Vendors (GET /api/vendors) returns 7+ vendors including all 3 new vendors: bio-well (Bio-Well), curawaves (CuraWaves), stemregen (StemRegen). 4) Products (GET /api/products) returns 25+ products spanning all 6 brand vendors with spot-check confirmation of key products: STEMREGEN® Mobilize, Bio-Well GDV Camera, CuraWaves Wave Therapy Device, Berberine. 5) Coaches (GET /api/coaches) returns 6+ approved+active coaches including Laura Zook (5.0 rating), Dr. James Okafor, and Maya Patel. 6) Weight-Loss Persona (POST /api/questionnaire/submit) returns 4-7 recommended products including Thorne products and devices (CuraWaves/Bio-Well), exactly 3 coaches with all required fields (id, name, specialties, rating, profile_image, match_score), coach_match_specialties list, health_score, primary_goals, lifestyle_tips, and personalized_summary. 7) Longevity Persona returns longevity-specific products (StemRegen Mobilize, NiaCel) and 3 matched coaches. 8) Immune Persona returns immune-relevant products (Vitamin D-5,000, Immuplex, B-Complex) and 3 matched coaches including Dr. James Okafor (immune specialist). Coach matching algorithm successfully pairs users with top 3 coaches based on specialty overlap with goal keywords. All recommendation fields populated correctly. Complete questionnaire → AI recommendations → coach matching flow is fully functional."
 
+  - task: "Coach Onboarding Flow - Signup → Wizard → Dashboard → Edit"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "TESTING IN PROGRESS: Testing the redesigned coach signup → onboarding → dashboard → edit flow at https://wellness-coach-match.preview.emergentagent.com. CRITICAL BUGS FOUND AND FIXED: 1) ESLint configuration error - webpack dev server overlay blocking all interactions due to jsx-a11y/img-redundant-alt rule not found. Fixed by removing problematic eslint-disable comments from lines 2453, 2621, 2871 in App.js. 2) FastAPI validation error handling bug - 422 validation errors returned as array but frontend tried to render entire error object causing 'Objects are not valid as a React child' React crash. Fixed by adding proper array handling in CoachSignUpPage (line 1810) and MemberSignUpPage (line 1679) to extract first error message from validation error array. Frontend restarted successfully and compiled without errors. Need to resume comprehensive end-to-end testing of complete coach onboarding flow."
+
 
     - agent: "testing"
       message: "HEALTH GOALS ASSESSMENT V2 TESTING COMPLETE: Conducted comprehensive backend testing of the redesigned questionnaire and recommendations flow with 100% success rate (8/8 tests passed). All endpoints working correctly: health check, questionnaire v2 with 19 questions, 7 vendors (including Bio-Well, CuraWaves, StemRegen), 25+ products from all 6 brands, 6+ coaches (including Laura Zook, Dr. James Okafor, Maya Patel), and questionnaire submission with AI-powered recommendations + top 3 coach matching for weight-loss, longevity, and immune personas. The complete flow from questionnaire → AI recommendations → product suggestions → coach matching is fully operational. Ready for frontend integration testing if needed."
+    - agent: "testing"
+      message: "COACH ONBOARDING FLOW TESTING IN PROGRESS: Testing the redesigned coach signup → onboarding → dashboard → edit flow. CRITICAL BUGS FOUND AND FIXED: 1) ESLint configuration error with jsx-a11y/img-redundant-alt rule causing webpack overlay to block all interactions - FIXED by removing problematic eslint-disable comments. 2) FastAPI validation error handling bug in signup forms - validation errors (422) returned as array but frontend tried to render entire object causing React crash - FIXED by adding proper array handling in both CoachSignUpPage and MemberSignUpPage error handlers. Frontend restarted successfully. Resuming comprehensive end-to-end testing of coach onboarding flow."

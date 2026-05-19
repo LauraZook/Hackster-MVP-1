@@ -112,7 +112,7 @@ const Navigation = () => {
         
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors">
+            <Link to={user?.role === 'coach' ? '/coach/dashboard' : '/dashboard'} className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">{user?.username?.[0]?.toUpperCase() || 'H'}</span>
               </div>
@@ -1565,7 +1565,12 @@ const SignInPage = () => {
 
       if (response.ok) {
         login(data.user, data.access_token);
-        window.location.href = '/dashboard'; // Redirect to dashboard
+        // Role-aware redirect — coaches go to their own dashboard
+        if (data.user?.role === 'coach') {
+          window.location.href = '/coach/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
       } else {
         setError(data.detail || 'Login failed');
       }
@@ -1671,7 +1676,12 @@ const MemberSignUpPage = () => {
         login(data.user, data.access_token);
         window.location.href = '/dashboard'; // Redirect to dashboard
       } else {
-        setError(data.detail || 'Registration failed');
+        // Handle validation errors (422) and other errors
+        if (Array.isArray(data.detail)) {
+          setError(data.detail[0]?.msg || 'Registration failed');
+        } else {
+          setError(data.detail || 'Registration failed');
+        }
       }
     } catch (err) {
       console.error('Registration error:', err);
@@ -1802,7 +1812,12 @@ const CoachSignUpPage = () => {
         login(data.user, data.access_token);
         window.location.href = '/onboarding/coach'; // Redirect to coach onboarding
       } else {
-        setError(data.detail || 'Registration failed');
+        // Handle validation errors (422) and other errors
+        if (Array.isArray(data.detail)) {
+          setError(data.detail[0]?.msg || 'Registration failed');
+        } else {
+          setError(data.detail || 'Registration failed');
+        }
       }
     } catch (err) {
       // Mock successful registration for demo
@@ -2255,238 +2270,923 @@ const Home = () => {
   );
 };
 
-// Coach Onboarding Page
+// ============================================================================
+// COACH ONBOARDING — Multi-step Wizard
+// ============================================================================
+const COACH_SPECIALTIES = [
+  // Aligned with our questionnaire / coach-matching keywords
+  'Energy', 'Vitality', 'Longevity', 'Immune Support',
+  'Weight Loss', 'Weight Management', 'Metabolic Health',
+  'Bioenergy', 'Frequency Therapy', 'Stem Cell Health',
+  'Hormone Optimization', 'Gut Health', 'Stress Management',
+  'Sleep Optimization', 'Cold Therapy', 'Breathwork',
+  'Athletic Performance', 'Functional Medicine', 'Biohacking',
+  'Nutrition', 'Supplements', 'Recovery'
+];
+
+const COACH_DRAFT_KEY = 'hackster_coach_draft';
+
 const CoachOnboardingPage = () => {
   const { user, token } = useAuth();
-  const [coachProfile, setCoachProfile] = useState({
-    full_name: '',
-    bio: '',
-    specialties: [],
-    years_experience: 0,
-    location: '',
-    website: '',
-    phone: '',
-    pricing: '',
-    profile_image: ''
-  });
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const totalSteps = 4;
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const availableSpecialties = [
-    'Nutrition', 'Weight Management', 'Hormone Optimization', 
-    'Athletic Performance', 'Sleep Optimization', 'Stress Management',
-    'Gut Health', 'Cold Therapy', 'Breathwork', 'Longevity',
-    'Functional Medicine', 'Biohacking', 'Supplements'
-  ];
+  // Load draft from localStorage (if any)
+  const loadDraft = () => {
+    try {
+      const raw = localStorage.getItem(COACH_DRAFT_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return null;
+  };
 
-  const toggleSpecialty = (specialty) => {
-    if (coachProfile.specialties.includes(specialty)) {
-      setCoachProfile({
-        ...coachProfile,
-        specialties: coachProfile.specialties.filter(s => s !== specialty)
-      });
-    } else {
-      setCoachProfile({
-        ...coachProfile,
-        specialties: [...coachProfile.specialties, specialty]
-      });
+  const [profile, setProfile] = useState(() => loadDraft() || {
+    full_name: '',
+    profile_image: '',
+    location: '',
+    years_experience: '',
+    specialties: [],
+    credentials: [],
+    bio: '',
+    hourly_rate: '',
+    availability: 'Mon-Fri 9AM-6PM (Virtual)',
+    phone: '',
+    website: ''
+  });
+  const [credentialInput, setCredentialInput] = useState('');
+
+  // Persist draft on every change
+  useEffect(() => {
+    localStorage.setItem(COACH_DRAFT_KEY, JSON.stringify(profile));
+  }, [profile]);
+
+  // If they already have a published profile, send them to the dashboard
+  useEffect(() => {
+    if (!token) return;
+    axios.get(`${API}/coaches/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (res.data && res.data.id) {
+          // Already published — redirect to dashboard
+          navigate('/coach/dashboard');
+        }
+      })
+      .catch(() => { /* not a coach yet, fine */ });
+  }, [token, navigate]);
+
+  const update = (patch) => setProfile(prev => ({ ...prev, ...patch }));
+
+  const toggleSpecialty = (s) => {
+    update({
+      specialties: profile.specialties.includes(s)
+        ? profile.specialties.filter(x => x !== s)
+        : [...profile.specialties, s]
+    });
+  };
+
+  const addCredential = () => {
+    const v = credentialInput.trim();
+    if (!v) return;
+    if (profile.credentials.includes(v)) {
+      setCredentialInput('');
+      return;
+    }
+    update({ credentials: [...profile.credentials, v] });
+    setCredentialInput('');
+  };
+
+  const removeCredential = (c) => {
+    update({ credentials: profile.credentials.filter(x => x !== c) });
+  };
+
+  const stepValid = () => {
+    if (step === 1) return profile.full_name.trim() && profile.location.trim();
+    if (step === 2) return profile.specialties.length >= 1;
+    if (step === 3) return profile.bio.trim().length >= 30;
+    if (step === 4) return profile.hourly_rate.trim();
+    return true;
+  };
+
+  const saveDraftAndExit = () => {
+    localStorage.setItem(COACH_DRAFT_KEY, JSON.stringify(profile));
+    navigate('/coach/dashboard');
+  };
+
+  const submitProfile = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await axios.post(`${API}/coaches`, {
+        name: profile.full_name,
+        bio: profile.bio,
+        specialties: profile.specialties,
+        location: profile.location,
+        hourly_rate: profile.hourly_rate,
+        availability: profile.availability,
+        credentials: profile.credentials,
+        contact_info: {
+          email: user?.email || '',
+          phone: profile.phone || '',
+          website: profile.website || ''
+        },
+        profile_image: profile.profile_image || null,
+        website: profile.website || null,
+        years_experience: profile.years_experience ? parseInt(profile.years_experience) : null
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      if (res.status === 200) {
+        localStorage.removeItem(COACH_DRAFT_KEY);
+        navigate('/coach/dashboard?welcome=1');
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Could not publish your profile. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const progressPct = Math.round((step / totalSteps) * 100);
 
-    try {
-      const response = await axios.post(`${API}/coaches`, {
-        name: coachProfile.full_name,
-        bio: coachProfile.bio,
-        specialties: coachProfile.specialties,
-        location: coachProfile.location,
-        hourly_rate: coachProfile.pricing,
-        availability: 'Mon-Fri 9AM-6PM',  // Default, can be made configurable
-        credentials: [],  // Can be added in profile editing
-        contact_info: {
-          email: user?.email || '',
-          phone: coachProfile.phone,
-          website: coachProfile.website
-        },
-        profile_image: coachProfile.profile_image,
-        website: coachProfile.website,
-        years_experience: coachProfile.years_experience
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 pb-16">
+      <Navigation />
 
-      if (response.status === 200) {
-        alert('🎉 Congratulations! Your coach profile has been created and is pending approval.');
-        window.location.href = '/coaches';
-      }
-    } catch (err) {
-      console.error('Profile creation error:', err);
-      setError(err.response?.data?.detail || 'Profile creation failed. Please try again.');
-    } finally {
-      setLoading(false);
+      <div className="max-w-3xl mx-auto px-4 pt-8">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="mx-auto h-14 w-14 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-4">
+            <span className="text-white text-2xl">🎯</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Build Your Coach Profile</h1>
+          <p className="text-gray-600 mt-2">Takes about 3 minutes. Your draft auto-saves as you go.</p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-xs font-medium text-gray-600 mb-2">
+            <span>Step {step} of {totalSteps}</span>
+            <span>{progressPct}% complete</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
+          </div>
+          <div className="flex justify-between mt-3 text-xs text-gray-500">
+            <span className={step >= 1 ? 'text-purple-600 font-semibold' : ''}>1. Basics</span>
+            <span className={step >= 2 ? 'text-purple-600 font-semibold' : ''}>2. Expertise</span>
+            <span className={step >= 3 ? 'text-purple-600 font-semibold' : ''}>3. Your Story</span>
+            <span className={step >= 4 ? 'text-purple-600 font-semibold' : ''}>4. Pricing</span>
+          </div>
+        </div>
+
+        {/* Step Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+          {/* STEP 1: Basics */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-gray-900">Tell us the basics</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <input
+                  type="text"
+                  value={profile.full_name}
+                  onChange={(e) => update({ full_name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., Dr. Jane Smith"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo URL <span className="text-gray-400 font-normal">(optional)</span></label>
+                <div className="flex items-center gap-3">
+                  {profile.profile_image ? (
+                    <img src={profile.profile_image} alt="profile" className="w-14 h-14 rounded-full object-cover border" onError={(e) => { e.target.style.display = 'none'; }} />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-200 to-blue-200 flex items-center justify-center text-purple-600 font-bold text-lg">
+                      {profile.full_name ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2) : '👤'}
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    value={profile.profile_image}
+                    onChange={(e) => update({ profile_image: e.target.value })}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://yoursite.com/photo.jpg"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Paste a public URL to your headshot. We'll add direct uploads soon.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                  <input
+                    type="text"
+                    value={profile.location}
+                    onChange={(e) => update({ location: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., Austin, TX (Virtual)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+                  <input
+                    type="number"
+                    value={profile.years_experience}
+                    onChange={(e) => update({ years_experience: e.target.value })}
+                    min="0" max="60"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="5"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: Expertise */}
+          {step === 2 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-gray-900">Your expertise</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Specialties * <span className="text-gray-400 font-normal">(pick all that apply — we use these to match you with clients)</span></label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {COACH_SPECIALTIES.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSpecialty(s)}
+                      className={`px-3 py-2 rounded-lg text-sm text-left border transition-colors ${
+                        profile.specialties.includes(s)
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
+                      }`}
+                    >
+                      {profile.specialties.includes(s) ? '✓ ' : ''}{s}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">{profile.specialties.length} selected</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Credentials & Certifications <span className="text-gray-400 font-normal">(optional)</span></label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={credentialInput}
+                    onChange={(e) => setCredentialInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCredential(); } }}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., NASM-CPT, RD, FMCA, Bio-Well Certified"
+                  />
+                  <button type="button" onClick={addCredential} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Add</button>
+                </div>
+                {profile.credentials.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {profile.credentials.map(c => (
+                      <span key={c} className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full">
+                        {c}
+                        <button onClick={() => removeCredential(c)} className="ml-1 text-purple-500 hover:text-purple-700" aria-label={`Remove ${c}`}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: Bio / Story */}
+          {step === 3 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-gray-900">Your story</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Professional Bio * <span className="text-gray-400 font-normal">(at least 30 characters)</span></label>
+                <textarea
+                  rows={7}
+                  value={profile.bio}
+                  onChange={(e) => update({ bio: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="What's your background, who do you love working with, and what's your approach to coaching? Be specific — this is what attracts the right clients."
+                />
+                <p className={`text-xs mt-1 ${profile.bio.length >= 30 ? 'text-green-600' : 'text-gray-500'}`}>
+                  {profile.bio.length} / 30 characters minimum
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: Pricing & Contact */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-gray-900">Pricing & availability</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pricing *</label>
+                  <input
+                    type="text"
+                    value={profile.hourly_rate}
+                    onChange={(e) => update({ hourly_rate: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g., $150/session or $500/month"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
+                  <input
+                    type="text"
+                    value={profile.availability}
+                    onChange={(e) => update({ availability: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="Mon-Fri 9AM-5PM CT (Virtual)"
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="tel"
+                    value={profile.phone}
+                    onChange={(e) => update({ phone: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Website <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="url"
+                    value={profile.website}
+                    onChange={(e) => update({ website: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="https://yoursite.com"
+                  />
+                </div>
+              </div>
+
+              {/* Live preview */}
+              <div className="mt-6 p-5 border-2 border-dashed border-purple-200 rounded-xl bg-gradient-to-b from-white to-purple-50/40">
+                <p className="text-xs font-semibold text-purple-700 uppercase mb-3">📋 Preview — how members will see you</p>
+                <div className="flex items-start gap-3">
+                  {profile.profile_image ? (
+                    <img src={profile.profile_image} alt="profile preview" className="w-16 h-16 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                      {(profile.full_name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900">{profile.full_name || 'Your Name'}</h3>
+                    <p className="text-xs text-gray-500">{profile.location || 'Location'} {profile.years_experience ? `· ${profile.years_experience} yrs exp` : ''}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {profile.specialties.slice(0, 4).map(s => (
+                        <span key={s} className="text-[11px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{s}</span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{profile.bio || 'Your bio will appear here…'}</p>
+                    <div className="text-sm font-medium text-gray-800 mt-2">{profile.hourly_rate || 'Pricing'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-blue-900">
+                <strong>🚀 You go live instantly during beta.</strong> No approval queue — your profile publishes the moment you click "Publish".
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg text-sm">{error}</div>
+          )}
+
+          {/* Wizard footer */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+            <div className="flex gap-2">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  ← Back
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={saveDraftAndExit}
+                className="px-5 py-2.5 text-gray-500 hover:text-gray-700 text-sm"
+              >
+                Save & Exit
+              </button>
+            </div>
+            {step < totalSteps ? (
+              <button
+                type="button"
+                onClick={() => setStep(step + 1)}
+                disabled={!stepValid()}
+                className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submitProfile}
+                disabled={!stepValid() || submitting}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Publishing…' : '🚀 Publish My Profile'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+// ============================================================================
+// COACH DASHBOARD — landing page for authenticated coaches
+// ============================================================================
+const CoachDashboardPage = () => {
+  const { user, token, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [coachProfile, setCoachProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [draftExists, setDraftExists] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  useEffect(() => {
+    if (window.location.search.includes('welcome=1')) {
+      setShowWelcome(true);
+      setTimeout(() => setShowWelcome(false), 6000);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    setDraftExists(!!localStorage.getItem(COACH_DRAFT_KEY));
+    axios.get(`${API}/coaches/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setCoachProfile(res.data || null))
+      .catch(() => setCoachProfile(null))
+      .finally(() => setLoading(false));
+  }, [isAuthenticated, token]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <div className="text-6xl mb-6">🔐</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Sign in to your coach dashboard</h1>
+          <Link to="/signin" className="bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-purple-700">Sign In</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (user?.role !== 'coach') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">This area is for coaches</h1>
+          <p className="text-gray-600 mb-6">You're signed in as a member.</p>
+          <Link to="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold">Go to Member Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile completeness scoring
+  const fields = coachProfile ? [
+    !!coachProfile.name,
+    !!coachProfile.bio && coachProfile.bio.length >= 30,
+    coachProfile.specialties?.length > 0,
+    !!coachProfile.location,
+    !!coachProfile.hourly_rate,
+    !!coachProfile.availability,
+    !!coachProfile.profile_image,
+    coachProfile.credentials?.length > 0,
+    !!coachProfile.website,
+    !!coachProfile.years_experience
+  ] : [];
+  const completeness = fields.length ? Math.round((fields.filter(Boolean).length / fields.length) * 100) : 0;
+
+  const publicShareUrl = coachProfile ? `${window.location.origin}/coaches` : '';
+  const isLive = coachProfile && coachProfile.is_approved && coachProfile.is_active;
+
+  const handleShare = () => {
+    if (!publicShareUrl) return;
+    navigator.clipboard?.writeText(publicShareUrl);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12">
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 bg-purple-600 rounded-full flex items-center justify-center mb-6">
-            <span className="text-white text-3xl">🎯</span>
+
+      {/* Welcome toast */}
+      {showWelcome && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl animate-pulse">
+          🎉 You're live! Your coach profile is published.
+        </div>
+      )}
+
+      {/* Banner */}
+      <div className={`${isLive ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-gradient-to-r from-purple-600 to-blue-600'} text-white py-10`}>
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-1">Hi, {coachProfile?.name?.split(' ')[0] || user?.username} 👋</h1>
+            <p className="text-white/90">
+              {!coachProfile && 'Welcome to Hackster.ai — let\'s get your coach profile live.'}
+              {coachProfile && isLive && '✅ Your profile is LIVE in the Hackster coach directory.'}
+              {coachProfile && !isLive && '⏸ Your profile is currently deactivated. Contact support to reactivate.'}
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Complete Your Coach Profile</h1>
-          <p className="text-xl text-gray-600">Let's set up your professional profile to start connecting with clients</p>
+          {isLive && (
+            <div className="flex gap-2">
+              <Link to="/coaches" className="bg-white text-emerald-700 font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">View in Directory</Link>
+              <button onClick={handleShare} className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold px-4 py-2 rounded-lg text-sm">
+                {shareCopied ? '✓ Copied!' : '🔗 Share'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading your dashboard…</p>
+          </div>
+        ) : !coachProfile ? (
+          // === NO PROFILE YET ===
+          <div className="bg-white rounded-xl shadow-md p-8 text-center max-w-2xl mx-auto">
+            <div className="text-5xl mb-4">📝</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              {draftExists ? 'Continue your profile' : 'Create your coach profile'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {draftExists
+                ? 'You have a saved draft. Pick up where you left off — your profile auto-publishes when you finish.'
+                : 'Set up your professional profile in about 3 minutes. You\'ll go live in the directory instantly.'}
+            </p>
+            <Link to="/onboarding/coach" className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90">
+              {draftExists ? 'Continue draft →' : 'Start onboarding →'}
+            </Link>
+          </div>
+        ) : (
+          // === HAS PROFILE ===
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left: profile card preview */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Status + completeness */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-gray-900">Profile Status</h3>
+                  {isLive ? (
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">● LIVE</span>
+                  ) : (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">⏸ Inactive</span>
+                  )}
+                </div>
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-sm text-gray-600">Profile completeness</span>
+                  <span className="text-sm font-semibold text-gray-900">{completeness}%</span>
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className={`h-full transition-all ${completeness === 100 ? 'bg-green-500' : completeness >= 70 ? 'bg-blue-500' : 'bg-yellow-500'}`} style={{ width: `${completeness}%` }}></div>
+                </div>
+                {completeness < 100 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Add the missing fields (credentials, profile photo, website, years of experience) to get more visibility in matches.
+                  </p>
+                )}
+              </div>
+
+              {/* Public profile preview */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900">Public Profile Preview</h3>
+                  <Link to="/coach/profile/edit" className="text-sm text-purple-600 hover:text-purple-700 font-medium">Edit profile →</Link>
+                </div>
+                <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-b from-white to-blue-50/30">
+                  <div className="flex items-start gap-4">
+                    {coachProfile.profile_image ? (
+                      <img src={coachProfile.profile_image} alt={coachProfile.name} className="w-20 h-20 rounded-full object-cover border-2 border-purple-100" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-2xl">
+                        {coachProfile.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-900">{coachProfile.name}</h4>
+                      <p className="text-sm text-gray-500">{coachProfile.location}{coachProfile.years_experience ? ` · ${coachProfile.years_experience} yrs experience` : ''}</p>
+                      <div className="flex items-center gap-1 text-sm text-yellow-600 mt-1">
+                        <span>★</span><span className="font-medium">{coachProfile.rating?.toFixed?.(1) || '—'}</span>
+                        <span className="text-gray-400">({coachProfile.total_reviews || 0} reviews)</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {(coachProfile.specialties || []).slice(0, 6).map(s => (
+                          <span key={s} className="text-[11px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-4 leading-relaxed">{coachProfile.bio}</p>
+                  {coachProfile.credentials?.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Credentials</p>
+                      <div className="flex flex-wrap gap-1">
+                        {coachProfile.credentials.map(c => (
+                          <span key={c} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid sm:grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100 text-sm">
+                    <div><span className="text-gray-500">Pricing:</span> <span className="text-gray-900 font-medium">{coachProfile.hourly_rate}</span></div>
+                    <div><span className="text-gray-500">Availability:</span> <span className="text-gray-900">{coachProfile.availability}</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: stats + quick actions */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
+                <div className="space-y-2">
+                  <Link to="/coach/profile/edit" className="flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-700">
+                    <span>✏️</span><span className="font-medium">Edit my profile</span>
+                  </Link>
+                  <Link to="/coaches" className="flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-700">
+                    <span>👀</span><span className="font-medium">View public directory</span>
+                  </Link>
+                  <button onClick={handleShare} className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-left">
+                    <span>🔗</span><span className="font-medium">{shareCopied ? '✓ Link copied!' : 'Copy share link'}</span>
+                  </button>
+                  <Link to="/community-forum" className="flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-700">
+                    <span>💬</span><span className="font-medium">Engage in Community</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="font-bold text-gray-900 mb-4">Performance</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Profile views</span>
+                    <span className="text-lg font-bold text-gray-900">—</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Inquiries</span>
+                    <span className="text-lg font-bold text-gray-900">—</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Average rating</span>
+                    <span className="text-lg font-bold text-yellow-600">{coachProfile.rating?.toFixed?.(1) || '—'}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-3">Analytics coming soon.</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-100 rounded-xl p-5">
+                <h4 className="font-bold text-gray-900 mb-2">💡 Pro tip</h4>
+                <p className="text-sm text-gray-700">Add at least one credential and a profile photo — coaches with complete profiles get matched 3× more often by our AI questionnaire.</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+// ============================================================================
+// COACH PROFILE EDIT — full editor for existing coach
+// ============================================================================
+const CoachProfileEditPage = () => {
+  const { user, token, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [credentialInput, setCredentialInput] = useState('');
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    axios.get(`${API}/coaches/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.data) {
+          navigate('/onboarding/coach');
+          return;
+        }
+        setProfile({
+          ...res.data,
+          phone: res.data.contact_info?.phone || '',
+        });
+      })
+      .catch(() => navigate('/onboarding/coach'))
+      .finally(() => setLoading(false));
+  }, [isAuthenticated, token, navigate]);
+
+  if (!isAuthenticated || user?.role !== 'coach') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Coach access only.</h1>
+          <Link to="/signin" className="text-blue-600">Sign in</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const update = (patch) => setProfile(prev => ({ ...prev, ...patch }));
+
+  const toggleSpecialty = (s) => {
+    update({
+      specialties: profile.specialties?.includes(s)
+        ? profile.specialties.filter(x => x !== s)
+        : [...(profile.specialties || []), s]
+    });
+  };
+
+  const addCredential = () => {
+    const v = credentialInput.trim();
+    if (!v) return;
+    if (!(profile.credentials || []).includes(v)) {
+      update({ credentials: [...(profile.credentials || []), v] });
+    }
+    setCredentialInput('');
+  };
+
+  const removeCredential = (c) => {
+    update({ credentials: (profile.credentials || []).filter(x => x !== c) });
+  };
+
+  const save = async () => {
+    setSaving(true); setError(''); setSaved(false);
+    try {
+      const payload = {
+        name: profile.name,
+        bio: profile.bio,
+        specialties: profile.specialties,
+        location: profile.location,
+        hourly_rate: profile.hourly_rate,
+        availability: profile.availability,
+        credentials: profile.credentials || [],
+        contact_info: {
+          email: user?.email || profile.contact_info?.email || '',
+          phone: profile.phone || '',
+          website: profile.website || ''
+        },
+        profile_image: profile.profile_image || null,
+        website: profile.website || null,
+        years_experience: profile.years_experience ? parseInt(profile.years_experience) : null
+      };
+      const res = await axios.patch(`${API}/coaches/me`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProfile({ ...res.data, phone: res.data.contact_info?.phone || '' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Could not save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <Link to="/coach/dashboard" className="text-sm text-gray-500 hover:text-gray-700">← Back to dashboard</Link>
+            <h1 className="text-3xl font-bold text-gray-900 mt-1">Edit Profile</h1>
+          </div>
+          {saved && <span className="text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full text-sm">✓ Saved</span>}
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-              <input
-                type="text"
-                required
-                value={coachProfile.full_name}
-                onChange={(e) => setCoachProfile({ ...coachProfile, full_name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Dr. Jane Smith"
-              />
+        <div className="bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
+          {/* Basics */}
+          <section>
+            <h2 className="font-bold text-gray-900 mb-3">Basics</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input type="text" value={profile.name || ''} onChange={(e) => update({ name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profile Photo URL</label>
+                <input type="url" value={profile.profile_image || ''} onChange={(e) => update({ profile_image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="https://…" />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input type="text" value={profile.location || ''} onChange={(e) => update({ location: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                  <input type="number" min="0" max="60" value={profile.years_experience ?? ''} onChange={(e) => update({ years_experience: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+                </div>
+              </div>
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Professional Bio *</label>
-              <textarea
-                required
-                rows={4}
-                value={coachProfile.bio}
-                onChange={(e) => setCoachProfile({ ...coachProfile, bio: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Tell potential clients about your background, expertise, and approach to wellness coaching..."
-              />
+          {/* Specialties */}
+          <section>
+            <h2 className="font-bold text-gray-900 mb-3">Specialties <span className="text-sm text-gray-500 font-normal">(used to match you with clients)</span></h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {COACH_SPECIALTIES.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleSpecialty(s)}
+                  className={`px-3 py-2 rounded-lg text-sm text-left border transition-colors ${profile.specialties?.includes(s) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'}`}
+                >
+                  {profile.specialties?.includes(s) ? '✓ ' : ''}{s}
+                </button>
+              ))}
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Specialties *</label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableSpecialties.map(specialty => (
-                  <button
-                    key={specialty}
-                    type="button"
-                    onClick={() => toggleSpecialty(specialty)}
-                    className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                      coachProfile.specialties.includes(specialty)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {specialty}
-                  </button>
+          {/* Credentials */}
+          <section>
+            <h2 className="font-bold text-gray-900 mb-3">Credentials & Certifications</h2>
+            <div className="flex gap-2">
+              <input type="text" value={credentialInput} onChange={(e) => setCredentialInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCredential(); } }} className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="e.g., RD, NASM-CPT, Bio-Well Certified" />
+              <button type="button" onClick={addCredential} className="px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Add</button>
+            </div>
+            {(profile.credentials || []).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {profile.credentials.map(c => (
+                  <span key={c} className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full">
+                    {c}<button onClick={() => removeCredential(c)} className="ml-1 text-purple-500 hover:text-purple-700">×</button>
+                  </span>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-1">Select all that apply</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
-                <input
-                  type="number"
-                  value={coachProfile.years_experience}
-                  onChange={(e) => setCoachProfile({ ...coachProfile, years_experience: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  min="0"
-                  max="50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                <input
-                  type="text"
-                  required
-                  value={coachProfile.location}
-                  onChange={(e) => setCoachProfile({ ...coachProfile, location: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="City, Country"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-              <input
-                type="tel"
-                value={coachProfile.phone}
-                onChange={(e) => setCoachProfile({ ...coachProfile, phone: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="(555) 123-4567"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Pricing</label>
-              <input
-                type="text"
-                value={coachProfile.pricing}
-                onChange={(e) => setCoachProfile({ ...coachProfile, pricing: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="e.g., $150/session, $500/month"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Website (Optional)</label>
-              <input
-                type="url"
-                value={coachProfile.website}
-                onChange={(e) => setCoachProfile({ ...coachProfile, website: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="https://www.yoursite.com"
-              />
-            </div>
-
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="text-purple-800 font-semibold mb-2">🚀 Ready to Launch Your Profile?</h3>
-              <ul className="text-purple-700 text-sm space-y-1">
-                <li>• <strong>FREE during BETA</strong> - No payment required!</li>
-                <li>• Contact details visible to potential clients</li>
-                <li>• Start receiving client inquiries immediately</li>
-                <li>• Help us build the best wellness coach directory</li>
-                <li>• Get early access to premium features</li>
-              </ul>
-              <div className="mt-3 p-2 bg-purple-100 rounded text-xs text-purple-600">
-                <strong>Beta Note:</strong> Your profile will be free during our beta phase. We'll notify you before any future changes.
-              </div>
-            </div>
-
-            {error && (
-              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
             )}
+          </section>
 
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                disabled={loading || coachProfile.specialties.length === 0}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 transition-colors"
-              >
-                {loading ? 'Creating Profile...' : 'Launch My Coach Profile'}
-              </button>
-              <Link
-                to="/"
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium text-center transition-colors"
-              >
-                Skip for Now
-              </Link>
+          {/* Bio */}
+          <section>
+            <h2 className="font-bold text-gray-900 mb-3">Bio</h2>
+            <textarea rows={6} value={profile.bio || ''} onChange={(e) => update({ bio: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+          </section>
+
+          {/* Pricing + Availability */}
+          <section className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pricing</label>
+              <input type="text" value={profile.hourly_rate || ''} onChange={(e) => update({ hourly_rate: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
             </div>
-          </form>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+              <input type="text" value={profile.availability || ''} onChange={(e) => update({ availability: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+            </div>
+          </section>
+
+          {/* Contact */}
+          <section className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input type="tel" value={profile.phone || ''} onChange={(e) => update({ phone: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <input type="url" value={profile.website || ''} onChange={(e) => update({ website: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+            </div>
+          </section>
+
+          {error && <div className="text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg text-sm">{error}</div>}
+
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <Link to="/coach/dashboard" className="text-gray-600 hover:text-gray-800">Cancel</Link>
+            <button onClick={save} disabled={saving} className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
       <Footer />
@@ -5126,6 +5826,8 @@ function App() {
             <Route path="/signup/member" element={<MemberSignUpPage />} />
             <Route path="/signup/coach" element={<CoachSignUpPage />} />
             <Route path="/onboarding/coach" element={<CoachOnboardingPage />} />
+            <Route path="/coach/dashboard" element={<CoachDashboardPage />} />
+            <Route path="/coach/profile/edit" element={<CoachProfileEditPage />} />
             <Route path="/coaches" element={<CoachesPage />} />
             <Route path="/coaching" element={<CoachingLandingPage />} />
             
