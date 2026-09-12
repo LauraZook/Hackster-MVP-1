@@ -79,6 +79,27 @@ const useAuth = () => {
 };
 
 // Navigation Component
+const LogoMark = ({ size = 40, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hackster.ai">
+    <defs>
+      <linearGradient id="hkGrad" x1="4" y1="2" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#2563EB" />
+        <stop offset="0.55" stopColor="#7C3AED" />
+        <stop offset="1" stopColor="#10B981" />
+      </linearGradient>
+    </defs>
+    <rect width="48" height="48" rx="14" fill="url(#hkGrad)" />
+    {/* H pillars */}
+    <rect x="12.5" y="12" width="4.6" height="24" rx="2.3" fill="white" />
+    <rect x="30.9" y="12" width="4.6" height="24" rx="2.3" fill="white" />
+    {/* heartbeat crossbar linking the pillars */}
+    <path d="M15 24 H20 L21.9 19 L24.3 29.5 L26.4 21.5 L27.9 24 H33"
+      stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    {/* spark accent */}
+    <circle cx="38.5" cy="10" r="2.1" fill="#FDE047" />
+  </svg>
+);
+
 const Navigation = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
@@ -86,16 +107,14 @@ const Navigation = () => {
   return (
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
       <Link to="/" className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">H</span>
-          </div>
+        <div className="flex items-center space-x-2.5">
+          <LogoMark size={40} className="shadow-sm rounded-[14px]" />
           <div className="flex flex-col">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-gray-900">Hackster.ai</span>
-              <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">BETA</span>
+              <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent">Hackster.ai</span>
+              <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide">BETA</span>
             </div>
-            <span className="text-xs text-gray-500 -mt-1">Your biohacking buddy</span>
+            <span className="text-xs text-gray-500 -mt-0.5">Your biohacking buddy</span>
           </div>
         </div>
       </Link>
@@ -5875,11 +5894,9 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">H</span>
-              </div>
-              <span className="text-xl font-bold">Hackster.ai</span>
+            <div className="flex items-center space-x-2.5 mb-4">
+              <LogoMark size={36} className="rounded-[12px]" />
+              <span className="text-xl font-extrabold tracking-tight">Hackster.ai</span>
             </div>
             <p className="text-gray-400 text-sm">
               Your biohacking buddy for optimal health and performance.
