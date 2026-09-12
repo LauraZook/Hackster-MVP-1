@@ -79,25 +79,37 @@ const useAuth = () => {
 };
 
 // Navigation Component
-const LogoMark = ({ size = 40, dark = false, className = "" }) => {
-  const bar = dark ? "#FFFFFF" : "#1E2A4A";
-  const strand = dark ? "#1E2A4A" : "#FFFFFF";
-  const strandOpacity = dark ? 0.55 : 0.6;
+const LogoMark = ({ size = 44, dark = false, className = "" }) => {
+  // Extruded 3D isometric "H": white front face with DNA strands, navy depth faces.
+  const H_PATH = "M8 8 H20 V30 H36 V8 H48 V60 H36 V40 H20 V60 H8 Z";
+  const depth = dark ? "#0E1730" : "#26324F";
+  const front = dark ? "#EEF2FA" : "#F5F7FB";
+  const line = "#1E2A4A";
+  const strand = dark ? "#3B4a73" : "#2A3A63";
+  const leftStrands = [
+    "M11 11 Q18 16 11 21 Q18 26 11 31 Q18 36 11 41 Q18 46 11 51 Q18 56 11 58",
+    "M17 11 Q10 16 17 21 Q10 26 17 31 Q10 36 17 41 Q10 46 17 51 Q10 56 17 58",
+  ];
+  const rightStrands = [
+    "M39 11 Q46 16 39 21 Q46 26 39 31 Q46 36 39 41 Q46 46 39 51 Q46 56 39 58",
+    "M45 11 Q38 16 45 21 Q38 26 45 31 Q38 36 45 41 Q38 46 45 51 Q38 56 45 58",
+  ];
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} role="img" aria-label="HACKSTER.ai">
-      {/* H letterform (solid so it reads at small sizes) */}
-      <rect x="10" y="8" width="12" height="48" rx="2.5" fill={bar} />
-      <rect x="42" y="8" width="12" height="48" rx="2.5" fill={bar} />
-      <rect x="20" y="26" width="24" height="12" fill={bar} />
-      {/* DNA double-helix inside the left pillar */}
-      <g stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity={strandOpacity} fill="none">
-        <path d="M13 11 Q21 17 13 23 Q21 29 13 35 Q21 41 13 47 Q21 53 13 55" />
-        <path d="M19 11 Q11 17 19 23 Q11 29 19 35 Q11 41 19 47 Q11 53 19 55" />
+    <svg width={size} height={size} viewBox="0 0 66 66" fill="none" className={className} role="img" aria-label="HACKSTER.ai">
+      {/* Extruded depth (offset up-right) forms the navy top & side faces */}
+      <path d={H_PATH} transform="translate(8,-8)" fill={depth} />
+      {/* Connectors joining front corners to the depth block */}
+      <g stroke={line} strokeWidth="1.2" strokeLinejoin="round">
+        <line x1="8" y1="8" x2="16" y2="0" />
+        <line x1="48" y1="8" x2="56" y2="0" />
+        <line x1="48" y1="60" x2="56" y2="52" />
       </g>
-      {/* DNA double-helix inside the right pillar */}
-      <g stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity={strandOpacity} fill="none">
-        <path d="M45 11 Q53 17 45 23 Q53 29 45 35 Q53 41 45 47 Q53 53 45 55" />
-        <path d="M51 11 Q43 17 51 23 Q43 29 51 35 Q43 41 51 47 Q43 53 51 55" />
+      {/* Front face */}
+      <path d={H_PATH} fill={front} stroke={line} strokeWidth="1.6" strokeLinejoin="round" />
+      {/* DNA double-helix on the two front pillars */}
+      <g stroke={strand} strokeWidth="1.2" strokeLinecap="round" opacity="0.7" fill="none">
+        {leftStrands.map((d, i) => <path key={`l${i}`} d={d} />)}
+        {rightStrands.map((d, i) => <path key={`r${i}`} d={d} />)}
       </g>
     </svg>
   );
@@ -2390,7 +2402,7 @@ const Home = () => {
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-400 text-sm mb-4 md:mb-0">
-                © 2026 Hackster.ai / a PLZ Company. All rights reserved. Beta Version
+                © 2026 Hackster.ai is a PLZ Company brand. All rights reserved. Beta Version.
               </div>
               <div className="flex items-center space-x-6">
                 <span className="text-gray-400 text-sm">
@@ -6079,7 +6091,7 @@ const Footer = () => {
               * Any recommendations on Hackster.ai have not been reviewed or approved by the Federal Drug Administration or FDA and are not intended to diagnose, treat, cure or prevent disease.
             </p>
           </div>
-          <p className="text-center text-sm text-gray-400">&copy; 2026 Hackster.ai / a PLZ Company. All rights reserved. Beta Version</p>
+          <p className="text-center text-sm text-gray-400">&copy; 2026 Hackster.ai is a PLZ Company brand. All rights reserved. Beta Version.</p>
         </div>
       </div>
     </footer>
