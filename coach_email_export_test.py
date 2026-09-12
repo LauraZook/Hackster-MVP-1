@@ -10,7 +10,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://wellness-coach-match.preview.emergentagent.com/api"
+BASE_URL = "https://health-revolution-1.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class CoachEmailExportTester:
