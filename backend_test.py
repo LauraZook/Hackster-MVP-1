@@ -1,513 +1,460 @@
+#!/usr/bin/env python3
 """
-Backend Testing for Hackster Health Goals Assessment V2
-Tests the redesigned questionnaire and recommendations flow
+Backend API Testing for Hackster.ai - Phase 1 Affiliate System
+Tests ONLY the new affiliate tracking, grouped checkout, practitioner orders, and admin CRUD endpoints.
 """
 
 import requests
 import json
-from typing import Dict, Any, List
+import sys
+from typing import Dict, Any, Optional
 
-# Backend URL from frontend/.env
-BASE_URL = "https://health-revolution-1.preview.emergentagent.com/api"
+# Backend URL from environment
+BACKEND_URL = "https://health-revolution-1.preview.emergentagent.com/api"
 
-class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    END = '\033[0m'
+# Admin credentials from test_credentials.md
+ADMIN_EMAIL = "lzook@plzcompany.com"
+ADMIN_PASSWORD = "HacksterAdmin2025!"
 
-def print_test(name: str, passed: bool, details: str = ""):
-    status = f"{Colors.GREEN}✓ PASS{Colors.END}" if passed else f"{Colors.RED}✗ FAIL{Colors.END}"
-    print(f"{status} - {name}")
+# Test results tracking
+test_results = []
+
+def log_test(test_name: str, passed: bool, details: str = ""):
+    """Log test result"""
+    status = "✅ PASS" if passed else "❌ FAIL"
+    result = f"{status} - {test_name}"
     if details:
-        print(f"  {details}")
-    if not passed:
-        print()
+        result += f"\n    Details: {details}"
+    print(result)
+    test_results.append({"name": test_name, "passed": passed, "details": details})
 
-def test_health_endpoint():
-    """Test 1: GET /api/health - returns 200, status healthy"""
-    print(f"\n{Colors.BLUE}=== Test 1: Health Check ==={Colors.END}")
+def make_request(method: str, endpoint: str, headers: Optional[Dict] = None, 
+                 json_data: Optional[Dict] = None, params: Optional[Dict] = None) -> tuple:
+    """Make HTTP request and return (success, response_data, status_code)"""
+    url = f"{BACKEND_URL}{endpoint}"
     try:
-        response = requests.get(f"{BASE_URL}/health", timeout=10)
-        passed = response.status_code == 200
-        
-        if passed:
-            data = response.json()
-            has_status = "status" in data
-            is_healthy = data.get("status") == "healthy" if has_status else False
-            passed = has_status and is_healthy
-            print_test("GET /api/health returns 200 with healthy status", passed, 
-                      f"Status: {data.get('status')}, Database: {data.get('database')}")
+        if method == "GET":
+            resp = requests.get(url, headers=headers, params=params, timeout=30)
+        elif method == "POST":
+            resp = requests.post(url, headers=headers, json=json_data, timeout=30)
+        elif method == "PUT":
+            resp = requests.put(url, headers=headers, json=json_data, timeout=30)
+        elif method == "DELETE":
+            resp = requests.delete(url, headers=headers, timeout=30)
         else:
-            print_test("GET /api/health returns 200", False, f"Status code: {response.status_code}")
+            return False, {"error": f"Unsupported method: {method}"}, 0
         
-        return passed
+        try:
+            data = resp.json()
+        except:
+            data = {"text": resp.text}
+        
+        return resp.ok, data, resp.status_code
     except Exception as e:
-        print_test("GET /api/health", False, f"Error: {str(e)}")
-        return False
+        return False, {"error": str(e)}, 0
 
-def test_questionnaire_endpoint():
-    """Test 2: GET /api/questionnaire - returns new v2 questionnaire"""
-    print(f"\n{Colors.BLUE}=== Test 2: Questionnaire V2 ==={Colors.END}")
-    try:
-        response = requests.get(f"{BASE_URL}/questionnaire", timeout=10)
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("GET /api/questionnaire returns 200", False, f"Status code: {response.status_code}")
-            return False
-        
-        data = response.json()
-        
-        # Check questionnaire ID
-        is_v2 = data.get("id") == "biohacking-assessment-v2"
-        print_test("Questionnaire ID is 'biohacking-assessment-v2'", is_v2, 
-                  f"ID: {data.get('id')}")
-        
-        # Check number of questions
-        questions = data.get("questions", [])
-        has_19_questions = len(questions) == 19
-        print_test("Has 19 questions", has_19_questions, f"Count: {len(questions)}")
-        
-        # Check categories
-        categories = set(q.get("category") for q in questions)
-        expected_categories = {"About You", "Primary Goal", "Current Baseline", "Lifestyle", "Preferences"}
-        has_all_categories = expected_categories.issubset(categories)
-        print_test("Has all 5 categories", has_all_categories, 
-                  f"Categories: {', '.join(sorted(categories))}")
-        
-        # Check for primary goal question with 4 priority goals
-        primary_goal_q = next((q for q in questions if q.get("id") == "primary_goal"), None)
-        if primary_goal_q:
-            options = primary_goal_q.get("options", [])
-            expected_goals = [
-                "Increase Energy",
-                "Improve Vitality / Longevity",
-                "Boost Immune System",
-                "Weight Loss / Metabolic Health"
-            ]
-            has_priority_goals = all(goal in options for goal in expected_goals)
-            print_test("Primary goal has 4 priority goals", has_priority_goals,
-                      f"Options: {', '.join(options)}")
-        else:
-            print_test("Primary goal question exists", False, "Question not found")
-        
-        return is_v2 and has_19_questions and has_all_categories
-        
-    except Exception as e:
-        print_test("GET /api/questionnaire", False, f"Error: {str(e)}")
-        return False
-
-def test_vendors_endpoint():
-    """Test 3: GET /api/vendors - returns at least 7 vendors including new ones"""
-    print(f"\n{Colors.BLUE}=== Test 3: Vendors ==={Colors.END}")
-    try:
-        response = requests.get(f"{BASE_URL}/vendors", timeout=10)
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("GET /api/vendors returns 200", False, f"Status code: {response.status_code}")
-            return False
-        
-        vendors = response.json()
-        vendor_count = len(vendors)
-        has_7_vendors = vendor_count >= 7
-        print_test("Has at least 7 vendors", has_7_vendors, f"Count: {vendor_count}")
-        
-        # Check for new vendors
-        vendor_slugs = [v.get("slug") for v in vendors]
-        new_vendors = ["bio-well", "curawaves", "stemregen"]
-        
-        for slug in new_vendors:
-            has_vendor = slug in vendor_slugs
-            vendor_name = next((v.get("name") for v in vendors if v.get("slug") == slug), "Not found")
-            print_test(f"Has vendor '{slug}'", has_vendor, f"Name: {vendor_name}")
-        
-        all_new_vendors = all(slug in vendor_slugs for slug in new_vendors)
-        
-        return has_7_vendors and all_new_vendors
-        
-    except Exception as e:
-        print_test("GET /api/vendors", False, f"Error: {str(e)}")
-        return False
-
-def test_products_endpoint():
-    """Test 4: GET /api/products - returns 25+ products from all vendors"""
-    print(f"\n{Colors.BLUE}=== Test 4: Products ==={Colors.END}")
-    try:
-        response = requests.get(f"{BASE_URL}/products", timeout=10)
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("GET /api/products returns 200", False, f"Status code: {response.status_code}")
-            return False
-        
-        products = response.json()
-        product_count = len(products)
-        has_25_products = product_count >= 25
-        print_test("Has at least 25 products", has_25_products, f"Count: {product_count}")
-        
-        # Check vendor distribution
-        vendor_names = set(p.get("vendor_name") for p in products)
-        expected_vendors = ["Thorne", "Apex Energetics", "Standard Process", "Bio-Well", "CuraWaves", "StemRegen"]
-        
-        print(f"\n  Vendors represented: {', '.join(sorted(vendor_names))}")
-        
-        # Spot-check specific products
-        product_names = [p.get("name") for p in products]
-        spot_check_products = [
-            "STEMREGEN® Mobilize",
-            "Bio-Well GDV Camera",
-            "CuraWaves Wave Therapy Device",
-            "Berberine"
-        ]
-        
-        print(f"\n  Spot-checking key products:")
-        for product_name in spot_check_products:
-            found = any(product_name.lower() in name.lower() for name in product_names)
-            print_test(f"  Has '{product_name}'", found)
-        
-        all_spot_checks = all(
-            any(product_name.lower() in name.lower() for name in product_names)
-            for product_name in spot_check_products
-        )
-        
-        return has_25_products and all_spot_checks
-        
-    except Exception as e:
-        print_test("GET /api/products", False, f"Error: {str(e)}")
-        return False
-
-def test_coaches_endpoint():
-    """Test 5: GET /api/coaches - returns at least 6 coaches including Laura Zook"""
-    print(f"\n{Colors.BLUE}=== Test 5: Coaches ==={Colors.END}")
-    try:
-        response = requests.get(f"{BASE_URL}/coaches", timeout=10)
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("GET /api/coaches returns 200", False, f"Status code: {response.status_code}")
-            return False
-        
-        coaches = response.json()
-        coach_count = len(coaches)
-        has_6_coaches = coach_count >= 6
-        print_test("Has at least 6 approved+active coaches", has_6_coaches, f"Count: {coach_count}")
-        
-        # Check for Laura Zook
-        laura = next((c for c in coaches if c.get("name") == "Laura Zook"), None)
-        has_laura = laura is not None
-        
-        if has_laura:
-            rating = laura.get("rating", 0)
-            is_5_star = rating == 5.0
-            print_test("Has Laura Zook with 5.0 rating", is_5_star, 
-                      f"Rating: {rating}, Specialties: {', '.join(laura.get('specialties', [])[:3])}")
-        else:
-            print_test("Has Laura Zook", False, "Coach not found")
-        
-        # Check for other new coaches
-        new_coaches = ["Dr. James Okafor", "Maya Patel"]
-        for coach_name in new_coaches:
-            found = any(c.get("name") == coach_name for c in coaches)
-            print_test(f"Has '{coach_name}'", found)
-        
-        return has_6_coaches and has_laura
-        
-    except Exception as e:
-        print_test("GET /api/coaches", False, f"Error: {str(e)}")
-        return False
-
-def test_questionnaire_submit_weight_loss():
-    """Test 6: POST /api/questionnaire/submit - weight-loss persona"""
-    print(f"\n{Colors.BLUE}=== Test 6: Questionnaire Submit - Weight Loss Persona ==={Colors.END}")
+def test_admin_login() -> Optional[str]:
+    """Test 1: Admin login and return access token"""
+    print("\n=== TEST 1: Admin Login ===")
+    success, data, status = make_request("POST", "/auth/login", json_data={
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    })
     
-    # Weight loss persona responses
-    responses = [
-        {"question_id": "age_range", "answer": "40-49"},
-        {"question_id": "gender", "answer": "Female"},
-        {"question_id": "height_weight_goal", "answer": "I want to lose 15-30 lbs"},
-        {"question_id": "primary_goal", "answer": "Weight Loss / Metabolic Health"},
-        {"question_id": "primary_goal_why", "answer": "I want to lose weight and improve my metabolic health for better energy and longevity"},
-        {"question_id": "secondary_goals", "answer": ["More Energy", "Better Sleep", "Gut Health"]},
-        {"question_id": "energy_level", "answer": 4},
-        {"question_id": "sleep_quality", "answer": 5},
-        {"question_id": "stress_level", "answer": 7},
-        {"question_id": "immune_resilience", "answer": "Occasionally (2-3x a year)"},
-        {"question_id": "metabolic_signals", "answer": ["Cravings for sugar / carbs", "Energy crashes after meals", "Belly fat hard to lose"]},
-        {"question_id": "health_concerns", "answer": ["Fatigue / low energy", "Blood sugar", "Gut / digestion"]},
-        {"question_id": "exercise_frequency", "answer": "3-4 times/week"},
-        {"question_id": "diet_type", "answer": "Mostly Healthy / Whole Foods"},
-        {"question_id": "current_supplements", "answer": ["Multivitamin", "Vitamin D"]},
-        {"question_id": "openness_to_devices", "answer": "Curious — open to learning"},
-        {"question_id": "wants_baseline_scan", "answer": "Maybe"},
-        {"question_id": "wants_coach", "answer": "Yes — I want a coach to guide me"},
-        {"question_id": "budget", "answer": "$100-200"}
+    if success and "access_token" in data:
+        # Verify role is admin
+        token = data["access_token"]
+        # Get user info to verify admin role
+        success2, user_data, _ = make_request("GET", "/auth/me", headers={
+            "Authorization": f"Bearer {token}"
+        })
+        if success2 and user_data.get("role") == "admin":
+            log_test("Admin Login", True, f"Token received, role=admin")
+            return token
+        else:
+            log_test("Admin Login", False, f"Token received but role is not admin: {user_data.get('role')}")
+            return None
+    else:
+        log_test("Admin Login", False, f"Status {status}, Response: {data}")
+        return None
+
+def test_affiliate_redirect(product_id: str):
+    """Test 2: GET /api/go/{product_id} - Affiliate tracking redirect"""
+    print("\n=== TEST 2: Affiliate Redirect Tracking ===")
+    
+    # Test 2a: JSON format (returns URL + click_id)
+    success, data, status = make_request("GET", f"/go/{product_id}", params={"format": "json"})
+    if success and "url" in data and "click_id" in data:
+        url = data["url"]
+        click_id = data["click_id"]
+        # Verify URL contains tracking params
+        has_tracking = "aff=hackster" in url or "ref=hackster" in url or "partner=hackster" in url
+        has_subid = "subId=" in url or "subid=" in url
+        if has_tracking:
+            log_test("Affiliate Redirect (JSON format)", True, 
+                    f"URL: {url[:80]}..., click_id: {click_id}, has_tracking: {has_tracking}, has_subid: {has_subid}")
+        else:
+            log_test("Affiliate Redirect (JSON format)", False, 
+                    f"URL missing tracking param: {url}")
+    else:
+        log_test("Affiliate Redirect (JSON format)", False, f"Status {status}, Response: {data}")
+    
+    # Test 2b: Redirect format (302)
+    try:
+        resp = requests.get(f"{BACKEND_URL}/go/{product_id}", allow_redirects=False, timeout=30)
+        if resp.status_code == 302 and "Location" in resp.headers:
+            location = resp.headers["Location"]
+            has_tracking = "aff=hackster" in location or "ref=hackster" in location or "partner=hackster" in location
+            log_test("Affiliate Redirect (302 redirect)", True, 
+                    f"Redirects to: {location[:80]}..., has_tracking: {has_tracking}")
+        else:
+            log_test("Affiliate Redirect (302 redirect)", False, 
+                    f"Expected 302, got {resp.status_code}")
+    except Exception as e:
+        log_test("Affiliate Redirect (302 redirect)", False, f"Error: {str(e)}")
+
+def test_grouped_checkout(thorne_product_id: str, practitioner_product_id: str):
+    """Test 3: POST /api/stack/checkout - Grouped checkout with mixed vendors"""
+    print("\n=== TEST 3: Grouped Checkout (Mixed Vendors) ===")
+    
+    success, data, status = make_request("POST", "/stack/checkout", json_data={
+        "items": [
+            {"product_id": thorne_product_id, "quantity": 2},
+            {"product_id": practitioner_product_id, "quantity": 1}
+        ],
+        "source": "stack"
+    })
+    
+    if success and "vendor_groups" in data:
+        vendor_groups = data["vendor_groups"]
+        has_affiliate = False
+        has_practitioner = False
+        
+        for group in vendor_groups:
+            if group.get("fulfillment_type") == "affiliate":
+                has_affiliate = True
+                # Verify affiliate group has checkout_url
+                if not group.get("checkout_url"):
+                    log_test("Grouped Checkout - Affiliate group", False, 
+                            f"Affiliate group missing checkout_url: {group}")
+                    continue
+                # Verify requires_practitioner_order is false
+                if group.get("requires_practitioner_order"):
+                    log_test("Grouped Checkout - Affiliate group", False, 
+                            f"Affiliate group has requires_practitioner_order=true")
+                    continue
+            
+            if group.get("fulfillment_type") == "practitioner_order":
+                has_practitioner = True
+                # Verify practitioner group has requires_practitioner_order=true
+                if not group.get("requires_practitioner_order"):
+                    log_test("Grouped Checkout - Practitioner group", False, 
+                            f"Practitioner group missing requires_practitioner_order")
+                    continue
+                # Verify checkout_url is null
+                if group.get("checkout_url"):
+                    log_test("Grouped Checkout - Practitioner group", False, 
+                            f"Practitioner group should not have checkout_url")
+                    continue
+        
+        # Verify response structure
+        checks = []
+        checks.append(("has_affiliate_group", has_affiliate))
+        checks.append(("has_practitioner_group", has_practitioner))
+        checks.append(("grand_total > 0", data.get("grand_total", 0) > 0))
+        checks.append(("est_commission_total >= 0", data.get("est_commission_total", -1) >= 0))
+        checks.append(("has_practitioner_orders = true", data.get("has_practitioner_orders") == True))
+        checks.append(("vendor_count >= 2", data.get("vendor_count", 0) >= 2))
+        checks.append(("item_count >= 2", data.get("item_count", 0) >= 2))
+        
+        all_passed = all(check[1] for check in checks)
+        details = ", ".join([f"{check[0]}={check[1]}" for check in checks])
+        log_test("Grouped Checkout", all_passed, details)
+    else:
+        log_test("Grouped Checkout", False, f"Status {status}, Response: {data}")
+
+def test_practitioner_order_create():
+    """Test 4: POST /api/practitioner-orders - Create practitioner order"""
+    print("\n=== TEST 4: Create Practitioner Order ===")
+    
+    # Get a practitioner product first
+    success, products, _ = make_request("GET", "/products", params={"limit": 100})
+    practitioner_product = None
+    if success and isinstance(products, list):
+        for p in products:
+            vendor_id = p.get("vendor_id", "")
+            if "apex" in vendor_id.lower() or "standard" in vendor_id.lower():
+                practitioner_product = p
+                break
+    
+    if not practitioner_product:
+        log_test("Create Practitioner Order", False, "No practitioner products found")
+        return None
+    
+    success, data, status = make_request("POST", "/practitioner-orders", json_data={
+        "customer_name": "Jane Test",
+        "customer_email": "jane@test.com",
+        "items": [{"product_id": practitioner_product["id"], "quantity": 2}]
+    })
+    
+    if success and "id" in data:
+        checks = []
+        checks.append(("has_id", "id" in data))
+        checks.append(("estimated_total > 0", data.get("estimated_total", 0) > 0))
+        checks.append(("status = new", data.get("status") == "new"))
+        checks.append(("vendors populated", len(data.get("vendors", [])) > 0))
+        
+        all_passed = all(check[1] for check in checks)
+        details = ", ".join([f"{check[0]}={check[1]}" for check in checks])
+        log_test("Create Practitioner Order", all_passed, details)
+        return data["id"]
+    else:
+        log_test("Create Practitioner Order", False, f"Status {status}, Response: {data}")
+        return None
+
+def test_admin_practitioner_orders(admin_token: str, order_id: Optional[str]):
+    """Test 5: Admin practitioner order management"""
+    print("\n=== TEST 5: Admin Practitioner Order Management ===")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test 5a: GET /api/admin/practitioner-orders
+    success, data, status = make_request("GET", "/admin/practitioner-orders", headers=headers)
+    if success and isinstance(data, list):
+        log_test("Admin List Practitioner Orders", True, f"Found {len(data)} orders")
+    else:
+        log_test("Admin List Practitioner Orders", False, f"Status {status}, Response: {data}")
+    
+    # Test 5b: PUT /api/admin/practitioner-orders/{id} - Update status
+    if order_id:
+        success, data, status = make_request("PUT", f"/admin/practitioner-orders/{order_id}", 
+                                            headers=headers, json_data={"status": "contacted"})
+        if success:
+            # Verify status was updated
+            success2, orders, _ = make_request("GET", "/admin/practitioner-orders", headers=headers)
+            if success2:
+                updated_order = next((o for o in orders if o.get("id") == order_id), None)
+                if updated_order and updated_order.get("status") == "contacted":
+                    log_test("Admin Update Practitioner Order", True, "Status updated to 'contacted'")
+                else:
+                    log_test("Admin Update Practitioner Order", False, 
+                            f"Status not updated correctly: {updated_order.get('status') if updated_order else 'order not found'}")
+            else:
+                log_test("Admin Update Practitioner Order", False, "Could not verify update")
+        else:
+            log_test("Admin Update Practitioner Order", False, f"Status {status}, Response: {data}")
+
+def test_admin_product_crud(admin_token: str):
+    """Test 6: Admin product CRUD"""
+    print("\n=== TEST 6: Admin Product CRUD ===")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Get a real vendor UUID first
+    success, vendors, _ = make_request("GET", "/vendors")
+    if not success or not vendors:
+        log_test("Admin Product CRUD", False, "Could not fetch vendors")
+        return
+    
+    vendor_id = vendors[0]["id"]
+    
+    # Test 6a: POST /api/admin/products - Create product
+    product_data = {
+        "vendor_id": vendor_id,
+        "vendor_name": vendors[0]["name"],
+        "name": "Test Product QA",
+        "slug": "test-product-qa",
+        "price": 29.99,
+        "category": "supplements",
+        "description": "QA test product"
+    }
+    success, data, status = make_request("POST", "/admin/products", headers=headers, json_data=product_data)
+    
+    if success and "id" in data:
+        product_id = data["id"]
+        checks = []
+        checks.append(("has_id", "id" in data))
+        checks.append(("vendor_name_filled", data.get("vendor_name") != ""))
+        
+        all_passed = all(check[1] for check in checks)
+        details = ", ".join([f"{check[0]}={check[1]}" for check in checks])
+        log_test("Admin Create Product", all_passed, details)
+        
+        # Test 6b: PUT /api/admin/products/{id} - Update product
+        success2, data2, status2 = make_request("PUT", f"/admin/products/{product_id}", 
+                                               headers=headers, json_data={"price": 34.99})
+        if success2 and data2.get("price") == 34.99:
+            log_test("Admin Update Product", True, f"Price updated to {data2.get('price')}")
+        else:
+            log_test("Admin Update Product", False, f"Status {status2}, Response: {data2}")
+        
+        # Test 6c: DELETE /api/admin/products/{id} - Delete product
+        success3, data3, status3 = make_request("DELETE", f"/admin/products/{product_id}", headers=headers)
+        if success3:
+            log_test("Admin Delete Product", True, "Product deleted successfully")
+        else:
+            log_test("Admin Delete Product", False, f"Status {status3}, Response: {data3}")
+    else:
+        log_test("Admin Create Product", False, f"Status {status}, Response: {data}")
+
+def test_admin_vendor_crud(admin_token: str):
+    """Test 7: Admin vendor CRUD"""
+    print("\n=== TEST 7: Admin Vendor CRUD ===")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    
+    # Test 7a: POST /api/admin/vendors - Create vendor
+    vendor_data = {
+        "name": "QA Vendor",
+        "slug": "qa-vendor",
+        "description": "QA test vendor",
+        "website": "https://qa.com"
+    }
+    success, data, status = make_request("POST", "/admin/vendors", headers=headers, json_data=vendor_data)
+    
+    if success and "id" in data:
+        vendor_id = data["id"]
+        log_test("Admin Create Vendor", True, f"Vendor created with id: {vendor_id}")
+        
+        # Test 7b: PUT /api/admin/vendors/{id} - Update vendor
+        success2, data2, status2 = make_request("PUT", f"/admin/vendors/{vendor_id}", 
+                                               headers=headers, json_data={"commission_rate": 0.2})
+        if success2 and data2.get("commission_rate") == 0.2:
+            log_test("Admin Update Vendor", True, f"Commission rate updated to {data2.get('commission_rate')}")
+        else:
+            log_test("Admin Update Vendor", False, f"Status {status2}, Response: {data2}")
+        
+        # Test 7c: DELETE /api/admin/vendors/{id} - Delete vendor
+        success3, data3, status3 = make_request("DELETE", f"/admin/vendors/{vendor_id}", headers=headers)
+        if success3:
+            log_test("Admin Delete Vendor", True, "Vendor deleted successfully")
+        else:
+            log_test("Admin Delete Vendor", False, f"Status {status3}, Response: {data3}")
+    else:
+        log_test("Admin Create Vendor", False, f"Status {status}, Response: {data}")
+
+def test_admin_analytics(admin_token: str):
+    """Test 8: GET /api/admin/affiliate/analytics"""
+    print("\n=== TEST 8: Admin Affiliate Analytics ===")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    success, data, status = make_request("GET", "/admin/affiliate/analytics", headers=headers)
+    
+    if success:
+        checks = []
+        checks.append(("has_total_clicks", "total_clicks" in data))
+        checks.append(("total_clicks > 0", data.get("total_clicks", 0) > 0))
+        checks.append(("has_by_vendor", "by_vendor" in data and isinstance(data["by_vendor"], list)))
+        checks.append(("has_top_products", "top_products" in data and isinstance(data["top_products"], list)))
+        checks.append(("has_recent_clicks", "recent_clicks" in data and isinstance(data["recent_clicks"], list)))
+        checks.append(("has_est_commission", "est_commission" in data and isinstance(data["est_commission"], (int, float))))
+        
+        all_passed = all(check[1] for check in checks)
+        details = ", ".join([f"{check[0]}={check[1]}" for check in checks])
+        log_test("Admin Affiliate Analytics", all_passed, details)
+    else:
+        log_test("Admin Affiliate Analytics", False, f"Status {status}, Response: {data}")
+
+def test_security_admin_endpoints():
+    """Test 9: Security - Admin endpoints without token"""
+    print("\n=== TEST 9: Security - Admin Endpoints Without Token ===")
+    
+    # Test without any token
+    endpoints = [
+        ("GET", "/admin/affiliate/analytics"),
+        ("GET", "/admin/practitioner-orders"),
+        ("POST", "/admin/products")
     ]
     
-    try:
-        response = requests.post(
-            f"{BASE_URL}/questionnaire/submit",
-            json={"responses": responses},
-            timeout=30
-        )
-        
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("POST /api/questionnaire/submit returns 200", False, 
-                      f"Status code: {response.status_code}, Error: {response.text[:200]}")
-            return False
-        
-        data = response.json()
-        
-        # Check recommended_products
-        products = data.get("recommended_products", [])
-        has_products = 4 <= len(products) <= 7
-        print_test("Has 4-7 recommended products", has_products, f"Count: {len(products)}")
-        
-        if products:
-            print(f"\n  Recommended products:")
-            for i, p in enumerate(products[:5], 1):
-                print(f"    {i}. {p.get('name')} ({p.get('brand')})")
-        
-        # Check for at least one Thorne product
-        has_thorne = any(p.get("brand") == "Thorne" for p in products)
-        print_test("Has at least one Thorne product", has_thorne)
-        
-        # Check for device (CuraWaves or Bio-Well)
-        has_device = any(
-            p.get("brand") in ["CuraWaves", "Bio-Well"] or 
-            "device" in p.get("name", "").lower() or
-            "curawaves" in p.get("name", "").lower() or
-            "bio-well" in p.get("name", "").lower()
-            for p in products
-        )
-        print_test("Has at least one device (CuraWaves or Bio-Well)", has_device)
-        
-        # Check recommended_coaches
-        coaches = data.get("recommended_coaches", [])
-        has_3_coaches = len(coaches) == 3
-        print_test("Has exactly 3 recommended coaches", has_3_coaches, f"Count: {len(coaches)}")
-        
-        if coaches:
-            print(f"\n  Recommended coaches:")
-            for i, c in enumerate(coaches, 1):
-                print(f"    {i}. {c.get('name')} (Rating: {c.get('rating')}, Match Score: {c.get('match_score')})")
-                print(f"       Specialties: {', '.join(c.get('specialties', [])[:3])}")
-        
-        # Check coach fields
-        if coaches:
-            first_coach = coaches[0]
-            required_fields = ["id", "name", "specialties", "rating", "profile_image", "match_score"]
-            has_all_fields = all(field in first_coach for field in required_fields)
-            print_test("Coach has all required fields", has_all_fields,
-                      f"Fields: {', '.join(required_fields)}")
-        
-        # Check coach_match_specialties
-        coach_specialties = data.get("coach_match_specialties", [])
-        has_specialties = len(coach_specialties) > 0
-        print_test("Has coach_match_specialties", has_specialties,
-                  f"Keywords: {', '.join(coach_specialties[:5])}")
-        
-        # Check other fields
-        has_health_score = "health_score" in data
-        has_primary_goals = "primary_goals" in data and len(data.get("primary_goals", [])) > 0
-        has_lifestyle_tips = "lifestyle_tips" in data and len(data.get("lifestyle_tips", [])) > 0
-        has_summary = "personalized_summary" in data and len(data.get("personalized_summary", "")) > 0
-        
-        print_test("Has health_score", has_health_score, f"Score: {data.get('health_score')}")
-        print_test("Has primary_goals", has_primary_goals, f"Goals: {', '.join(data.get('primary_goals', []))}")
-        print_test("Has lifestyle_tips", has_lifestyle_tips, f"Count: {len(data.get('lifestyle_tips', []))}")
-        print_test("Has personalized_summary", has_summary)
-        
-        return (has_products and has_3_coaches and has_all_fields and 
-                has_health_score and has_primary_goals and has_lifestyle_tips and has_summary)
-        
-    except Exception as e:
-        print_test("POST /api/questionnaire/submit (weight-loss)", False, f"Error: {str(e)}")
-        return False
+    all_blocked = True
+    for method, endpoint in endpoints:
+        success, data, status = make_request(method, endpoint)
+        # Should return 401 (unauthorized) or 403 (forbidden)
+        if status in [401, 403]:
+            print(f"  ✓ {method} {endpoint} correctly blocked (status {status})")
+        else:
+            print(f"  ✗ {method} {endpoint} NOT blocked (status {status})")
+            all_blocked = False
+    
+    log_test("Security - Admin Endpoints Without Token", all_blocked, 
+            "All admin endpoints should return 401/403 without token")
 
-def test_questionnaire_submit_longevity():
-    """Test 7: POST /api/questionnaire/submit - longevity persona"""
-    print(f"\n{Colors.BLUE}=== Test 7: Questionnaire Submit - Longevity Persona ==={Colors.END}")
+def main():
+    """Run all Phase-1 affiliate system tests"""
+    print("=" * 80)
+    print("HACKSTER.AI - PHASE 1 AFFILIATE SYSTEM BACKEND TESTING")
+    print("=" * 80)
+    print(f"Backend URL: {BACKEND_URL}")
+    print(f"Admin Email: {ADMIN_EMAIL}")
     
-    # Longevity persona responses
-    responses = [
-        {"question_id": "age_range", "answer": "50-59"},
-        {"question_id": "gender", "answer": "Male"},
-        {"question_id": "height_weight_goal", "answer": "I'm at a healthy weight and want to maintain"},
-        {"question_id": "primary_goal", "answer": "Improve Vitality / Longevity"},
-        {"question_id": "primary_goal_why", "answer": "I want to optimize my healthspan and live a long, vibrant life"},
-        {"question_id": "secondary_goals", "answer": ["More Energy", "Mental Focus / Brain Health", "Heart Health"]},
-        {"question_id": "energy_level", "answer": 7},
-        {"question_id": "sleep_quality", "answer": 7},
-        {"question_id": "stress_level", "answer": 5},
-        {"question_id": "immune_resilience", "answer": "Rarely (1x a year or less)"},
-        {"question_id": "metabolic_signals", "answer": ["None of these"]},
-        {"question_id": "health_concerns", "answer": ["None"]},
-        {"question_id": "exercise_frequency", "answer": "5+ times/week"},
-        {"question_id": "diet_type", "answer": "Mediterranean"},
-        {"question_id": "current_supplements", "answer": ["Vitamin D", "Omega-3 / Fish Oil", "NAD+ / NR"]},
-        {"question_id": "openness_to_devices", "answer": "Very open — I love biohacking tools"},
-        {"question_id": "wants_baseline_scan", "answer": "Yes, definitely"},
-        {"question_id": "wants_coach", "answer": "Maybe — show me coach options"},
-        {"question_id": "budget", "answer": "$200-500"}
-    ]
+    # Get product IDs for testing
+    print("\n=== SETUP: Fetching Product IDs ===")
+    success, products, _ = make_request("GET", "/products", params={"limit": 100})
+    if not success or not isinstance(products, list):
+        print("❌ FATAL: Could not fetch products")
+        sys.exit(1)
     
-    try:
-        response = requests.post(
-            f"{BASE_URL}/questionnaire/submit",
-            json={"responses": responses},
-            timeout=30
-        )
-        
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("POST /api/questionnaire/submit returns 200", False, 
-                      f"Status code: {response.status_code}")
-            return False
-        
-        data = response.json()
-        products = data.get("recommended_products", [])
-        
-        print(f"\n  Recommended products for longevity:")
-        for i, p in enumerate(products[:7], 1):
-            print(f"    {i}. {p.get('name')} ({p.get('brand')})")
-        
-        # Check for StemRegen or NiaCel products
-        has_longevity_product = any(
-            "stemregen" in p.get("name", "").lower() or
-            "niacel" in p.get("name", "").lower() or
-            "nad" in p.get("name", "").lower() or
-            p.get("brand") == "StemRegen"
-            for p in products
-        )
-        print_test("Has longevity product (StemRegen or NiaCel)", has_longevity_product)
-        
-        # Check coaches
-        coaches = data.get("recommended_coaches", [])
-        print(f"\n  Recommended coaches for longevity:")
-        for i, c in enumerate(coaches, 1):
-            print(f"    {i}. {c.get('name')} - Specialties: {', '.join(c.get('specialties', [])[:3])}")
-        
-        return has_longevity_product and len(coaches) == 3
-        
-    except Exception as e:
-        print_test("POST /api/questionnaire/submit (longevity)", False, f"Error: {str(e)}")
-        return False
-
-def test_questionnaire_submit_immune():
-    """Test 8: POST /api/questionnaire/submit - immune persona"""
-    print(f"\n{Colors.BLUE}=== Test 8: Questionnaire Submit - Immune Support Persona ==={Colors.END}")
+    # Find Thorne (affiliate) and Apex/Standard Process (practitioner) products
+    thorne_product = None
+    practitioner_product = None
     
-    # Immune support persona responses
-    responses = [
-        {"question_id": "age_range", "answer": "30-39"},
-        {"question_id": "gender", "answer": "Female"},
-        {"question_id": "height_weight_goal", "answer": "I'm at a healthy weight and want to maintain"},
-        {"question_id": "primary_goal", "answer": "Boost Immune System"},
-        {"question_id": "primary_goal_why", "answer": "I get sick frequently and want to strengthen my immune system"},
-        {"question_id": "secondary_goals", "answer": ["More Energy", "Better Sleep", "Stress Resilience"]},
-        {"question_id": "energy_level", "answer": 5},
-        {"question_id": "sleep_quality", "answer": 6},
-        {"question_id": "stress_level", "answer": 8},
-        {"question_id": "immune_resilience", "answer": "Often (4-6x a year)"},
-        {"question_id": "metabolic_signals", "answer": ["Brain fog"]},
-        {"question_id": "health_concerns", "answer": ["Frequent illness", "Fatigue / low energy", "Mood / anxiety"]},
-        {"question_id": "exercise_frequency", "answer": "1-2 times/week"},
-        {"question_id": "diet_type", "answer": "Standard American Diet"},
-        {"question_id": "current_supplements", "answer": ["None"]},
-        {"question_id": "openness_to_devices", "answer": "Maybe later — supplements first"},
-        {"question_id": "wants_baseline_scan", "answer": "No"},
-        {"question_id": "wants_coach", "answer": "Maybe — show me coach options"},
-        {"question_id": "budget", "answer": "$50-100"}
-    ]
+    for p in products:
+        vendor_id = p.get("vendor_id", "").lower()
+        if "thorne" in vendor_id and not thorne_product:
+            thorne_product = p
+        if ("apex" in vendor_id or "standard" in vendor_id) and not practitioner_product:
+            practitioner_product = p
     
-    try:
-        response = requests.post(
-            f"{BASE_URL}/questionnaire/submit",
-            json={"responses": responses},
-            timeout=30
-        )
-        
-        passed = response.status_code == 200
-        
-        if not passed:
-            print_test("POST /api/questionnaire/submit returns 200", False, 
-                      f"Status code: {response.status_code}")
-            return False
-        
-        data = response.json()
-        products = data.get("recommended_products", [])
-        
-        print(f"\n  Recommended products for immune support:")
-        for i, p in enumerate(products[:7], 1):
-            print(f"    {i}. {p.get('name')} ({p.get('brand')})")
-        
-        # Check for immune-relevant products
-        immune_keywords = ["vitamin d", "immuplex", "thymex", "curcumin", "immune"]
-        has_immune_product = any(
-            any(keyword in p.get("name", "").lower() for keyword in immune_keywords)
-            for p in products
-        )
-        print_test("Has immune-relevant product (Vitamin D, Immuplex, Thymex, or Curcumin)", 
-                  has_immune_product)
-        
-        # Check coaches
-        coaches = data.get("recommended_coaches", [])
-        print(f"\n  Recommended coaches for immune support:")
-        for i, c in enumerate(coaches, 1):
-            print(f"    {i}. {c.get('name')} - Specialties: {', '.join(c.get('specialties', [])[:3])}")
-        
-        return has_immune_product and len(coaches) == 3
-        
-    except Exception as e:
-        print_test("POST /api/questionnaire/submit (immune)", False, f"Error: {str(e)}")
-        return False
-
-def run_all_tests():
-    """Run all backend tests"""
-    print(f"\n{Colors.YELLOW}{'='*80}{Colors.END}")
-    print(f"{Colors.YELLOW}HACKSTER HEALTH GOALS ASSESSMENT V2 - BACKEND TESTING{Colors.END}")
-    print(f"{Colors.YELLOW}{'='*80}{Colors.END}")
-    print(f"\nBackend URL: {BASE_URL}\n")
+    if not thorne_product:
+        print("❌ FATAL: No Thorne products found")
+        sys.exit(1)
+    if not practitioner_product:
+        print("❌ FATAL: No practitioner products found")
+        sys.exit(1)
     
-    results = []
+    print(f"✓ Thorne product: {thorne_product['name']} (id: {thorne_product['id']})")
+    print(f"✓ Practitioner product: {practitioner_product['name']} (id: {practitioner_product['id']})")
     
-    # Run all tests
-    results.append(("Health Check", test_health_endpoint()))
-    results.append(("Questionnaire V2", test_questionnaire_endpoint()))
-    results.append(("Vendors", test_vendors_endpoint()))
-    results.append(("Products", test_products_endpoint()))
-    results.append(("Coaches", test_coaches_endpoint()))
-    results.append(("Submit - Weight Loss", test_questionnaire_submit_weight_loss()))
-    results.append(("Submit - Longevity", test_questionnaire_submit_longevity()))
-    results.append(("Submit - Immune", test_questionnaire_submit_immune()))
+    # Run tests
+    admin_token = test_admin_login()
+    if not admin_token:
+        print("\n❌ FATAL: Admin login failed, cannot continue with admin tests")
+        sys.exit(1)
+    
+    test_affiliate_redirect(thorne_product["id"])
+    test_grouped_checkout(thorne_product["id"], practitioner_product["id"])
+    order_id = test_practitioner_order_create()
+    test_admin_practitioner_orders(admin_token, order_id)
+    test_admin_product_crud(admin_token)
+    test_admin_vendor_crud(admin_token)
+    test_admin_analytics(admin_token)
+    test_security_admin_endpoints()
     
     # Summary
-    print(f"\n{Colors.YELLOW}{'='*80}{Colors.END}")
-    print(f"{Colors.YELLOW}TEST SUMMARY{Colors.END}")
-    print(f"{Colors.YELLOW}{'='*80}{Colors.END}\n")
+    print("\n" + "=" * 80)
+    print("TEST SUMMARY")
+    print("=" * 80)
     
-    passed_count = sum(1 for _, passed in results if passed)
-    total_count = len(results)
+    passed = sum(1 for r in test_results if r["passed"])
+    total = len(test_results)
     
-    for test_name, passed in results:
-        status = f"{Colors.GREEN}✓ PASS{Colors.END}" if passed else f"{Colors.RED}✗ FAIL{Colors.END}"
-        print(f"{status} - {test_name}")
+    print(f"\nTotal Tests: {total}")
+    print(f"Passed: {passed}")
+    print(f"Failed: {total - passed}")
+    print(f"Success Rate: {(passed/total*100):.1f}%")
     
-    print(f"\n{Colors.YELLOW}Total: {passed_count}/{total_count} tests passed{Colors.END}")
+    if total - passed > 0:
+        print("\n❌ FAILED TESTS:")
+        for r in test_results:
+            if not r["passed"]:
+                print(f"  - {r['name']}")
+                if r["details"]:
+                    print(f"    {r['details']}")
     
-    if passed_count == total_count:
-        print(f"\n{Colors.GREEN}🎉 ALL TESTS PASSED! 🎉{Colors.END}\n")
-    else:
-        print(f"\n{Colors.RED}❌ {total_count - passed_count} test(s) failed{Colors.END}\n")
+    print("\n" + "=" * 80)
     
-    return passed_count == total_count
+    # Exit with appropriate code
+    sys.exit(0 if passed == total else 1)
 
 if __name__ == "__main__":
-    success = run_all_tests()
-    exit(0 if success else 1)
+    main()

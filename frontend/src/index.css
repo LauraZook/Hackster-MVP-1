@@ -84,3 +84,17 @@ code {
     @apply bg-background text-foreground;
     }
 }
+
+/* Admin panel form input helper */
+.inp {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+.inp:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}

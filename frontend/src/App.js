@@ -2,6 +2,8 @@ import { useState, useEffect, createContext, useContext, useRef } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import AdminPanel from "./AdminPanel";
+import StackCheckout from "./StackCheckout";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -103,15 +105,17 @@ const Navigation = () => {
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
         </Link>
-        <Link to="/coaches" className={`transition-colors ${location.pathname === '/coaches' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
-          Find a Coach
-        </Link>
         <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
           Get Started
         </Link>
         
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
+            {user?.role === 'admin' && (
+              <Link to="/admin" className={`transition-colors ${location.pathname === '/admin' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
+                Admin
+              </Link>
+            )}
             <Link to={user?.role === 'coach' ? '/coach/dashboard' : '/dashboard'} className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">{user?.username?.[0]?.toUpperCase() || 'H'}</span>
@@ -4825,6 +4829,7 @@ const MyStackPage = () => {
   const [showAddToStackModal, setShowAddToStackModal] = useState(false);
   const [pendingProduct, setPendingProduct] = useState(null);
   const [selectedStack, setSelectedStack] = useState(null);
+  const [checkoutStack, setCheckoutStack] = useState(null);
   const [newStack, setNewStack] = useState({ name: '', description: '', visibility: 'private', health_goals: [] });
 
   useEffect(() => {
@@ -5011,6 +5016,14 @@ const MyStackPage = () => {
                         <span>💬 {stack.comments_count || 0}</span>
                       </div>
                       <div className="flex items-center gap-2">
+                        {stack.items?.length > 0 && (
+                          <button
+                            onClick={() => setCheckoutStack(stack)}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:opacity-90 flex items-center gap-1"
+                          >
+                            <span>🛒</span> Buy Stack
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             const shareUrl = `${window.location.origin}/stack/share/${stack.share_token}`;
@@ -5112,6 +5125,22 @@ const MyStackPage = () => {
           )}
         </div>
       </div>
+
+      {/* One-click Stack Checkout Modal */}
+      {checkoutStack && (
+        <StackCheckout
+          items={(checkoutStack.items || []).map(it => ({
+            product_id: it.product_id,
+            product_name: it.product_name,
+            vendor_name: it.vendor_name,
+            price: it.price,
+            image_url: it.image_url,
+          }))}
+          user={user}
+          source="stack"
+          onClose={() => setCheckoutStack(null)}
+        />
+      )}
 
       {/* Create Stack Modal */}
       {showCreateModal && (
@@ -5884,6 +5913,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="/community" element={<CommunityLanding />} />
             <Route path="/community-forum" element={<CommunityPlatform />} />
             <Route path="/posts/:postId" element={<PublicPostView />} />

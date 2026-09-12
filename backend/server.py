@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import RedirectResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -283,6 +284,10 @@ class HealthAssessment(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # ============== MARKETPLACE MODELS ==============
+class FulfillmentType(str, Enum):
+    AFFILIATE = "affiliate"              # Public tracked affiliate link -> vendor checkout
+    PRACTITIONER_ORDER = "practitioner_order"  # Ordered via Hackster practitioner account (e.g. Standard Process, Apex)
+
 class Vendor(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -297,6 +302,13 @@ class Vendor(BaseModel):
     shipping_info: str = "Ships within 2-5 business days"
     return_policy: str = "30-day return policy"
     categories: List[ProductCategory] = []
+    # ----- Affiliate / fulfillment configuration (network-agnostic) -----
+    fulfillment_type: FulfillmentType = FulfillmentType.AFFILIATE
+    network: Optional[str] = None            # e.g. "impact", "shareasale", "refersion", "cj", "direct" (informational)
+    tracking_param: str = "aff"              # query param used to attribute the sale (editable per vendor)
+    tracking_value: str = "hackster"         # your affiliate/partner id value for this vendor
+    subid_param: Optional[str] = "subId"     # optional param to pass per-click/per-user subID for reporting
+    add_to_cart_pattern: Optional[str] = None  # optional multi-item deep link, e.g. "https://vendor.com/cart/add?items={items}"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class MarketplaceProduct(BaseModel):
@@ -374,6 +386,77 @@ class Order(BaseModel):
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+# ============== AFFILIATE TRACKING MODELS ==============
+class AffiliateClick(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    product_id: str
+    product_name: str
+    vendor_id: str
+    vendor_name: str
+    source: str = "marketplace"     # marketplace | stack | chat | questionnaire | recommendation
+    tracked_url: str
+    price: float = 0.0
+    commission_rate: float = 0.0
+    est_commission: float = 0.0
+    converted: bool = False
+    conversion_value: float = 0.0
+    ip: Optional[str] = None
+    user_agent: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CheckoutItem(BaseModel):
+    product_id: str
+    quantity: int = 1
+
+class StackCheckoutRequest(BaseModel):
+    items: List[CheckoutItem]
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    source: str = "stack"
+
+class PractitionerOrderItem(BaseModel):
+    product_id: str
+    product_name: str
+    vendor_id: str
+    vendor_name: str
+    quantity: int = 1
+    price: float = 0.0
+
+class PractitionerOrderStatus(str, Enum):
+    NEW = "new"
+    CONTACTED = "contacted"
+    FULFILLED = "fulfilled"
+    CANCELLED = "cancelled"
+
+class PractitionerOrderRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    customer_name: str
+    customer_email: str
+    customer_phone: Optional[str] = None
+    items: List[PractitionerOrderItem] = []
+    vendors: List[str] = []
+    estimated_total: float = 0.0
+    notes: Optional[str] = None
+    status: PractitionerOrderStatus = PractitionerOrderStatus.NEW
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PractitionerOrderCreate(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    notes: Optional[str] = None
+    items: List[CheckoutItem]
+    user_id: Optional[str] = None
+
+class ConversionReport(BaseModel):
+    click_id: Optional[str] = None
+    product_id: Optional[str] = None
+    order_value: float = 0.0
 
 # ============== WISHLIST / STACK MODELS ==============
 class WishlistItem(BaseModel):
@@ -600,6 +683,46 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if user is None:
         raise credentials_exception
     return UserProfile(**user.dict())
+
+async def require_admin(current_user: UserProfile = Depends(get_current_user)) -> UserProfile:
+    """Dependency that ensures the current user is an admin."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+def build_tracked_url(product: dict, vendor: dict, subid: Optional[str] = None) -> str:
+    """Build a network-agnostic tracked affiliate URL for a product.
+    Uses the product's explicit affiliate_url if present, else the vendor's
+    affiliate_url_pattern, else the vendor website. Injects the vendor's
+    tracking param/value and an optional subID for per-click attribution.
+    """
+    from urllib.parse import urlparse, urlencode, parse_qsl, urlunparse
+
+    base = product.get("affiliate_url")
+    if not base:
+        pattern = vendor.get("affiliate_url_pattern")
+        slug = product.get("slug") or product.get("id")
+        if pattern:
+            base = pattern.replace("{product_slug}", str(slug)).replace("{product_id}", str(product.get("id")))
+        else:
+            base = vendor.get("website") or "https://hackster.ai"
+
+    try:
+        parsed = urlparse(base)
+        query = dict(parse_qsl(parsed.query))
+        # Ensure the vendor tracking param/value is present (network-agnostic)
+        tracking_param = vendor.get("tracking_param") or "aff"
+        tracking_value = vendor.get("tracking_value") or "hackster"
+        query[tracking_param] = tracking_value
+        # Attach optional subID for per-click / per-user reporting
+        subid_param = vendor.get("subid_param") or "subId"
+        if subid_param and subid:
+            query[subid_param] = subid
+        new_query = urlencode(query)
+        return urlunparse(parsed._replace(query=new_query))
+    except Exception:
+        return base
+
 
 # ============== AI RECOMMENDATION ENGINE ==============
 async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse], user_profile: Optional[UserProfile] = None) -> Dict[str, Any]:
@@ -1258,6 +1381,75 @@ async def initialize_sample_data():
                 {"$setOnInsert": doc},
                 upsert=True
             )
+
+        # Standard Process & Apex Energetics are fulfilled via Hackster's practitioner
+        # accounts (Laura places the orders) rather than a public affiliate link.
+        await db.vendors.update_one(
+            {"slug": "apex-energetics"},
+            {"$set": {"fulfillment_type": "practitioner_order"}}
+        )
+        await db.vendors.update_one(
+            {"slug": "standard-process"},
+            {"$set": {"fulfillment_type": "practitioner_order"}}
+        )
+
+    # Seed the platform admin account (idempotent)
+    admin_email = "lzook@plzcompany.com"
+    existing_admin = await db.users.find_one({"email": admin_email})
+    if not existing_admin:
+        admin_user = UserInDB(
+            email=admin_email,
+            username="lauraadmin",
+            role=UserRole.ADMIN,
+            hashed_password=get_password_hash("HacksterAdmin2025!"),
+        )
+        await db.users.insert_one(admin_user.dict())
+        logging.info("Seeded admin user lzook@plzcompany.com")
+    else:
+        # Ensure the account always has admin role
+        await db.users.update_one({"email": admin_email}, {"$set": {"role": "admin"}})
+
+    # Seed a demo member with a pre-populated mixed-vendor stack (for one-click checkout demo/testing)
+    demo_email = "demo@hackster.ai"
+    demo = await db.users.find_one({"email": demo_email})
+    if not demo:
+        demo_user = UserInDB(
+            email=demo_email,
+            username="demohacker",
+            role=UserRole.MEMBER,
+            hashed_password=get_password_hash("Demo12345!"),
+        )
+        await db.users.insert_one(demo_user.dict())
+        demo = demo_user.dict()
+    demo_id = demo["id"]
+    existing_stack = await db.stacks.find_one({"user_id": demo_id})
+    if not existing_stack:
+        wanted_slugs = ["vitamin-d-5000", "magnesium-bisglycinate", "resvero-active"]
+        stack_items = []
+        for slug in wanted_slugs:
+            p = await db.marketplace_products.find_one({"slug": slug})
+            if p:
+                stack_items.append(WishlistItem(
+                    product_id=p["id"],
+                    product_name=p["name"],
+                    vendor_name=p["vendor_name"],
+                    price=(p.get("sale_price") or p["price"]),
+                    image_url=p.get("image_url"),
+                    priority=1,
+                ).dict())
+        if stack_items:
+            demo_stack = HacksterStack(
+                user_id=demo_id,
+                username="demohacker",
+                name="My Wellness Stack",
+                description="A demo stack spanning affiliate and practitioner-order vendors.",
+                share_token=str(uuid.uuid4())[:8],
+                items=stack_items,
+                total_value=sum(i["price"] for i in stack_items),
+                is_ai_generated=True,
+            )
+            await db.stacks.insert_one(demo_stack.dict())
+            logging.info("Seeded demo member + wellness stack")
     
     # Sample Marketplace Products (upsert by slug so new products get added on restart)
     if True:
@@ -3530,6 +3722,331 @@ async def api_health_check():
         return {"status": "unhealthy", "service": "Hackster.ai API", "version": "1.0", "error": str(e), "database": "disconnected"}
 
 # Include the router in the main app
+# ============== AFFILIATE TRACKING & CHECKOUT API ROUTES ==============
+
+async def _find_vendor(vendor_ref: Optional[str]) -> Optional[dict]:
+    """Resolve a vendor by its UUID id or by its slug (product seeds reference slug)."""
+    if not vendor_ref:
+        return None
+    vendor = await db.vendors.find_one({"id": vendor_ref})
+    if not vendor:
+        vendor = await db.vendors.find_one({"slug": vendor_ref})
+    return vendor
+
+
+async def _log_affiliate_click(product: dict, vendor: dict, tracked_url: str,
+                               user_id: Optional[str], session_id: Optional[str],
+                               source: str, request: Optional[Request] = None) -> AffiliateClick:
+    price = float(product.get("sale_price") or product.get("price") or 0.0)
+    commission_rate = float(vendor.get("commission_rate") or 0.0)
+    click = AffiliateClick(
+        user_id=user_id,
+        session_id=session_id,
+        product_id=product.get("id"),
+        product_name=product.get("name", ""),
+        vendor_id=vendor.get("id"),
+        vendor_name=vendor.get("name", ""),
+        source=source,
+        tracked_url=tracked_url,
+        price=price,
+        commission_rate=commission_rate,
+        est_commission=round(price * commission_rate, 2),
+        ip=(request.client.host if request and request.client else None),
+        user_agent=(request.headers.get("user-agent") if request else None),
+    )
+    await db.affiliate_clicks.insert_one(click.dict())
+    return click
+
+
+@api_router.get("/go/{product_id}")
+async def affiliate_redirect(product_id: str, request: Request,
+                             user_id: Optional[str] = None,
+                             session_id: Optional[str] = None,
+                             source: str = "marketplace",
+                             format: Optional[str] = None):
+    """Log an affiliate click and redirect (302) to the vendor's tracked URL.
+    Pass ?format=json to receive the URL instead of a redirect (for SPA window.open)."""
+    product = await db.marketplace_products.find_one({"id": product_id}) or \
+        await db.marketplace_products.find_one({"slug": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    vendor = await _find_vendor(product.get("vendor_id"))
+    if not vendor:
+        # Fall back to a minimal vendor shell so we can still build a link
+        vendor = {"id": product.get("vendor_id"), "name": product.get("vendor_name", ""),
+                  "commission_rate": 0.0, "tracking_param": "aff", "tracking_value": "hackster"}
+    click = AffiliateClick(product_id=product_id, product_name="", vendor_id="", vendor_name="", tracked_url="")
+    tracked_url = build_tracked_url(product, vendor, subid=click.id)
+    await _log_affiliate_click(product, vendor, tracked_url, user_id, session_id, source, request)
+    if format == "json":
+        return {"url": tracked_url, "click_id": click.id}
+    return RedirectResponse(url=tracked_url, status_code=302)
+
+
+@api_router.post("/stack/checkout")
+async def stack_checkout(req: StackCheckoutRequest, request: Request):
+    """Group selected stack items by vendor and return a per-vendor checkout plan.
+    Affiliate vendors get tracked links (+ optional multi-item add-to-cart deep link);
+    practitioner-order vendors (e.g. Standard Process, Apex) are flagged for a
+    Hackster-fulfilled order request. Clicks are logged for attribution."""
+    groups: Dict[str, Dict[str, Any]] = {}
+    grand_total = 0.0
+    est_commission_total = 0.0
+
+    for item in req.items:
+        product = await db.marketplace_products.find_one({"id": item.product_id}) or \
+            await db.marketplace_products.find_one({"slug": item.product_id})
+        if not product:
+            continue
+        vendor = await _find_vendor(product.get("vendor_id"))
+        if not vendor:
+            continue
+        vid = vendor["id"]
+        if vid not in groups:
+            groups[vid] = {
+                "vendor_id": vid,
+                "vendor_name": vendor.get("name"),
+                "vendor_logo": vendor.get("logo_url"),
+                "fulfillment_type": vendor.get("fulfillment_type", "affiliate"),
+                "shipping_info": vendor.get("shipping_info", ""),
+                "items": [],
+                "subtotal": 0.0,
+                "checkout_url": None,
+                "add_to_cart_url": None,
+                "requires_practitioner_order": vendor.get("fulfillment_type") == "practitioner_order",
+            }
+        price = float(product.get("sale_price") or product.get("price") or 0.0)
+        line_total = price * item.quantity
+        grand_total += line_total
+        est_commission_total += line_total * float(vendor.get("commission_rate") or 0.0)
+
+        line = {
+            "product_id": product.get("id"),
+            "name": product.get("name"),
+            "slug": product.get("slug"),
+            "image_url": product.get("image_url"),
+            "price": price,
+            "quantity": item.quantity,
+            "line_total": round(line_total, 2),
+            "checkout_url": None,
+        }
+
+        if groups[vid]["fulfillment_type"] == "affiliate":
+            click = AffiliateClick(product_id=product.get("id"), product_name="", vendor_id="", vendor_name="", tracked_url="")
+            tracked_url = build_tracked_url(product, vendor, subid=click.id)
+            await _log_affiliate_click(product, vendor, tracked_url, req.user_id, req.session_id, req.source, request)
+            line["checkout_url"] = tracked_url
+            # Use the first product's link as the vendor's primary checkout entry point
+            if not groups[vid]["checkout_url"]:
+                groups[vid]["checkout_url"] = tracked_url
+
+        groups[vid]["items"].append(line)
+        groups[vid]["subtotal"] = round(groups[vid]["subtotal"] + line_total, 2)
+
+    # Build optional multi-item add-to-cart deep links for affiliate vendors that support it
+    for vid, g in groups.items():
+        vendor = await db.vendors.find_one({"id": vid})
+        pattern = vendor.get("add_to_cart_pattern") if vendor else None
+        if pattern and g["fulfillment_type"] == "affiliate":
+            slugs = ",".join([str(i.get("slug") or i.get("product_id")) for i in g["items"]])
+            try:
+                g["add_to_cart_url"] = pattern.replace("{items}", slugs)
+            except Exception:
+                g["add_to_cart_url"] = None
+
+    vendor_groups = list(groups.values())
+    return {
+        "vendor_groups": vendor_groups,
+        "vendor_count": len(vendor_groups),
+        "item_count": sum(len(g["items"]) for g in vendor_groups),
+        "grand_total": round(grand_total, 2),
+        "est_commission_total": round(est_commission_total, 2),
+        "has_practitioner_orders": any(g["requires_practitioner_order"] for g in vendor_groups),
+    }
+
+
+@api_router.post("/practitioner-orders", response_model=PractitionerOrderRequest)
+async def create_practitioner_order(req: PractitionerOrderCreate):
+    """Create a practitioner-fulfilled order request (e.g. Standard Process, Apex Energetics).
+    These items are ordered by a Hackster practitioner rather than via a public affiliate link."""
+    order_items: List[PractitionerOrderItem] = []
+    vendors_set = set()
+    total = 0.0
+    for item in req.items:
+        product = await db.marketplace_products.find_one({"id": item.product_id}) or \
+            await db.marketplace_products.find_one({"slug": item.product_id})
+        if not product:
+            continue
+        price = float(product.get("sale_price") or product.get("price") or 0.0)
+        total += price * item.quantity
+        vendors_set.add(product.get("vendor_name", ""))
+        order_items.append(PractitionerOrderItem(
+            product_id=product.get("id"),
+            product_name=product.get("name", ""),
+            vendor_id=product.get("vendor_id", ""),
+            vendor_name=product.get("vendor_name", ""),
+            quantity=item.quantity,
+            price=price,
+        ))
+    order = PractitionerOrderRequest(
+        user_id=req.user_id,
+        customer_name=req.customer_name,
+        customer_email=req.customer_email,
+        customer_phone=req.customer_phone,
+        notes=req.notes,
+        items=order_items,
+        vendors=list(vendors_set),
+        estimated_total=round(total, 2),
+    )
+    await db.practitioner_orders.insert_one(order.dict())
+    return order
+
+
+@api_router.get("/admin/practitioner-orders", response_model=List[PractitionerOrderRequest])
+async def list_practitioner_orders(current_user: UserProfile = Depends(require_admin)):
+    orders = await db.practitioner_orders.find().sort("created_at", -1).to_list(500)
+    return [PractitionerOrderRequest(**{k: v for k, v in o.items() if k != "_id"}) for o in orders]
+
+
+@api_router.put("/admin/practitioner-orders/{order_id}")
+async def update_practitioner_order(order_id: str, status_update: Dict[str, Any],
+                                    current_user: UserProfile = Depends(require_admin)):
+    update = {"updated_at": datetime.utcnow()}
+    if "status" in status_update:
+        update["status"] = status_update["status"]
+    if "notes" in status_update:
+        update["notes"] = status_update["notes"]
+    result = await db.practitioner_orders.update_one({"id": order_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Order updated"}
+
+
+@api_router.post("/affiliate/conversion")
+async def report_conversion(report: ConversionReport):
+    """Webhook stub to mark an affiliate click as converted (called by affiliate network postback)."""
+    query = None
+    if report.click_id:
+        query = {"id": report.click_id}
+    elif report.product_id:
+        query = {"product_id": report.product_id, "converted": False}
+    if not query:
+        raise HTTPException(status_code=400, detail="click_id or product_id required")
+    result = await db.affiliate_clicks.update_one(
+        query, {"$set": {"converted": True, "conversion_value": report.order_value}}
+    )
+    return {"updated": result.modified_count}
+
+
+# ---------- Admin: Vendor management ----------
+@api_router.post("/admin/vendors", response_model=Vendor)
+async def admin_create_vendor(vendor: Vendor, current_user: UserProfile = Depends(require_admin)):
+    existing = await db.vendors.find_one({"slug": vendor.slug})
+    if existing:
+        raise HTTPException(status_code=400, detail="Vendor slug already exists")
+    await db.vendors.insert_one(vendor.dict())
+    return vendor
+
+
+@api_router.put("/admin/vendors/{vendor_id}", response_model=Vendor)
+async def admin_update_vendor(vendor_id: str, updates: Dict[str, Any],
+                              current_user: UserProfile = Depends(require_admin)):
+    updates.pop("id", None)
+    result = await db.vendors.update_one({"id": vendor_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    vendor = await db.vendors.find_one({"id": vendor_id})
+    return Vendor(**{k: v for k, v in vendor.items() if k != "_id"})
+
+
+@api_router.delete("/admin/vendors/{vendor_id}")
+async def admin_delete_vendor(vendor_id: str, current_user: UserProfile = Depends(require_admin)):
+    result = await db.vendors.delete_one({"id": vendor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return {"message": "Vendor deleted"}
+
+
+# ---------- Admin: Product management ----------
+@api_router.post("/admin/products", response_model=MarketplaceProduct)
+async def admin_create_product(product: MarketplaceProduct, current_user: UserProfile = Depends(require_admin)):
+    # Ensure vendor_name is populated from vendor if missing
+    if not product.vendor_name and product.vendor_id:
+        vendor = await db.vendors.find_one({"id": product.vendor_id})
+        if vendor:
+            product.vendor_name = vendor.get("name", "")
+    await db.marketplace_products.insert_one(product.dict())
+    return product
+
+
+@api_router.put("/admin/products/{product_id}", response_model=MarketplaceProduct)
+async def admin_update_product(product_id: str, updates: Dict[str, Any],
+                               current_user: UserProfile = Depends(require_admin)):
+    updates.pop("id", None)
+    updates["updated_at"] = datetime.utcnow()
+    result = await db.marketplace_products.update_one({"id": product_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product = await db.marketplace_products.find_one({"id": product_id})
+    return MarketplaceProduct(**{k: v for k, v in product.items() if k != "_id"})
+
+
+@api_router.delete("/admin/products/{product_id}")
+async def admin_delete_product(product_id: str, current_user: UserProfile = Depends(require_admin)):
+    result = await db.marketplace_products.delete_one({"id": product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"message": "Product deleted"}
+
+
+# ---------- Admin: Affiliate analytics ----------
+@api_router.get("/admin/affiliate/analytics")
+async def affiliate_analytics(current_user: UserProfile = Depends(require_admin)):
+    clicks = await db.affiliate_clicks.find().to_list(10000)
+    total_clicks = len(clicks)
+    total_conversions = sum(1 for c in clicks if c.get("converted"))
+    est_commission = round(sum(float(c.get("est_commission") or 0.0) for c in clicks), 2)
+    realized_commission = round(sum(
+        float(c.get("conversion_value") or 0.0) * float(c.get("commission_rate") or 0.0)
+        for c in clicks if c.get("converted")
+    ), 2)
+
+    by_vendor: Dict[str, Dict[str, Any]] = {}
+    by_product: Dict[str, Dict[str, Any]] = {}
+    for c in clicks:
+        v = c.get("vendor_name") or "Unknown"
+        by_vendor.setdefault(v, {"vendor": v, "clicks": 0, "conversions": 0, "est_commission": 0.0})
+        by_vendor[v]["clicks"] += 1
+        by_vendor[v]["conversions"] += 1 if c.get("converted") else 0
+        by_vendor[v]["est_commission"] = round(by_vendor[v]["est_commission"] + float(c.get("est_commission") or 0.0), 2)
+
+        p = c.get("product_name") or "Unknown"
+        by_product.setdefault(p, {"product": p, "vendor": v, "clicks": 0})
+        by_product[p]["clicks"] += 1
+
+    top_products = sorted(by_product.values(), key=lambda x: x["clicks"], reverse=True)[:10]
+    recent = sorted(clicks, key=lambda x: x.get("created_at", datetime.min), reverse=True)[:20]
+    recent_clean = [{
+        "product_name": c.get("product_name"),
+        "vendor_name": c.get("vendor_name"),
+        "source": c.get("source"),
+        "est_commission": c.get("est_commission"),
+        "converted": c.get("converted"),
+        "created_at": (c.get("created_at").isoformat() if isinstance(c.get("created_at"), datetime) else str(c.get("created_at"))),
+    } for c in recent]
+
+    return {
+        "total_clicks": total_clicks,
+        "total_conversions": total_conversions,
+        "conversion_rate": round((total_conversions / total_clicks * 100) if total_clicks else 0.0, 1),
+        "est_commission": est_commission,
+        "realized_commission": realized_commission,
+        "by_vendor": sorted(by_vendor.values(), key=lambda x: x["clicks"], reverse=True),
+        "top_products": top_products,
+        "recent_clicks": recent_clean,
+    }
+
+
 app.include_router(api_router)
 
 # Simple health endpoint (no database dependency)
