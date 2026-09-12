@@ -655,6 +655,18 @@ class AddToStackRequest(BaseModel):
     priority: int = 0
     notes: Optional[str] = None
 
+class RecItemRequest(BaseModel):
+    """Flexible add for recommendation items (may be a real product or free-form AI suggestion)."""
+    product_id: Optional[str] = None
+    product_name: str
+    vendor_name: Optional[str] = ""
+    price: Optional[float] = 0.0
+    image_url: Optional[str] = None
+    category: Optional[str] = None
+    notes: Optional[str] = None
+    priority: int = 0
+    quantity: int = 1
+
 class StackCommentCreate(BaseModel):
     content: str
 
@@ -3102,6 +3114,82 @@ async def add_to_cart(item_request: AddToCartRequest, current_user: UserProfile 
     )
     
     return ShoppingCart(**cart)
+
+@api_router.post("/me/cart/items", response_model=ShoppingCart)
+async def add_item_to_my_cart(req: RecItemRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Add a recommendation item (real product or free-form AI suggestion) to the user's cart, in place."""
+    product = None
+    if req.product_id:
+        product = await db.marketplace_products.find_one({"id": req.product_id}) or \
+            await db.marketplace_products.find_one({"slug": req.product_id})
+    cart = await db.carts.find_one({"user_id": current_user.id})
+    if not cart:
+        cart = ShoppingCart(user_id=current_user.id).dict()
+        await db.carts.insert_one(cart)
+    pid = product["id"] if product else (req.product_id or req.product_name.lower().replace(" ", "-"))
+    found = False
+    for idx, item in enumerate(cart.get("items", [])):
+        if item["product_id"] == pid:
+            item["quantity"] += req.quantity
+            cart["items"][idx] = item
+            found = True
+            break
+    if not found:
+        ci = CartItem(
+            product_id=pid,
+            product_name=product["name"] if product else req.product_name,
+            vendor_id=product["vendor_id"] if product else "",
+            vendor_name=product["vendor_name"] if product else (req.vendor_name or ""),
+            quantity=req.quantity,
+            price=float(product.get("sale_price") or product["price"]) if product else float(req.price or 0.0),
+            image_url=product.get("image_url") if product else req.image_url,
+        )
+        cart.setdefault("items", []).append(ci.dict())
+    cart["subtotal"] = sum(i["price"] * i["quantity"] for i in cart["items"])
+    cart["updated_at"] = datetime.utcnow()
+    await db.carts.update_one({"user_id": current_user.id},
+                              {"$set": {"items": cart["items"], "subtotal": cart["subtotal"], "updated_at": cart["updated_at"]}})
+    return ShoppingCart(**{k: v for k, v in cart.items() if k != "_id"})
+
+@api_router.post("/me/stack/items", response_model=HacksterStack)
+async def add_item_to_my_stack(req: RecItemRequest, current_user: UserProfile = Depends(get_current_user)):
+    """Add a recommendation item to the user's DEFAULT stack (creating one if needed), in place & idempotent."""
+    stack = await db.stacks.find_one({"user_id": current_user.id})
+    if not stack:
+        new_stack = HacksterStack(
+            user_id=current_user.id,
+            username=(current_user.username or current_user.email.split("@")[0]),
+            name="My Hackster Stack",
+            description="Your personalized wellness stack.",
+            share_token=str(uuid.uuid4())[:8],
+            items=[],
+        )
+        await db.stacks.insert_one(new_stack.dict())
+        stack = new_stack.dict()
+    product = None
+    if req.product_id:
+        product = await db.marketplace_products.find_one({"id": req.product_id}) or \
+            await db.marketplace_products.find_one({"slug": req.product_id})
+    pid = product["id"] if product else (req.product_id or req.product_name.lower().replace(" ", "-"))
+    clean = {k: v for k, v in stack.items() if k != "_id"}
+    for it in clean.get("items", []):
+        if it.get("product_id") == pid or it.get("product_name") == req.product_name:
+            return HacksterStack(**clean)  # already there — idempotent
+    item = WishlistItem(
+        product_id=pid,
+        product_name=product["name"] if product else req.product_name,
+        vendor_name=product["vendor_name"] if product else (req.vendor_name or ""),
+        price=float(product.get("sale_price") or product["price"]) if product else float(req.price or 0.0),
+        image_url=product.get("image_url") if product else req.image_url,
+        priority=req.priority,
+        notes=req.notes,
+    )
+    clean.setdefault("items", []).append(item.dict())
+    clean["total_value"] = sum(i["price"] for i in clean["items"])
+    clean["updated_at"] = datetime.utcnow()
+    await db.stacks.update_one({"id": clean["id"]},
+                               {"$set": {"items": clean["items"], "total_value": clean["total_value"], "updated_at": clean["updated_at"]}})
+    return HacksterStack(**clean)
 
 @api_router.put("/cart/items/{item_id}", response_model=ShoppingCart)
 async def update_cart_item(item_id: str, update_request: UpdateCartItemRequest, current_user: UserProfile = Depends(get_current_user)):

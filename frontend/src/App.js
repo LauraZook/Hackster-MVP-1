@@ -79,26 +79,29 @@ const useAuth = () => {
 };
 
 // Navigation Component
-const LogoMark = ({ size = 40, className = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hackster.ai">
-    <defs>
-      <linearGradient id="hkGrad" x1="4" y1="2" x2="44" y2="46" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#2563EB" />
-        <stop offset="0.55" stopColor="#7C3AED" />
-        <stop offset="1" stopColor="#10B981" />
-      </linearGradient>
-    </defs>
-    <rect width="48" height="48" rx="14" fill="url(#hkGrad)" />
-    {/* H pillars */}
-    <rect x="12.5" y="12" width="4.6" height="24" rx="2.3" fill="white" />
-    <rect x="30.9" y="12" width="4.6" height="24" rx="2.3" fill="white" />
-    {/* heartbeat crossbar linking the pillars */}
-    <path d="M15 24 H20 L21.9 19 L24.3 29.5 L26.4 21.5 L27.9 24 H33"
-      stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    {/* spark accent */}
-    <circle cx="38.5" cy="10" r="2.1" fill="#FDE047" />
-  </svg>
-);
+const LogoMark = ({ size = 40, dark = false, className = "" }) => {
+  const bar = dark ? "#FFFFFF" : "#1E2A4A";
+  const strand = dark ? "#1E2A4A" : "#FFFFFF";
+  const strandOpacity = dark ? 0.55 : 0.6;
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} role="img" aria-label="HACKSTER.ai">
+      {/* H letterform (solid so it reads at small sizes) */}
+      <rect x="10" y="8" width="12" height="48" rx="2.5" fill={bar} />
+      <rect x="42" y="8" width="12" height="48" rx="2.5" fill={bar} />
+      <rect x="20" y="26" width="24" height="12" fill={bar} />
+      {/* DNA double-helix inside the left pillar */}
+      <g stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity={strandOpacity} fill="none">
+        <path d="M13 11 Q21 17 13 23 Q21 29 13 35 Q21 41 13 47 Q21 53 13 55" />
+        <path d="M19 11 Q11 17 19 23 Q11 29 19 35 Q11 41 19 47 Q11 53 19 55" />
+      </g>
+      {/* DNA double-helix inside the right pillar */}
+      <g stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity={strandOpacity} fill="none">
+        <path d="M45 11 Q53 17 45 23 Q53 29 45 35 Q53 41 45 47 Q53 53 45 55" />
+        <path d="M51 11 Q43 17 51 23 Q43 29 51 35 Q43 41 51 47 Q43 53 51 55" />
+      </g>
+    </svg>
+  );
+};
 
 const Navigation = () => {
   const location = useLocation();
@@ -108,10 +111,10 @@ const Navigation = () => {
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
       <Link to="/" className="flex items-center space-x-3">
         <div className="flex items-center space-x-2.5">
-          <LogoMark size={40} className="shadow-sm rounded-[14px]" />
+          <LogoMark size={40} className="shrink-0" />
           <div className="flex flex-col">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent">Hackster.ai</span>
+              <span className="text-2xl font-extrabold tracking-tight text-[#1E2A4A]">HACKSTER<span className="text-blue-600">.ai</span></span>
               <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide">BETA</span>
             </div>
             <span className="text-xs text-gray-500 -mt-0.5">Your biohacking buddy</span>
@@ -210,14 +213,59 @@ const HeroSection = () => {
 };
 
 // Core Features Section
+const TileIcon = ({ type }) => {
+  const common = {
+    width: 30, height: 30, viewBox: "0 0 24 24", fill: "none",
+    stroke: "white", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round",
+  };
+  switch (type) {
+    case "vision": // target / clear vision
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="4.5" />
+          <circle cx="12" cy="12" r="1" fill="white" stroke="none" />
+        </svg>
+      );
+    case "stack": // stacked layers
+      return (
+        <svg {...common}>
+          <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+          <path d="M2 12l10 5 10-5" />
+          <path d="M2 17l10 5 10-5" />
+        </svg>
+      );
+    case "shop": // shopping bag
+      return (
+        <svg {...common}>
+          <path d="M6 2 3 6v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+      );
+    case "trophy": // trophy / celebrate
+      return (
+        <svg {...common}>
+          <path d="M8 21h8" />
+          <path d="M12 17v4" />
+          <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+          <path d="M7 6H4v2a3 3 0 0 0 3 3" />
+          <path d="M17 6h3v2a3 3 0 0 1-3 3" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 const CoreFeatures = () => {
   const features = [
     {
       id: "questionnaire",
       title: "Establish Your Vision",
       subtitle: "Personalized Recommendations",
-      description: "Take our AI-powered questionnaire for your personalized supplements, relevant lab tests, and biohacking tips.",
-      icon: "🎯",
+      description: "Take our AI-powered questionnaire for personalized supplements, relevant lab tests, and biohacking guidance.",
+      iconType: "vision",
       highlights: [],
       cta: "Start AI Assessment",
       color: "blue",
@@ -226,9 +274,9 @@ const CoreFeatures = () => {
     {
       id: "stack",
       title: "Build Your Stack",
-      subtitle: "Save & Share Your Favorites",
-      description: "Create your personalized Hackster Stack, save products and crowd source support to meet your health and fitness goals faster.",
-      icon: "⚡",
+      subtitle: "Save, Share & Crowdsource",
+      description: "Create your personalized Hackster Stack, save products, and rally friends and family to help you reach your goals faster.",
+      iconType: "stack",
       highlights: [],
       cta: "Create My Stack",
       color: "purple",
@@ -238,44 +286,22 @@ const CoreFeatures = () => {
       id: "marketplace",
       title: "Shop Trusted Vendors",
       subtitle: "Premium Biohacking Products", 
-      description: "Browse your recommended products from our carefully curated and top brand partners all in one place.",
-      icon: "🛒",
+      description: "Browse recommended products from our carefully curated, top brand partners — all in one place.",
+      iconType: "shop",
       highlights: [],
       cta: "Visit Hackster Store",
-      color: "blue",
+      color: "emerald",
       link: "/marketplace"
     },
     {
-      id: "coaching",
-      title: "Find Expert Coaching",
-      subtitle: "AI Coach + Human Experts",
-      description: "Get 24/7 guidance from Raphael, our AI Wellness Coach, or connect with certified human coaches for personalized 1:1 support.",
-      icon: "🚀",
-      highlights: [],
-      cta: "Explore Coaching",
-      color: "purple",
-      link: "/coaching"
-    },
-    {
-      id: "tracking",
-      title: "Track Your Progress",
-      subtitle: "Monitor Results Over Time",
-      description: "Login to your personal dashboard to record results over time and stay motivated during your biohacking journey.",
-      icon: "📊",
-      highlights: [],
-      cta: "View My Dashboard",
-      color: "blue",
-      link: "/dashboard"
-    },
-    {
       id: "celebrate",
-      title: "Celebrate Your Wins!",
+      title: "Celebrate Your Wins",
       subtitle: "Inspire the Community",
-      description: "Share your biohacking successes with the Hackster community and help others achieve great results, too.",
-      icon: "🏆",
+      description: "Share your biohacking successes with the Hackster community and help others thrive, too.",
+      iconType: "trophy",
       highlights: [],
       cta: "Share Success",
-      color: "purple",
+      color: "amber",
       link: "/community"
     }
   ];
@@ -293,7 +319,7 @@ const CoreFeatures = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => {
             // Define color classes explicitly to ensure Tailwind includes them
             const getColorClasses = (color) => {
@@ -304,7 +330,8 @@ const CoreFeatures = () => {
                     border: 'border-blue-200',
                     text: 'text-blue-600',
                     button: 'bg-blue-600 hover:bg-blue-700',
-                    dot: 'bg-blue-500'
+                    dot: 'bg-blue-500',
+                    badge: 'from-blue-500 to-indigo-500'
                   };
                 case 'purple':
                   return {
@@ -312,7 +339,26 @@ const CoreFeatures = () => {
                     border: 'border-purple-200',
                     text: 'text-purple-600',
                     button: 'bg-purple-600 hover:bg-purple-700',
-                    dot: 'bg-purple-500'
+                    dot: 'bg-purple-500',
+                    badge: 'from-purple-500 to-fuchsia-500'
+                  };
+                case 'emerald':
+                  return {
+                    background: 'bg-gradient-to-br from-emerald-50 to-teal-100',
+                    border: 'border-emerald-200',
+                    text: 'text-emerald-600',
+                    button: 'bg-emerald-600 hover:bg-emerald-700',
+                    dot: 'bg-emerald-500',
+                    badge: 'from-emerald-500 to-teal-500'
+                  };
+                case 'amber':
+                  return {
+                    background: 'bg-gradient-to-br from-amber-50 to-orange-100',
+                    border: 'border-amber-200',
+                    text: 'text-amber-600',
+                    button: 'bg-amber-500 hover:bg-amber-600',
+                    dot: 'bg-amber-500',
+                    badge: 'from-amber-400 to-orange-500'
                   };
                 default:
                   return {
@@ -320,7 +366,8 @@ const CoreFeatures = () => {
                     border: 'border-gray-200',
                     text: 'text-gray-600',
                     button: 'bg-gray-600 hover:bg-gray-700',
-                    dot: 'bg-gray-500'
+                    dot: 'bg-gray-500',
+                    badge: 'from-gray-500 to-gray-600'
                   };
               }
             };
@@ -331,7 +378,9 @@ const CoreFeatures = () => {
               <div key={feature.id} className="group hover:scale-105 transition-all duration-300">
                 <div className={`${colorClasses.background} rounded-2xl p-8 h-full border ${colorClasses.border} shadow-lg hover:shadow-xl transition-all`}>
                   <div className="text-center mb-6">
-                    <div className="text-4xl mb-4">{feature.icon}</div>
+                    <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${colorClasses.badge} flex items-center justify-center shadow-md`}>
+                      <TileIcon type={feature.iconType} />
+                    </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">{feature.title}</h3>
                     <p className={`${colorClasses.text} font-semibold mb-4`}>{feature.subtitle}</p>
                     <p className="text-gray-600 leading-relaxed">{feature.description}</p>
@@ -2341,7 +2390,7 @@ const Home = () => {
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-400 text-sm mb-4 md:mb-0">
-                © 2024 Hackster.ai. All rights reserved. | Beta Version
+                © 2026 Hackster.ai / a PLZ Company. All rights reserved. Beta Version
               </div>
               <div className="flex items-center space-x-6">
                 <span className="text-gray-400 text-sm">
@@ -4208,9 +4257,68 @@ const AIQuestionnairePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [error, setError] = useState(null);
+  const { isAuthenticated, token } = useAuth();
+  const [addedStack, setAddedStack] = useState({});
+  const [addedCart, setAddedCart] = useState({});
+  const [busyItem, setBusyItem] = useState(null);
+  const [needAuth, setNeedAuth] = useState(false);
+
+  const authCfg = () => (token ? { headers: { Authorization: `Bearer ${token}` } } : null);
+  const parsePrice = (p) => {
+    if (typeof p === 'number') return p;
+    const n = parseFloat(String(p || '').replace(/[^0-9.]/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
+  const recPayload = (product) => ({
+    product_id: product.product_id || product.slug || null,
+    product_name: product.name,
+    vendor_name: product.brand || product.vendor_name || '',
+    price: parsePrice(product.price),
+    category: product.category || null,
+    notes: product.reason || null,
+    priority: product.priority || 0,
+  });
+
+  const addRecToStack = async (product) => {
+    if (!isAuthenticated) { setNeedAuth(true); return; }
+    setBusyItem(`stack-${product.name}`);
+    try {
+      await axios.post(`${API}/me/stack/items`, recPayload(product), authCfg());
+      setAddedStack(prev => ({ ...prev, [product.name]: true }));
+    } catch (e) {
+      console.error('add to stack error', e);
+      alert('Could not add to your stack. Please try again.');
+    } finally { setBusyItem(null); }
+  };
+
+  const addRecToCart = async (product) => {
+    if (!isAuthenticated) { setNeedAuth(true); return; }
+    setBusyItem(`cart-${product.name}`);
+    try {
+      await axios.post(`${API}/me/cart/items`, recPayload(product), authCfg());
+      setAddedCart(prev => ({ ...prev, [product.name]: true }));
+    } catch (e) {
+      console.error('add to cart error', e);
+      alert('Could not add to your cart. Please try again.');
+    } finally { setBusyItem(null); }
+  };
+
+  const startNewAssessment = () => {
+    localStorage.removeItem('hacksterLastRec');
+    setRecommendations(null);
+    setResponses({});
+    setCurrentQuestion(0);
+    setAddedStack({});
+    setAddedCart({});
+    setNeedAuth(false);
+  };
 
   useEffect(() => {
     fetchQuestionnaire();
+    try {
+      const saved = localStorage.getItem('hacksterLastRec');
+      if (saved) setRecommendations(JSON.parse(saved));
+    } catch (e) { /* ignore */ }
   }, []);
 
   const fetchQuestionnaire = async () => {
@@ -4242,6 +4350,7 @@ const AIQuestionnairePage = () => {
       });
       
       setRecommendations(response.data);
+      try { localStorage.setItem('hacksterLastRec', JSON.stringify(response.data)); } catch (e) { /* ignore */ }
     } catch (error) {
       console.error('Error submitting questionnaire:', error);
       setError('Failed to generate recommendations. Please try again.');
@@ -4277,7 +4386,21 @@ const AIQuestionnairePage = () => {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Personalized Hackster Stack</h1>
             <p className="text-gray-600">AI-powered recommendations based on your health profile</p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <span className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full">✓ Saved — revisit these anytime</span>
+              <button onClick={startNewAssessment} className="text-sm text-blue-600 hover:text-blue-700 font-medium underline">Start a new assessment</button>
+            </div>
           </div>
+
+          {needAuth && !isAuthenticated && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-amber-800 text-sm">Create a free account to save items to your stack and cart — your recommendations stay right here.</p>
+              <div className="flex gap-2 shrink-0">
+                <Link to="/signin" className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700">Sign In</Link>
+                <Link to="/get-started" className="border border-amber-600 text-amber-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-100">Create Account</Link>
+              </div>
+            </div>
+          )}
 
           {/* Health Score */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white mb-8">
@@ -4329,21 +4452,35 @@ const AIQuestionnairePage = () => {
                   </div>
                   <div className="mt-3 flex gap-2">
                     <button 
-                      onClick={() => {
-                        // Store recommendation to add to stack later
-                        localStorage.setItem('pendingStackItem', JSON.stringify(product));
-                        window.location.href = '/my-stack';
-                      }}
-                      className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center justify-center gap-2"
+                      onClick={() => addRecToStack(product)}
+                      disabled={addedStack[product.name] || busyItem === `stack-${product.name}`}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                        addedStack[product.name]
+                          ? 'bg-green-100 text-green-700 cursor-default'
+                          : 'bg-purple-600 text-white hover:bg-purple-700'
+                      }`}
                     >
-                      <span>⚡</span> Add to My Stack
+                      {addedStack[product.name]
+                        ? <><span>✓</span> Added to Stack</>
+                        : busyItem === `stack-${product.name}`
+                          ? <>Adding…</>
+                          : <><span>⚡</span> Add to Stack</>}
                     </button>
-                    <Link 
-                      to="/marketplace" 
-                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center justify-center gap-2"
+                    <button 
+                      onClick={() => addRecToCart(product)}
+                      disabled={addedCart[product.name] || busyItem === `cart-${product.name}`}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                        addedCart[product.name]
+                          ? 'bg-green-100 text-green-700 cursor-default'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     >
-                      <span>🛒</span> Shop Now
-                    </Link>
+                      {addedCart[product.name]
+                        ? <><span>✓</span> In Cart</>
+                        : busyItem === `cart-${product.name}`
+                          ? <>Adding…</>
+                          : <><span>🛒</span> Add to Cart</>}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -5895,8 +6032,8 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2.5 mb-4">
-              <LogoMark size={36} className="rounded-[12px]" />
-              <span className="text-xl font-extrabold tracking-tight">Hackster.ai</span>
+              <LogoMark size={36} dark />
+              <span className="text-xl font-extrabold tracking-tight text-white">HACKSTER<span className="text-blue-400">.ai</span></span>
             </div>
             <p className="text-gray-400 text-sm">
               Your biohacking buddy for optimal health and performance.
@@ -5942,7 +6079,7 @@ const Footer = () => {
               * Any recommendations on Hackster.ai have not been reviewed or approved by the Federal Drug Administration or FDA and are not intended to diagnose, treat, cure or prevent disease.
             </p>
           </div>
-          <p className="text-center text-sm text-gray-400">&copy; 2024 Hackster.ai. All rights reserved.</p>
+          <p className="text-center text-sm text-gray-400">&copy; 2026 Hackster.ai / a PLZ Company. All rights reserved. Beta Version</p>
         </div>
       </div>
     </footer>
