@@ -22,7 +22,8 @@ const emptyProduct = {
   name: "", slug: "", vendor_id: "", category: "supplements", price: "",
   sale_price: "", short_description: "", description: "", image_url: "",
   affiliate_url: "", health_goals: [], benefits: "", sku: "",
-  is_featured: false, is_ai_recommended: false,
+  source_type: "affiliate",
+  is_featured: false, is_ai_recommended: false, is_habit_forming: false,
 };
 
 const AdminPanel = () => {
@@ -32,6 +33,8 @@ const AdminPanel = () => {
   const [products, setProducts] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [coaches, setCoaches] = useState([]);
+  const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
@@ -56,6 +59,14 @@ const AdminPanel = () => {
       setProducts(p.data);
       setAnalytics(a.data);
       setOrders(o.data);
+      try {
+        const c = await axios.get(`${API}/admin/coaches`, authHeaders());
+        setCoaches(c.data);
+      } catch (err) { console.error("coaches load error", err); }
+      try {
+        const ct = await axios.get(`${API}/admin/content`, authHeaders());
+        setContent(ct.data);
+      } catch (err) { console.error("content load error", err); }
     } catch (e) {
       console.error("Admin load error", e);
     } finally {
@@ -82,6 +93,8 @@ const AdminPanel = () => {
     { id: "overview", label: "Analytics" },
     { id: "products", label: "Products" },
     { id: "vendors", label: "Vendors & Affiliate" },
+    { id: "practitioners", label: "Practitioners" },
+    { id: "content", label: "Content Library" },
     { id: "orders", label: "Practitioner Orders" },
   ];
 
@@ -130,6 +143,8 @@ const AdminPanel = () => {
             {tab === "overview" && <AnalyticsTab analytics={analytics} />}
             {tab === "products" && <ProductsTab products={products} vendors={vendors} reload={loadAll} flash={flash} />}
             {tab === "vendors" && <VendorsTab vendors={vendors} reload={loadAll} flash={flash} />}
+            {tab === "practitioners" && <PractitionersTab coaches={coaches} reload={loadAll} flash={flash} />}
+            {tab === "content" && <ContentTab content={content} reload={loadAll} flash={flash} />}
             {tab === "orders" && <OrdersTab orders={orders} reload={loadAll} flash={flash} />}
           </>
         )}
@@ -285,7 +300,7 @@ const ProductsTab = ({ products, vendors, reload, flash }) => {
               <tr key={p.id} className="border-t border-gray-100">
                 <td className="p-3">
                   <div className="font-medium text-gray-900">{p.name}</div>
-                  <div className="text-xs text-gray-400">{p.category}</div>
+                  <div className="text-xs text-gray-400">{p.category} · <span className={p.source_type === "wholesale" ? "text-purple-500" : "text-blue-500"}>{p.source_type === "wholesale" ? "wholesale" : "affiliate"}</span></div>
                 </td>
                 <td className="p-3 text-gray-700">{p.vendor_name}</td>
                 <td className="p-3">${p.price?.toFixed(2)}</td>
@@ -326,6 +341,12 @@ const ProductsTab = ({ products, vendors, reload, flash }) => {
                 <Field label="Price ($)"><input type="number" className="inp" value={editing.price} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
                 <Field label="Sale Price ($, optional)"><input type="number" className="inp" value={editing.sale_price} onChange={(e) => setEditing({ ...editing, sale_price: e.target.value })} /></Field>
               </div>
+              <Field label="Sourcing">
+                <select className="inp" value={editing.source_type || "affiliate"} onChange={(e) => setEditing({ ...editing, source_type: e.target.value })}>
+                  <option value="affiliate">Affiliate link (tracked commission)</option>
+                  <option value="wholesale">Wholesale account (Hackster stocks/orders)</option>
+                </select>
+              </Field>
               <Field label="Affiliate URL (leave blank to auto-generate from vendor pattern)">
                 <input className="inp" placeholder="https://vendor.com/product?aff=hackster" value={editing.affiliate_url || ""} onChange={(e) => setEditing({ ...editing, affiliate_url: e.target.value })} />
               </Field>
@@ -346,6 +367,7 @@ const ProductsTab = ({ products, vendors, reload, flash }) => {
               <div className="flex gap-6">
                 <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_featured} onChange={(e) => setEditing({ ...editing, is_featured: e.target.checked })} /><span>Featured</span></label>
                 <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_ai_recommended} onChange={(e) => setEditing({ ...editing, is_ai_recommended: e.target.checked })} /><span>AI Recommended</span></label>
+                <label className="flex items-center space-x-2 text-sm text-red-600"><input type="checkbox" checked={!!editing.is_habit_forming} onChange={(e) => setEditing({ ...editing, is_habit_forming: e.target.checked })} /><span>Habit-forming (exclude)</span></label>
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end space-x-3 shrink-0">
@@ -506,5 +528,273 @@ const Field = ({ label, children }) => (
     {children}
   </div>
 );
+
+/* ---------------- Practitioners ---------------- */
+const emptyCoach = {
+  name: "", credentials: "", specialties: "", location: "", bio: "",
+  hourly_rate: "", availability: "", contact_email: "", website: "",
+  profile_image: "", years_experience: "", payment_status: "unpaid",
+  is_featured: false, is_approved: true, is_active: true, internal_notes: "",
+};
+const PAYMENT_STATUSES = ["unpaid", "trial", "active", "comp", "lapsed"];
+const paymentColors = {
+  unpaid: "bg-gray-100 text-gray-600", trial: "bg-blue-100 text-blue-700",
+  active: "bg-green-100 text-green-700", comp: "bg-purple-100 text-purple-700",
+  lapsed: "bg-red-100 text-red-700",
+};
+
+const PractitionersTab = ({ coaches, reload, flash }) => {
+  const [editing, setEditing] = useState(null);
+
+  const startNew = () => setEditing({ ...emptyCoach });
+  const startEdit = (c) => setEditing({
+    ...c,
+    credentials: Array.isArray(c.credentials) ? c.credentials.join(", ") : (c.credentials || ""),
+    specialties: Array.isArray(c.specialties) ? c.specialties.join(", ") : (c.specialties || ""),
+    contact_email: c.contact_info?.email || "",
+    years_experience: c.years_experience ?? "",
+  });
+
+  const save = async () => {
+    const toArr = (s) => (typeof s === "string" ? s.split(",").map((x) => x.trim()).filter(Boolean) : s);
+    const body = {
+      name: editing.name,
+      credentials: toArr(editing.credentials),
+      specialties: toArr(editing.specialties),
+      location: editing.location || "",
+      bio: editing.bio || "",
+      hourly_rate: editing.hourly_rate || "",
+      availability: editing.availability || "",
+      contact_info: editing.contact_email ? { email: editing.contact_email } : {},
+      website: editing.website || null,
+      profile_image: editing.profile_image || null,
+      years_experience: editing.years_experience === "" ? null : parseInt(editing.years_experience, 10),
+      payment_status: editing.payment_status || "unpaid",
+      is_featured: !!editing.is_featured,
+      is_approved: !!editing.is_approved,
+      is_active: !!editing.is_active,
+      internal_notes: editing.internal_notes || null,
+    };
+    try {
+      if (editing.id) { await axios.put(`${API}/admin/coaches/${editing.id}`, body, authHeaders()); flash("Practitioner updated"); }
+      else { await axios.post(`${API}/admin/coaches`, body, authHeaders()); flash("Practitioner added"); }
+      setEditing(null); reload();
+    } catch (e) { alert("Error saving practitioner: " + (e.response?.data?.detail || e.message)); }
+  };
+
+  const remove = async (c) => {
+    if (!window.confirm(`Delete practitioner "${c.name}"?`)) return;
+    try { await axios.delete(`${API}/coaches/${c.id}`, authHeaders()); flash("Practitioner deleted"); reload(); }
+    catch (e) { alert("Error deleting: " + (e.response?.data?.detail || e.message)); }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">{coaches.length} Practitioners</h2>
+          <p className="text-xs text-gray-500">Approved + active practitioners are matched into user recommendations. Featured ones are prioritized. Not shown as a public directory.</p>
+        </div>
+        <button onClick={startNew} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700">+ Add Practitioner</button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-500">
+            <tr><th className="p-3">Practitioner</th><th className="p-3">Specialties</th><th className="p-3">Payment</th><th className="p-3">Status</th><th className="p-3"></th></tr>
+          </thead>
+          <tbody>
+            {coaches.map((c) => (
+              <tr key={c.id} className="border-t border-gray-100">
+                <td className="p-3">
+                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                    {c.name}
+                    {c.is_featured && <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">★ Featured</span>}
+                  </div>
+                  <div className="text-xs text-gray-400">{(c.credentials || []).join(", ")} · {c.location}</div>
+                </td>
+                <td className="p-3 text-gray-700 max-w-[220px]">{(c.specialties || []).join(", ")}</td>
+                <td className="p-3"><span className={`text-xs px-2 py-0.5 rounded-full ${paymentColors[c.payment_status] || "bg-gray-100 text-gray-600"}`}>{c.payment_status || "unpaid"}</span></td>
+                <td className="p-3 text-xs">
+                  <span className={c.is_approved && c.is_active ? "text-green-600" : "text-gray-400"}>{c.is_approved && c.is_active ? "● Live" : "○ Hidden"}</span>
+                </td>
+                <td className="p-3 whitespace-nowrap">
+                  <button onClick={() => startEdit(c)} className="text-blue-600 hover:underline mr-3">Edit</button>
+                  <button onClick={() => remove(c)} className="text-red-500 hover:underline">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-gray-900">{editing.id ? "Edit Practitioner" : "New Practitioner"}</h3>
+              <button onClick={() => setEditing(null)} className="text-2xl text-gray-400">×</button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Name"><input className="inp" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+                <Field label="Location"><input className="inp" value={editing.location} onChange={(e) => setEditing({ ...editing, location: e.target.value })} /></Field>
+              </div>
+              <Field label="Specialties (comma separated — used to match recommendations)">
+                <input className="inp" placeholder="energy, longevity, weight loss" value={editing.specialties} onChange={(e) => setEditing({ ...editing, specialties: e.target.value })} />
+              </Field>
+              <Field label="Credentials (comma separated)"><input className="inp" placeholder="ND, CNS, FMCA" value={editing.credentials} onChange={(e) => setEditing({ ...editing, credentials: e.target.value })} /></Field>
+              <Field label="Bio"><textarea rows={3} className="inp" value={editing.bio} onChange={(e) => setEditing({ ...editing, bio: e.target.value })} /></Field>
+              <div className="grid grid-cols-3 gap-4">
+                <Field label="Rate"><input className="inp" placeholder="$120/session" value={editing.hourly_rate} onChange={(e) => setEditing({ ...editing, hourly_rate: e.target.value })} /></Field>
+                <Field label="Availability"><input className="inp" placeholder="Weekdays" value={editing.availability} onChange={(e) => setEditing({ ...editing, availability: e.target.value })} /></Field>
+                <Field label="Years exp."><input type="number" className="inp" value={editing.years_experience} onChange={(e) => setEditing({ ...editing, years_experience: e.target.value })} /></Field>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Contact email"><input className="inp" value={editing.contact_email} onChange={(e) => setEditing({ ...editing, contact_email: e.target.value })} /></Field>
+                <Field label="Website"><input className="inp" value={editing.website} onChange={(e) => setEditing({ ...editing, website: e.target.value })} /></Field>
+              </div>
+              <Field label="Profile image URL"><input className="inp" value={editing.profile_image} onChange={(e) => setEditing({ ...editing, profile_image: e.target.value })} /></Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Payment status (back office)">
+                  <select className="inp" value={editing.payment_status} onChange={(e) => setEditing({ ...editing, payment_status: e.target.value })}>
+                    {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </Field>
+                <Field label="Internal notes (admin only)"><input className="inp" value={editing.internal_notes} onChange={(e) => setEditing({ ...editing, internal_notes: e.target.value })} /></Field>
+              </div>
+              <div className="flex flex-wrap gap-6">
+                <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_featured} onChange={(e) => setEditing({ ...editing, is_featured: e.target.checked })} /><span>Featured in recommendations</span></label>
+                <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_approved} onChange={(e) => setEditing({ ...editing, is_approved: e.target.checked })} /><span>Approved</span></label>
+                <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /><span>Active</span></label>
+              </div>
+              <p className="text-xs text-gray-400">Approved + Active practitioners are eligible to appear in user recommendations after the questionnaire. Featured practitioners get a ranking boost.</p>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end space-x-3 shrink-0">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-gray-500">Cancel</button>
+              <button onClick={save} disabled={!editing.name} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-40">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ---------------- Content Library ---------------- */
+const CONTENT_CATEGORIES = ["frequency_healing", "detox", "nutrition", "mindfulness", "sleep", "supplements", "movement", "general"];
+const emptyContent = {
+  title: "", slug: "", category: "general", summary: "", body: "",
+  image_url: "", media_url: "", source_url: "", tags: "", related_goals: "", is_published: true,
+};
+
+const ContentTab = ({ content, reload, flash }) => {
+  const [editing, setEditing] = useState(null);
+
+  const startNew = () => setEditing({ ...emptyContent });
+  const startEdit = (c) => setEditing({
+    ...c,
+    tags: Array.isArray(c.tags) ? c.tags.join(", ") : (c.tags || ""),
+    related_goals: Array.isArray(c.related_goals) ? c.related_goals.join(", ") : (c.related_goals || ""),
+  });
+
+  const save = async () => {
+    const toArr = (s) => (typeof s === "string" ? s.split(",").map((x) => x.trim()).filter(Boolean) : s);
+    const body = {
+      title: editing.title,
+      slug: editing.slug || "",
+      category: editing.category || "general",
+      summary: editing.summary || "",
+      body: editing.body || "",
+      image_url: editing.image_url || null,
+      media_url: editing.media_url || null,
+      source_url: editing.source_url || null,
+      tags: toArr(editing.tags),
+      related_goals: toArr(editing.related_goals),
+      is_published: !!editing.is_published,
+    };
+    try {
+      if (editing.id) { await axios.put(`${API}/admin/content/${editing.id}`, body, authHeaders()); flash("Content updated"); }
+      else { await axios.post(`${API}/admin/content`, body, authHeaders()); flash("Content created"); }
+      setEditing(null); reload();
+    } catch (e) { alert("Error saving content: " + (e.response?.data?.detail || e.message)); }
+  };
+
+  const remove = async (c) => {
+    if (!window.confirm(`Delete "${c.title}"?`)) return;
+    try { await axios.delete(`${API}/admin/content/${c.id}`, authHeaders()); flash("Content deleted"); reload(); }
+    catch (e) { alert("Error deleting: " + (e.response?.data?.detail || e.message)); }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">{content.length} Articles</h2>
+          <p className="text-xs text-gray-500">Educational content that powers questionnaire results and Raphael’s chatbot answers. Tag with health goals so it surfaces to the right users.</p>
+        </div>
+        <button onClick={startNew} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700">+ Add Article</button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-500">
+            <tr><th className="p-3">Title</th><th className="p-3">Category</th><th className="p-3">Goals</th><th className="p-3">Status</th><th className="p-3"></th></tr>
+          </thead>
+          <tbody>
+            {content.map((c) => (
+              <tr key={c.id} className="border-t border-gray-100">
+                <td className="p-3 font-medium text-gray-900">{c.title}</td>
+                <td className="p-3"><span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{c.category?.replace(/_/g, " ")}</span></td>
+                <td className="p-3 text-gray-600 text-xs max-w-[200px]">{(c.related_goals || []).join(", ")}</td>
+                <td className="p-3 text-xs">{c.is_published ? <span className="text-green-600">● Published</span> : <span className="text-gray-400">○ Draft</span>}</td>
+                <td className="p-3 whitespace-nowrap">
+                  <button onClick={() => startEdit(c)} className="text-blue-600 hover:underline mr-3">Edit</button>
+                  <button onClick={() => remove(c)} className="text-red-500 hover:underline">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-gray-900">{editing.id ? "Edit Article" : "New Article"}</h3>
+              <button onClick={() => setEditing(null)} className="text-2xl text-gray-400">×</button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              <Field label="Title"><input className="inp" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Category">
+                  <select className="inp" value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })}>
+                    {CONTENT_CATEGORIES.map((c) => <option key={c} value={c}>{c.replace(/_/g, " ")}</option>)}
+                  </select>
+                </Field>
+                <Field label="Slug (auto if blank)"><input className="inp" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} /></Field>
+              </div>
+              <Field label="Summary (shown in cards & used for matching)"><textarea rows={2} className="inp" value={editing.summary} onChange={(e) => setEditing({ ...editing, summary: e.target.value })} /></Field>
+              <Field label="Body (full article)"><textarea rows={6} className="inp" value={editing.body} onChange={(e) => setEditing({ ...editing, body: e.target.value })} /></Field>
+              <Field label="Image URL"><input className="inp" value={editing.image_url} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="YouTube or media URL (optional — embeds a video)"><input className="inp" placeholder="https://youtube.com/watch?v=…" value={editing.media_url} onChange={(e) => setEditing({ ...editing, media_url: e.target.value })} /></Field>
+                <Field label="Source URL (optional)"><input className="inp" value={editing.source_url} onChange={(e) => setEditing({ ...editing, source_url: e.target.value })} /></Field>
+              </div>
+              <Field label="Related goals (comma separated — e.g. energy, sleep, longevity)"><input className="inp" value={editing.related_goals} onChange={(e) => setEditing({ ...editing, related_goals: e.target.value })} /></Field>
+              <Field label="Tags (comma separated)"><input className="inp" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} /></Field>
+              <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={!!editing.is_published} onChange={(e) => setEditing({ ...editing, is_published: e.target.checked })} /><span>Published (visible to users)</span></label>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end space-x-3 shrink-0">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-gray-500">Cancel</button>
+              <button onClick={save} disabled={!editing.title} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-40">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default AdminPanel;

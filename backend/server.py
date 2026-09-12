@@ -325,6 +325,7 @@ class MarketplaceProduct(BaseModel):
     price: float
     sale_price: Optional[float] = None
     currency: str = "USD"
+    source_type: str = "affiliate"  # "affiliate" (tracked link) | "wholesale" (Hackster wholesale account)
     image_url: Optional[str] = None
     images: List[str] = []
     affiliate_url: Optional[str] = None
@@ -339,6 +340,7 @@ class MarketplaceProduct(BaseModel):
     stock_status: str = "in_stock"
     is_featured: bool = False
     is_ai_recommended: bool = False
+    is_habit_forming: bool = False  # Flag to EXCLUDE from recommendations (Hackster promotes non-habit-forming modalities)
     priority_score: int = 0  # For AI recommendations ranking
     tags: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -458,6 +460,23 @@ class ConversionReport(BaseModel):
     product_id: Optional[str] = None
     order_value: float = 0.0
 
+# ============== EDUCATION CONTENT LIBRARY MODELS ==============
+class EducationContent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    slug: str = ""
+    category: str = "general"  # frequency_healing | detox | nutrition | mindfulness | sleep | supplements | movement | general
+    summary: str = ""
+    body: str = ""            # markdown / long-form educational text
+    image_url: Optional[str] = None
+    media_url: Optional[str] = None   # optional video/audio link
+    source_url: Optional[str] = None
+    tags: List[str] = []
+    related_goals: List[str] = []      # health goal keywords for matching (e.g. energy, longevity)
+    is_published: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 # ============== WISHLIST / STACK MODELS ==============
 class WishlistItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -530,6 +549,7 @@ class AIRecommendation(BaseModel):
     recommended_products: List[Dict[str, Any]]  # List of product recommendations with reasons
     recommended_lab_tests: List[Dict[str, Any]]
     recommended_coaches: List[Dict[str, Any]] = []  # Top matched health coaches
+    recommended_content: List[Dict[str, Any]] = []  # Matched education library articles
     lifestyle_tips: List[str]
     personalized_summary: str
     ai_reasoning: str  # Detailed AI analysis
@@ -546,6 +566,13 @@ class LabResultUpload(BaseModel):
     notes: Optional[str] = None
     ai_analysis: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PractitionerPaymentStatus(str, Enum):
+    UNPAID = "unpaid"       # Not yet paying the back office
+    TRIAL = "trial"         # On a free trial / beta
+    ACTIVE = "active"       # Paying / in good standing
+    COMP = "comp"           # Complimentary / partner
+    LAPSED = "lapsed"       # Was paying, now overdue
 
 class Coach(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -565,6 +592,10 @@ class Coach(BaseModel):
     years_experience: Optional[int] = None
     is_approved: bool = False  # For admin approval
     is_active: bool = True
+    # ----- Back-office / recommendation-engine fields (admin managed) -----
+    payment_status: PractitionerPaymentStatus = PractitionerPaymentStatus.UNPAID
+    is_featured: bool = False          # Prioritize in recommendations
+    internal_notes: Optional[str] = None  # Admin-only notes (never shown to users)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -830,6 +861,14 @@ async def generate_ai_recommendations(user_responses: List[QuestionnaireResponse
     The "coach_match_specialties" field should list 2-4 keywords matching the user's main goals so we can
     pair them with the right health coach (e.g. "longevity", "weight management", "energy", "immune",
     "bioenergy", "frequency therapy", "stem cell", "stress").
+
+    CRITICAL PRINCIPLE — NO HABIT-FORMING RECOMMENDATIONS:
+    Hackster.ai's mission is natural modalities that work short- AND long-term, with NO habit-forming
+    or dependency-creating recommendations. NEVER recommend addictive or dependency-forming substances
+    or behaviors (e.g. stimulant dependence, sedative/sleep-drug reliance, nicotine, high-dose caffeine
+    routines, or anything that creates tolerance/withdrawal). Favor natural, non-addictive approaches:
+    nutrition, targeted supplements, frequency/energy healing, breathwork, light/cold/heat, movement,
+    sleep hygiene, detoxification, and mindfulness. Emphasize building the body's own resilience.
 
     Base your recommendations on evidence-based health science and biohacking best practices."""
     
@@ -1450,6 +1489,59 @@ async def initialize_sample_data():
             )
             await db.stacks.insert_one(demo_stack.dict())
             logging.info("Seeded demo member + wellness stack")
+
+    # Seed starter education content library (idempotent by slug)
+    starter_content = [
+        {
+            "title": "Frequency Healing 101: How Vibration Supports the Body",
+            "slug": "frequency-healing-101",
+            "category": "frequency_healing",
+            "summary": "An introduction to bioelectrical health and how sound, light, and PEMF/Rife-style frequencies may support the body's natural balance.",
+            "body": "Your body is bioelectrical. Every cell holds a small charge, and the field they create can be influenced by the frequencies around us — from the food we eat to sound, light, and our environment.\n\nAs Nikola Tesla noted, 'If you want to know the secrets of the universe, think in terms of energy, frequency and vibration.' Frequency-based modalities (such as square-wave Rife-style devices and PEMF) aim to gently nudge the body toward balance.\n\n**Ways to explore electric health:**\n- Grounding / earthing for 10–20 minutes daily\n- Morning sunlight to set circadian rhythm\n- Reducing EMF exposure at night\n- Frequency devices used as directed with coaching support\n\nAlways pair new modalities with the guidance of your wellness team.",
+            "image_url": "https://images.unsplash.com/photo-1517971071642-34a2d3ecc9cd?w=800",
+            "tags": ["frequency", "rife", "pemf", "electric health", "energy"],
+            "related_goals": ["energy", "longevity", "recovery", "stress_management"],
+            "is_published": True,
+        },
+        {
+            "title": "Gentle Detoxification: Supporting Your Body's Natural Cleansing",
+            "slug": "gentle-detoxification",
+            "category": "detox",
+            "summary": "Practical, non-habit-forming ways to reduce toxic load and support the liver, lymph, and gut.",
+            "body": "Detoxification is about releasing what no longer serves you so your body can function optimally — not extreme cleanses.\n\n**Daily supportive practices:**\n- Hydrate with clean, filtered water\n- Epsom salt or bentonite clay baths\n- Deep breathing and gentle movement to move lymph\n- Chlorophyll-rich foods (wheatgrass, spirulina, chlorella)\n- Swapping to non-toxic home and body products\n\nThese approaches build resilience over time and never create dependency.",
+            "image_url": "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800",
+            "tags": ["detox", "liver", "lymph", "gut health"],
+            "related_goals": ["gut_health", "immune_support", "weight_management", "longevity"],
+            "is_published": True,
+        },
+        {
+            "title": "Natural Sleep Optimization Without Dependency",
+            "slug": "natural-sleep-optimization",
+            "category": "sleep",
+            "summary": "Build deep, restorative sleep using light, temperature, and rhythm — no habit-forming sleep aids.",
+            "body": "Great sleep is foundational to energy, mood, and longevity — and you can improve it naturally.\n\n**Evening wind-down:**\n- Dim lights and avoid blue light 1–2 hours before bed\n- Keep the room cool (65–67°F)\n- Magnesium bisglycinate ~2 hours before bed\n- Consistent sleep/wake times, even on weekends\n- Morning sunlight to anchor your circadian rhythm\n\nThese habits strengthen your body's own sleep signals rather than overriding them.",
+            "image_url": "https://images.unsplash.com/photo-1520206183501-b80df61043c2?w=800",
+            "tags": ["sleep", "circadian", "magnesium", "recovery"],
+            "related_goals": ["sleep", "energy", "stress_management", "longevity"],
+            "is_published": True,
+        },
+        {
+            "title": "Mindfulness & Breathwork for Emotional Balance",
+            "slug": "mindfulness-breathwork",
+            "category": "mindfulness",
+            "summary": "Simple breath and mindfulness practices to build resilience and a positive mental outlook.",
+            "body": "Our emotions play a significant role in physical health. Mindful practices calm the nervous system and improve outcomes.\n\n**Try today:**\n- Box breathing (inhale 4, hold 4, exhale 4, hold 4)\n- 5 minutes of quiet reflection or prayer\n- A short gratitude note each morning\n- Visualization of your best, healthiest self\n\nPresent-moment awareness empowers better choices throughout your day.",
+            "image_url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800",
+            "tags": ["mindfulness", "breathwork", "stress", "emotional balance"],
+            "related_goals": ["stress_management", "focus", "energy"],
+            "is_published": True,
+        },
+    ]
+    for c in starter_content:
+        existing_c = await db.education_content.find_one({"slug": c["slug"]})
+        if not existing_c:
+            await db.education_content.insert_one(EducationContent(**c).dict())
+    logging.info("Seeded education content library")
     
     # Sample Marketplace Products (upsert by slug so new products get added on restart)
     if True:
@@ -3328,6 +3420,9 @@ async def submit_questionnaire(submission: AIQuestionnaireSubmission):
             # Boost Laura Zook slightly so she's surfaced for our beta members
             if coach.get("name") == "Laura Zook":
                 score += 1
+            # Boost admin-featured practitioners in the recommendation engine
+            if coach.get("is_featured"):
+                score += 3
             score += coach.get("rating", 0)  # tiebreak by rating
             scored.append((score, coach))
         scored.sort(key=lambda x: x[0], reverse=True)
@@ -3348,6 +3443,9 @@ async def submit_questionnaire(submission: AIQuestionnaireSubmission):
                 "match_score": int(score)
             })
 
+        # ===== Match education content =====
+        matched_content = await match_content_for_keywords(list(expanded_keywords), limit=3)
+
         # Create recommendation record
         recommendation = AIRecommendation(
             user_id=user_id,
@@ -3357,6 +3455,7 @@ async def submit_questionnaire(submission: AIQuestionnaireSubmission):
             recommended_products=ai_result.get("recommended_products", []),
             recommended_lab_tests=ai_result.get("recommended_lab_tests", []),
             recommended_coaches=top_coaches,
+            recommended_content=matched_content,
             lifestyle_tips=ai_result.get("lifestyle_tips", []),
             personalized_summary=ai_result.get("personalized_summary", ""),
             ai_reasoning=ai_result.get("ai_reasoning", ""),
@@ -3393,7 +3492,7 @@ async def upload_lab_results(lab_data: LabResultUploadRequest, current_user: Use
     """Upload lab test results for tracking"""
     try:
         test_date = datetime.fromisoformat(lab_data.test_date.replace('Z', '+00:00'))
-    except:
+    except Exception:
         test_date = datetime.utcnow()
     
     lab_result = LabResultUpload(
@@ -3565,6 +3664,15 @@ GUIDELINES:
 8. Be encouraging and celebrate progress
 9. Healing is a journey - honor wherever someone is on their path
 
+CRITICAL PRINCIPLE — NO HABIT-FORMING RECOMMENDATIONS:
+Hackster.ai is about natural modalities that work short- AND long-term, with NO habit-forming or
+dependency-creating recommendations. You must NEVER encourage addictive or dependency-forming substances
+or behaviors (e.g. reliance on stimulants, sleep/sedative drugs, nicotine, high-dose caffeine loops, or
+anything that builds tolerance and withdrawal). If a user asks about something habit-forming, gently and
+without judgment steer them toward natural, non-addictive alternatives that build the body's own resilience
+(nutrition, targeted supplements, frequency/energy healing, breathwork, light/cold/heat, movement, sleep
+hygiene, detox, mindfulness). Always aim to help people become MORE free, not dependent.
+
 BUILDING A HEALTHCARE & WELLNESS TEAM:
 Encourage users to build collaborative support:
 
@@ -3626,11 +3734,22 @@ async def coach_chat(request: CoachChatRequest):
         # Add current message
         messages_for_ai.append({"role": "user", "content": request.message})
         
+        # Retrieve relevant Hackster library content to ground Raphael's response
+        msg_words = [w.strip(".,!?;:'\"").lower() for w in request.message.split() if len(w) > 3]
+        relevant_content = await match_content_for_keywords(msg_words, limit=2, fallback=False)
+        system_msg = RAPHAEL_SYSTEM_PROMPT
+        if relevant_content:
+            article_lines = "\n".join([f"- \"{c['title']}\": {c.get('summary', '')}" for c in relevant_content])
+            system_msg = RAPHAEL_SYSTEM_PROMPT + (
+                "\n\nRELEVANT HACKSTER LIBRARY ARTICLES (you may reference these by name and "
+                "encourage the user to read them in the Hackster Library if helpful):\n" + article_lines
+            )
+        
         # Create chat with Raphael's personality
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=f"raphael-coach-{uuid.uuid4()}",
-            system_message=RAPHAEL_SYSTEM_PROMPT
+            system_message=system_msg
         ).with_model("openai", "gpt-4.1-mini")
         
         # Send message and get response
@@ -3997,6 +4116,125 @@ async def admin_delete_product(product_id: str, current_user: UserProfile = Depe
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Product deleted"}
+
+
+# ---------- Admin: Practitioner (coach) management ----------
+@api_router.post("/admin/coaches", response_model=Coach)
+async def admin_create_coach(coach: Coach, current_user: UserProfile = Depends(require_admin)):
+    """Admin adds a practitioner directly to the recommendation engine.
+    Defaults to approved + active so they immediately appear in matched recommendations."""
+    # Admin-added practitioners are live by default
+    if coach.is_approved is False and coach.is_active is True:
+        coach.is_approved = True
+    await db.coaches.insert_one(coach.dict())
+    return coach
+
+
+@api_router.put("/admin/coaches/{coach_id}", response_model=Coach)
+async def admin_update_coach(coach_id: str, updates: Dict[str, Any],
+                             current_user: UserProfile = Depends(require_admin)):
+    """Admin updates any practitioner field (approval, active, payment_status, is_featured, notes, specialties, etc.)."""
+    updates.pop("id", None)
+    updates["updated_at"] = datetime.utcnow()
+    result = await db.coaches.update_one({"id": coach_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Practitioner not found")
+    coach = await db.coaches.find_one({"id": coach_id})
+    return Coach(**{k: v for k, v in coach.items() if k != "_id"})
+
+
+# ---------- Education Content Library ----------
+async def match_content_for_keywords(keywords: List[str], limit: int = 3, fallback: bool = True) -> List[dict]:
+    """Return up to `limit` published content items matching goal/tag keywords."""
+    kws = [k.lower() for k in keywords if k]
+    items = await db.education_content.find({"is_published": True}).to_list(500)
+    scored = []
+    for it in items:
+        hay = " ".join([
+            " ".join(it.get("related_goals", [])),
+            " ".join(it.get("tags", [])),
+            it.get("category", ""),
+            it.get("title", ""),
+        ]).lower()
+        score = sum(1 for kw in kws if kw and kw in hay)
+        if score > 0:
+            scored.append((score, it))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    picked = [it for _, it in scored[:limit]]
+    # Fallback: if nothing matched, return most recent published
+    if not picked and fallback:
+        picked = sorted(items, key=lambda x: x.get("created_at", datetime.min), reverse=True)[:limit]
+    return [{
+        "id": it.get("id"), "title": it.get("title"), "slug": it.get("slug"),
+        "category": it.get("category"), "summary": it.get("summary"),
+        "image_url": it.get("image_url"),
+    } for it in picked]
+
+
+@api_router.get("/content", response_model=List[EducationContent])
+async def list_content(category: Optional[str] = None, goal: Optional[str] = None,
+                       search: Optional[str] = None, limit: int = 100):
+    """Public: list published education content."""
+    query: Dict[str, Any] = {"is_published": True}
+    if category:
+        query["category"] = category
+    if goal:
+        query["related_goals"] = goal
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"summary": {"$regex": search, "$options": "i"}},
+            {"tags": {"$regex": search, "$options": "i"}},
+        ]
+    items = await db.education_content.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    return [EducationContent(**{k: v for k, v in i.items() if k != "_id"}) for i in items]
+
+
+@api_router.get("/content/{slug}", response_model=EducationContent)
+async def get_content(slug: str):
+    """Public: get a single published content item by slug or id."""
+    item = await db.education_content.find_one({"slug": slug, "is_published": True}) or \
+        await db.education_content.find_one({"id": slug, "is_published": True})
+    if not item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return EducationContent(**{k: v for k, v in item.items() if k != "_id"})
+
+
+@api_router.get("/admin/content", response_model=List[EducationContent])
+async def admin_list_content(current_user: UserProfile = Depends(require_admin)):
+    items = await db.education_content.find().sort("created_at", -1).to_list(500)
+    return [EducationContent(**{k: v for k, v in i.items() if k != "_id"}) for i in items]
+
+
+@api_router.post("/admin/content", response_model=EducationContent)
+async def admin_create_content(content: EducationContent, current_user: UserProfile = Depends(require_admin)):
+    if not content.slug:
+        content.slug = content.title.lower().replace(" ", "-")
+    existing = await db.education_content.find_one({"slug": content.slug})
+    if existing:
+        content.slug = f"{content.slug}-{str(uuid.uuid4())[:4]}"
+    await db.education_content.insert_one(content.dict())
+    return content
+
+
+@api_router.put("/admin/content/{content_id}", response_model=EducationContent)
+async def admin_update_content(content_id: str, updates: Dict[str, Any],
+                               current_user: UserProfile = Depends(require_admin)):
+    updates.pop("id", None)
+    updates["updated_at"] = datetime.utcnow()
+    result = await db.education_content.update_one({"id": content_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Content not found")
+    item = await db.education_content.find_one({"id": content_id})
+    return EducationContent(**{k: v for k, v in item.items() if k != "_id"})
+
+
+@api_router.delete("/admin/content/{content_id}")
+async def admin_delete_content(content_id: str, current_user: UserProfile = Depends(require_admin)):
+    result = await db.education_content.delete_one({"id": content_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return {"message": "Content deleted"}
 
 
 # ---------- Admin: Affiliate analytics ----------

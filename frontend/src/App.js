@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, useParams, useNavigate
 import axios from "axios";
 import AdminPanel from "./AdminPanel";
 import StackCheckout from "./StackCheckout";
+import LibraryPage from "./LibraryPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -104,6 +105,9 @@ const Navigation = () => {
         </Link>
         <Link to="/community" className={`transition-colors ${location.pathname === '/community' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
           Community
+        </Link>
+        <Link to="/library" className={`transition-colors ${location.pathname === '/library' ? 'text-blue-600 font-semibold' : 'text-gray-700 hover:text-blue-600'}`}>
+          Library
         </Link>
         <Link to="/questionnaire" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
           Get Started
@@ -705,36 +709,37 @@ const CommunityPlatform = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Community & Expert Coaching
+              Guidance, Community &amp; Learning
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Connect with like-minded biohackers, chat with our AI coach 24/7 plus get personalized 
-              guidance from certified coaches for optimal results.
+              Start a conversation with Raphael, our AI Wellness Coach, or take the 2-minute
+              assessment. When you’re ready for more, we’ll personally match you with the
+              right certified practitioner.
             </p>
 
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">1,000+</div>
-                <div className="text-gray-600">Active Members</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
+                <div className="text-gray-600">AI Coaching</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">50+</div>
-                <div className="text-gray-600">Certified Coaches</div>
+                <div className="text-3xl font-bold text-purple-600 mb-2">1,000+</div>
+                <div className="text-gray-600">Active Members</div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
-                to="/community"
+                to="/chat"
                 className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors text-center"
               >
-                Join Community
+                Chat with Raphael
               </Link>
               <Link 
-                to="/coaches"
+                to="/questionnaire"
                 className="border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all text-center"
               >
-                Find a Coach
+                Take the Free Assessment
               </Link>
             </div>
           </div>
@@ -742,25 +747,20 @@ const CommunityPlatform = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Hackster AI Coach</h3>
-              <p className="text-gray-600 mb-4">Get 24/7 personalized biohacking guidance with the Hackster AI Coach using our proprietary F.R.E.E.D.O.M. method.</p>
+              <p className="text-gray-600 mb-4">Get 24/7 personalized biohacking guidance with Raphael, our AI Wellness Coach, using the proprietary F.R.E.E.D.O.M. method.</p>
               <Link to="/chat" className="text-blue-600 font-semibold hover:text-blue-700">Try AI Coach →</Link>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Coach Directory</h3>
-              <p className="text-gray-600 mb-4">Connect with certified nutritionists, fitness coaches, and wellness experts in your area.</p>
-              <Link to="/coaches" className="text-blue-600 font-semibold hover:text-blue-700">Browse Coaches →</Link>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">Personalized Practitioner Matches</h3>
+              <p className="text-gray-600 mb-4">Complete your assessment and we’ll match you with certified practitioners suited to your goals — no endless directory to sift through.</p>
+              <Link to="/questionnaire" className="text-blue-600 font-semibold hover:text-blue-700">Get Matched →</Link>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Community Forum</h3>
-              <p className="text-gray-600 mb-4">Share your results, get support, and learn from thousands of fellow biohackers.</p>
-              <Link 
-                to="/community"
-                className="text-purple-600 font-semibold hover:text-purple-700"
-              >
-                Join Discussion →
-              </Link>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">The Hackster Library</h3>
+              <p className="text-gray-600 mb-4">Learn the natural modalities behind lasting wellness — frequency healing, detox, sleep, mindfulness and more.</p>
+              <Link to="/library" className="text-purple-600 font-semibold hover:text-purple-700">Explore the Library →</Link>
             </div>
           </div>
         </div>
@@ -1427,10 +1427,10 @@ const GetStartedFlow = () => {
                 Join Community to Share Results
               </Link>
               <Link 
-                to="/coaches" 
+                to="/questionnaire" 
                 className="flex-1 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white px-6 py-4 rounded-xl font-semibold text-center transition-colors"
               >
-                Find a Coach for Advanced Guidance
+                Get Matched with a Practitioner
               </Link>
             </div>
           </div>
@@ -4414,6 +4414,32 @@ const AIQuestionnairePage = () => {
             </ul>
           </div>
 
+          {/* Learn More — Education Library */}
+          {recommendations.recommended_content && recommendations.recommended_content.length > 0 && (
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">📚 Learn More</h3>
+                <Link to="/library" className="text-emerald-600 text-sm font-medium hover:underline">Browse the Library →</Link>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-4">
+                {recommendations.recommended_content.map((c, idx) => (
+                  <Link key={idx} to="/library" className="block border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                    {c.image_url && (
+                      <div className="h-24 bg-gray-100 overflow-hidden">
+                        <img src={c.image_url} alt={c.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{(c.category || '').replace(/_/g, ' ')}</span>
+                      <h4 className="font-semibold text-gray-900 text-sm mt-2 leading-snug">{c.title}</h4>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{c.summary}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* AI Reasoning (Expandable) */}
           <details className="bg-gray-100 rounded-xl p-6 mb-8">
             <summary className="cursor-pointer font-semibold text-gray-700">🤖 View AI Analysis Details</summary>
@@ -5874,7 +5900,7 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Community</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link to="/community" className="hover:text-white">Forum</Link></li>
-              <li><Link to="/coaches" className="hover:text-white">Find Coaches</Link></li>
+              <li><Link to="/library" className="hover:text-white">Library</Link></li>
               <li><Link to="/chat" className="hover:text-white">AI Coach</Link></li>
             </ul>
           </div>
@@ -5914,6 +5940,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/library" element={<LibraryPage NavigationComponent={Navigation} />} />
             <Route path="/community" element={<CommunityLanding />} />
             <Route path="/community-forum" element={<CommunityPlatform />} />
             <Route path="/posts/:postId" element={<PublicPostView />} />
