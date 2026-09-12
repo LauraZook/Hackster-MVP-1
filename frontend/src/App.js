@@ -5,6 +5,7 @@ import axios from "axios";
 import AdminPanel from "./AdminPanel";
 import StackCheckout from "./StackCheckout";
 import LibraryPage from "./LibraryPage";
+import hacksterH from "./assets/hackster-h.png";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -79,41 +80,16 @@ const useAuth = () => {
 };
 
 // Navigation Component
-const LogoMark = ({ size = 44, dark = false, className = "" }) => {
-  // Extruded 3D isometric "H": white front face with DNA strands, navy depth faces.
-  const H_PATH = "M8 8 H20 V30 H36 V8 H48 V60 H36 V40 H20 V60 H8 Z";
-  const depth = dark ? "#0E1730" : "#26324F";
-  const front = dark ? "#EEF2FA" : "#F5F7FB";
-  const line = "#1E2A4A";
-  const strand = dark ? "#3B4a73" : "#2A3A63";
-  const leftStrands = [
-    "M11 11 Q18 16 11 21 Q18 26 11 31 Q18 36 11 41 Q18 46 11 51 Q18 56 11 58",
-    "M17 11 Q10 16 17 21 Q10 26 17 31 Q10 36 17 41 Q10 46 17 51 Q10 56 17 58",
-  ];
-  const rightStrands = [
-    "M39 11 Q46 16 39 21 Q46 26 39 31 Q46 36 39 41 Q46 46 39 51 Q46 56 39 58",
-    "M45 11 Q38 16 45 21 Q38 26 45 31 Q38 36 45 41 Q38 46 45 51 Q38 56 45 58",
-  ];
-  return (
-    <svg width={size} height={size} viewBox="0 0 66 66" fill="none" className={className} role="img" aria-label="HACKSTER.ai">
-      {/* Extruded depth (offset up-right) forms the navy top & side faces */}
-      <path d={H_PATH} transform="translate(8,-8)" fill={depth} />
-      {/* Connectors joining front corners to the depth block */}
-      <g stroke={line} strokeWidth="1.2" strokeLinejoin="round">
-        <line x1="8" y1="8" x2="16" y2="0" />
-        <line x1="48" y1="8" x2="56" y2="0" />
-        <line x1="48" y1="60" x2="56" y2="52" />
-      </g>
-      {/* Front face */}
-      <path d={H_PATH} fill={front} stroke={line} strokeWidth="1.6" strokeLinejoin="round" />
-      {/* DNA double-helix on the two front pillars */}
-      <g stroke={strand} strokeWidth="1.2" strokeLinecap="round" opacity="0.7" fill="none">
-        {leftStrands.map((d, i) => <path key={`l${i}`} d={d} />)}
-        {rightStrands.map((d, i) => <path key={`r${i}`} d={d} />)}
-      </g>
-    </svg>
-  );
-};
+const LogoMark = ({ size = 44, dark = false, className = "" }) => (
+  <img
+    src={hacksterH}
+    alt="HACKSTER.ai"
+    width={size}
+    height={size}
+    className={className}
+    style={{ objectFit: "contain", height: size, width: "auto" }}
+  />
+);
 
 const Navigation = () => {
   const location = useLocation();
@@ -123,7 +99,7 @@ const Navigation = () => {
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
       <Link to="/" className="flex items-center space-x-3">
         <div className="flex items-center space-x-2.5">
-          <LogoMark size={40} className="shrink-0" />
+          <LogoMark size={48} className="shrink-0" />
           <div className="flex flex-col">
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-extrabold tracking-tight text-[#1E2A4A]">HACKSTER<span className="text-blue-600">.ai</span></span>
@@ -6044,7 +6020,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2.5 mb-4">
-              <LogoMark size={36} dark />
+              <LogoMark size={40} dark />
               <span className="text-xl font-extrabold tracking-tight text-white">HACKSTER<span className="text-blue-400">.ai</span></span>
             </div>
             <p className="text-gray-400 text-sm">
