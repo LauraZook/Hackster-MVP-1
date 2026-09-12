@@ -371,9 +371,23 @@
         - working: true
           agent: "testing"
           comment: "🎉 PRODUCTION DEPLOYMENT VERIFICATION SUCCESS: Conducted comprehensive testing of live production deployment at https://hackster-mvp-1.vercel.app with 100% success rate. CONFIRMED: Frontend successfully deployed on Vercel and fully operational (excellent 0.94s load times), Backend API connectivity verified (Railway health endpoint 200 OK, 13 community posts available via API), All core user journeys working perfectly (homepage → community → authentication → health assessment → coach directory), Authentication system fully functional (member/coach signup forms complete with proper field validation), Mobile responsiveness confirmed across all device sizes (390px mobile, 768px tablet, 1920px desktop), All biohacking content present and properly branded (Hackster.ai with BETA tag, supplement recommendations featuring Thorne/Apex Energetics/Standard Process brands, community features, AI coach integration), Cross-origin requests working seamlessly (CORS properly configured between Vercel frontend and Railway backend), Professional design and user experience optimized for real users, Error handling graceful for invalid routes. DEPLOYMENT STATUS: FULLY OPERATIONAL. The complete Hackster.ai biohacking platform is production-ready with all core features (community engagement, coach directory, health optimization tools) working seamlessly. Real users can now access the platform at https://hackster-mvp-1.vercel.app and experience the full biohacking journey from health assessment to community engagement to expert coaching."
+  - task: "YouTube Video Integration in Content Library"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/LibraryPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ YOUTUBE VIDEO INTEGRATION VERIFICATION COMPLETE (100% success rate, 6/6 checks passed). VERIFIED on live site (https://health-revolution-1.preview.emergentagent.com/library): (1) 'Frequency Healing 101' article card displays red '▶ Video' badge next to category tag with correct styling (bg-red-50 text-red-600), (2) Clicking card opens reading modal successfully, (3) YouTube iframe renders at top of modal above article title and body text, (4) Iframe src attribute confirmed: https://www.youtube.com/embed/0V6KgqsQaJg (correct video ID), (5) Iframe is visible and not blocked (video player shows Gary Brecka's video with YouTube controls), (6) No console/CSP errors detected related to iframe. Frontend LibraryPage.js has complete YouTube embed logic: getYouTubeEmbed() function extracts video IDs from various YouTube URL formats, video badge conditionally renders on cards when media_url contains YouTube link, iframe with proper YouTube embed URL renders in modal with 16:9 aspect ratio. Backend EducationContent model includes media_url field for storing video links. Complete video integration working perfectly - users can discover video content via badge on cards and watch embedded videos in reading modal."
+
 ## agent_communication:
     - agent: "main"
       message: "Successfully transformed basic status checker into comprehensive Hackster health platform. Backend has full API infrastructure with sample data. Frontend has beautiful, professional design showcasing all 3 core features. Next priority: integrate frontend with backend APIs to display dynamic data and create interactive user experience. Ready for testing agent to validate full user flows."
+    - agent: "testing"
+      message: "✅ YOUTUBE VIDEO INTEGRATION VERIFICATION COMPLETE: Conducted focused verification of YouTube video integration for 'Frequency Healing 101' article with 100% success rate (6/6 checks passed). All requirements met: red '▶ Video' badge displays on article card, clicking card opens modal with embedded YouTube iframe at top (src: https://www.youtube.com/embed/0V6KgqsQaJg), iframe is visible and functional with no CSP errors. Video integration working perfectly - users can discover and watch embedded videos in the content library."
     - agent: "user"
       message: "The login experience to create an account for Members still isn't working. I tested that and it didn't allow me to create an account."
     - agent: "main"
